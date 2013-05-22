@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{66af6529-2979-4c36-ab61-14ef631dda08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{4556bec2-c425-44ea-a120-9404888b1803}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Shaders">
+      <UniqueIdentifier>{99137807-c9fb-4fd6-949b-30c29d15ff15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Window">
+      <UniqueIdentifier>{1739d821-740c-437d-ba9f-d28678a80e65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{d65e7e62-9ae0-4595-a612-c2897351cd60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Components">
+      <UniqueIdentifier>{190a5944-97dc-4d3e-8cb6-50dad9726b02}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Window.cpp">
+      <Filter>Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Core.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonLibs.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="Input.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Graphics.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Core.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Input.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>Window</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonLibs.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="Enums.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="Math3D.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="System.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Phong.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Phong.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Screen.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Screen.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Hud.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Hud.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+  </ItemGroup>
+</Project>
