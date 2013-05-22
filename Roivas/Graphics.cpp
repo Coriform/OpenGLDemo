@@ -570,7 +570,7 @@ namespace Roivas
 
 		cam_rot.x = 0;
 		cam_rot.z = 0;
-		double mag = 1.0 / sqrt(cam_rot.w*cam_rot.w + cam_rot.y*cam_rot.y);
+		float mag = 1.0f / sqrt(cam_rot.w*cam_rot.w + cam_rot.y*cam_rot.y);
 		cam_rot.w *= mag;
 		cam_rot.y *= mag;
 	}
