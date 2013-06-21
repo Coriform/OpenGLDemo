@@ -43,6 +43,36 @@
     <ClCompile Include="Graphics.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Body.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="FileIO.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="..\jsoncpp\src\lib_json\json_value.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="..\jsoncpp\src\lib_json\json_reader.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="..\jsoncpp\src\lib_json\json_writer.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics.h">
@@ -67,24 +97,51 @@
       <Filter>Libraries</Filter>
     </ClInclude>
     <ClInclude Include="System.h" />
+    <ClInclude Include="Transform.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Body.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="FileIO.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Phong.vert">
+    <None Include="..\Assets\Shaders\Hud.frag">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="Phong.frag">
+    <None Include="..\Assets\Shaders\Hud.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="Screen.frag">
+    <None Include="..\Assets\Shaders\Phong.frag">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="Screen.vert">
+    <None Include="..\Assets\Shaders\Phong.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="Hud.vert">
+    <None Include="..\Assets\Shaders\Screen.frag">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="Hud.frag">
+    <None Include="..\Assets\Shaders\Screen.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="..\Assets\Shaders\Wireframe.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="..\Assets\Shaders\Wireframe.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
   </ItemGroup>

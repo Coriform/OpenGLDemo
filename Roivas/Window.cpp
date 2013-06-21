@@ -85,7 +85,7 @@ namespace Roivas
 			case SDL_MOUSEMOTION:
 			{
 				if( Input::GetInstance()->GetMouseButton(SDL_BUTTON_RIGHT) )
-					GetSystem(Graphics)->UpdateCameraRotation((float)event.motion.xrel*dt*0.3f, (float)event.motion.yrel*dt*0.3f);				
+					GetSystem(Graphics)->UpdateCameraRotation((float)event.motion.xrel*0.3f, (float)event.motion.yrel*0.3f);				
 			}
 			break;
 
