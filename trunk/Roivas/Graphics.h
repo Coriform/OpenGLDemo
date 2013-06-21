@@ -8,6 +8,7 @@
 #include <FTGL/ftgl.h>
 #include "SOIL.h"
 #include "System.h"
+#include "Model.h"
 
 namespace Roivas
 {
@@ -31,9 +32,9 @@ namespace Roivas
 
 		private:
 			void Draw3D(float dt);
-			void DrawPP(float dt);
+			void DrawPP(float dt);			
+			void DrawWireframe(float dt);		
 			void Draw2D(float dt);
-			void DrawDebug(float dt);				
 			void UpdateCamera(float dt);
 
 			void DrawDebugText(std::string path);
@@ -52,6 +53,8 @@ namespace Roivas
 
 			mat4 model, view, proj, ortho;
 			GLuint uniColor, uniModel, uniView, uniProj, uniOrtho;
+			GLuint uniLightPos;
+			GLuint wireColor, wireModel, wireView, wireProj;
 			
 
 			SDL_Surface *HUD;			
@@ -83,12 +86,18 @@ namespace Roivas
 			GLfloat	cnt1;
 			GLfloat	cnt2;
 
+			vec3 light_pos;
+
 			vec3 cam_pos;
 			vec3 cam_look;
 			vec3 cam_up;
 			vec3 cam_right;
 			quat cam_rot;
 
+			vec3 obj_position;
+
 			float pitch;
+
+			Model* testmodel;
 	};
 }

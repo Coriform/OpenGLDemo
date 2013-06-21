@@ -1,0 +1,37 @@
+﻿Build started 6/20/2013 3:21:41 PM.
+     1>Project "C:\Users\Cory\Downloads\jsoncpp-src-0.5.0\makefiles\vs71\test_lib_json.vcxproj" on node 3 (Build target(s)).
+     1>InitializeBuildStatus:
+         Creating "../../build/vs71/debug/test_lib_json\test_lib_json.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /I../../include /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _MBCS /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"../../build/vs71/debug/test_lib_json\\" /Fd"../../build/vs71/debug/test_lib_json\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\src\test_lib_json\jsontest.cpp ..\..\src\test_lib_json\main.cpp
+         main.cpp
+         jsontest.cpp
+         Generating Code...
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"../../build/vs71/debug/test_lib_json\test_lib_json.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"../../build/vs71/debug/test_lib_json\test_lib_json.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"../../build/vs71/debug/test_lib_json\test_lib_json.lib" /MACHINE:X86 /SAFESEH ../../build/vs71/debug/test_lib_json\jsontest.obj
+         ../../build/vs71/debug/test_lib_json\main.obj
+         "C:\Users\Cory\Downloads\jsoncpp-src-0.5.0\build\vs71\debug\lib_json\json_vc71_libmtd.lib"
+     1>jsontest.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/SAFESEH' specification
+         test_lib_json.vcxproj -> C:\Users\Cory\Downloads\jsoncpp-src-0.5.0\makefiles\vs71\../../build/vs71/debug/test_lib_json\test_lib_json.exe
+       PostBuildEvent:
+         Description: Running all unit tests
+         C:\Users\Cory\Downloads\jsoncpp-src-0.5.0\makefiles\vs71\../../build/vs71/debug/test_lib_json\test_lib_json.exe
+         :VCEnd
+         Testing ValueTest/size: OK
+         Testing ValueTest/isObject: OK
+         Testing ValueTest/isArray: OK
+         Testing ValueTest/isBool: OK
+         Testing ValueTest/isInt: OK
+         Testing ValueTest/isUInt: OK
+         Testing ValueTest/isDouble: OK
+         Testing ValueTest/isString: OK
+         Testing ValueTest/isNull: OK
+         All 9 tests passed
+       FinalizeBuildStatus:
+         Deleting file "../../build/vs71/debug/test_lib_json\test_lib_json.unsuccessfulbuild".
+         Touching "../../build/vs71/debug/test_lib_json\test_lib_json.lastbuildstate".
+     1>Done Building Project "C:\Users\Cory\Downloads\jsoncpp-src-0.5.0\makefiles\vs71\test_lib_json.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:04.62
