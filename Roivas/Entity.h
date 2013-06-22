@@ -19,5 +19,6 @@ namespace Roivas
 		// Data
 			Component* Components[CT_Total];
 			GLint ID;
+			bool Temp;
 	};
 }

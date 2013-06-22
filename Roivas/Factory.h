@@ -12,9 +12,11 @@ namespace Roivas
 			void Initialize() {}
 			void Update(float dt) {}
 			static Entity* AddEntity(std::string path);
+			static Entity* AddTempEntity(std::string path);
 
 		private:
 			Entity* AddEntityNS(std::string path);
+			Entity* AddTempEntityNS(std::string path);
 			Entity* CreateEntity(std::string path);
 			Entity* BuildArchetype(std::string path);
 			std::map<std::string,Entity*> ARCHETYPE_MAP;

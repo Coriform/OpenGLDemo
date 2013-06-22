@@ -78,6 +78,12 @@ namespace Roivas
 
 
 		Entity* e = Factory::AddEntity("Assets/Objects/test2.json");
+
+		Factory::AddEntity("Assets/Objects/test2.json");
+		Factory::AddEntity("Assets/Objects/test2.json");
+		Factory::AddEntity("Assets/Objects/test2.json");
+
+		Factory::AddEntity("Assets/Objects/test2.json");
 	}
 
 	void Graphics::Update(float dt)
