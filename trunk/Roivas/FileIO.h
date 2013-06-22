@@ -19,10 +19,6 @@ namespace Roivas
 			void Read(Json::Value& value, vec3&data);
 			void Read(Json::Value& value, vec4&data);
 
-			void Test();
-			void PrintJSONValue(Json::Value &val);
-			bool PrintJSONTree(Json::Value &val,unsigned short depth = 0);
-
 		// Data
 			std::string RootKey;
 			Json::Value Root;	

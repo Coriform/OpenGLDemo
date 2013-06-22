@@ -27,31 +27,17 @@ namespace Roivas
 		return GetSystem(Factory)->AddEntityNS(path);
 	}
 
+	Entity* Factory::AddTempEntity(std::string path)
+	{
+		return GetSystem(Factory)->AddTempEntityNS(path);
+	}
+
 	Entity* Factory::AddEntityNS(std::string path)
 	{
 		Entity* entity = CreateEntity(path);
 
 		if( entity == nullptr )
-			return nullptr;
-
-
-		////
-		ENTITY_LIST.resize(10);
-
-		Entity* e = new Entity();
-		ENTITY_LIST[0] = e;
-		Entity* f = new Entity();
-		ENTITY_LIST[1] = f;
-		Entity* r = new Entity();
-		ENTITY_LIST[2] = r;
-
-		Entity* g = new Entity();
-		ENTITY_LIST[4] = g;
-		Entity* h = new Entity();
-		ENTITY_LIST[9] = g;
-		
-		////
-		
+			return nullptr;		
 
 		GLuint id = ENTITY_LIST.size();
 		for( unsigned i = 0; i < ENTITY_LIST.size(); ++i )
@@ -69,6 +55,19 @@ namespace Roivas
 			ENTITY_LIST[id] = entity;
 
 		entity->ID = id;
+		entity->Temp = false;
+
+		return entity;
+	}
+
+	Entity* Factory::AddTempEntityNS(std::string path)
+	{
+		Entity* entity = AddEntityNS(path);
+
+		if( entity == nullptr )
+			return nullptr;	
+
+		entity->Temp = true;
 
 		return entity;
 	}
@@ -114,9 +113,6 @@ namespace Roivas
 			comp->Deserialize(fio, *itr);
 
 			entity->Components[comp->Type] = comp;
-			
-			// Deserialize data
-			//Json::Value value = *itr;
 		}
 		
 		return entity;
