@@ -1,9 +1,10 @@
 #pragma once
 #pragma warning( disable : 4351 )
 
+#include "System.h"
 #include "Window.h"
 #include "Graphics.h"
-#include "System.h"
+#include "Factory.h"
 #include "Input.h"
 
 namespace Roivas

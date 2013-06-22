@@ -8,5 +8,12 @@ namespace Roivas
 	{
 		public:
 			Transform();
+			Transform(const Transform& t);
+			Transform* Clone();
+			void Deserialize(FileIO& fio, Json::Value& root);
+
+		// Data
+			vec3 Position;
+			vec3 Scale;
 	};
 }

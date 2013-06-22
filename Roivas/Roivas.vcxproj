@@ -104,6 +104,7 @@
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="Core.cpp" />
     <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="Factory.cpp" />
     <ClCompile Include="FileIO.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -127,20 +128,23 @@
     <ClInclude Include="Input.h" />
     <ClInclude Include="Math3D.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="Factory.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Assets\Shaders\Hud.frag" />
-    <None Include="..\Assets\Shaders\Hud.vert" />
-    <None Include="..\Assets\Shaders\Phong.frag" />
-    <None Include="..\Assets\Shaders\Phong.vert" />
-    <None Include="..\Assets\Shaders\Screen.frag" />
-    <None Include="..\Assets\Shaders\Screen.vert" />
-    <None Include="..\Assets\Shaders\Wireframe.frag" />
-    <None Include="..\Assets\Shaders\Wireframe.vert" />
+    <None Include="Assets\Shaders\Default.frag" />
+    <None Include="Assets\Shaders\Default.vert" />
+    <None Include="Assets\Shaders\Hud.frag" />
+    <None Include="Assets\Shaders\Hud.vert" />
+    <None Include="Assets\Shaders\Phong.frag" />
+    <None Include="Assets\Shaders\Phong.vert" />
+    <None Include="Assets\Shaders\Screen.frag" />
+    <None Include="Assets\Shaders\Screen.vert" />
+    <None Include="Assets\Shaders\Wireframe.frag" />
+    <None Include="Assets\Shaders\Wireframe.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

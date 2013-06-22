@@ -8,5 +8,8 @@ namespace Roivas
 	{
 		public:
 			Player();
+			Player(const Player& p);
+			Player* Clone();
+			void Deserialize(FileIO& fio, Json::Value& root) {}
 	};
 }

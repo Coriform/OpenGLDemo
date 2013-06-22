@@ -7,4 +7,14 @@ namespace Roivas
 	{
 
 	}
+
+	Player::Player(const Player& p) : Component(CT_Player)
+	{
+
+	}
+
+	Player* Player::Clone()
+	{
+		return new Player(*this);
+	}
 }

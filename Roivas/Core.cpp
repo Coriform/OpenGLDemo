@@ -20,6 +20,12 @@ namespace Roivas
 				Graphics *graphics = new Graphics( window->GetWindowContext(), (float)params.window_width, (float)params.window_height );
 				AddSystem(graphics);
 			}	
+
+			if (params.systems & (1 << SYS_Factory)) 
+			{			
+				Factory *factory = new Factory();
+				AddSystem(factory);
+			}	
 			
 		}
 	}

@@ -8,5 +8,8 @@ namespace Roivas
 	{
 		public:
 			Body();
+			Body(const Body& b);
+			Body* Clone();
+			void Deserialize(FileIO& fio, Json::Value& root) {}
 	};
 }

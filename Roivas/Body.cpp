@@ -7,4 +7,14 @@ namespace Roivas
 	{
 
 	}
+
+	Body::Body(const Body& b) : Component(CT_Body)
+	{
+
+	}
+
+	Body* Body::Clone()
+	{
+		return new Body(*this);
+	}
 }

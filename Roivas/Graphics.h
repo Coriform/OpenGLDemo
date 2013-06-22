@@ -18,6 +18,7 @@ namespace Roivas
 			Graphics(SDL_Window* _window, float screenwidth, float screenheight);
 			~Graphics();
 			void Initialize();
+			void PreloadAssets();
 			void Update(float dt);
 			void UpdateScreenDims(int x, int y, int w, int h);
 			void UpdateCameraRotation(float x, float y);
@@ -36,10 +37,11 @@ namespace Roivas
 			void DrawWireframe(float dt);		
 			void Draw2D(float dt);
 			void UpdateCamera(float dt);
-
 			void DrawDebugText(std::string path);
+
 			void CreateShaderProgram(std::string _vertSource, std::string _fragSource);
-			void LoadTexture(std::string path);
+			GLuint LoadTexture(std::string path);
+			GLuint LoadMesh(std::string path);
 			void LoadFontmap(std::string path);
 			GLint LoadShader(std::string shader_filename, GLenum shader_type);
 			void SetupFonts();
@@ -47,11 +49,11 @@ namespace Roivas
 
 			GLuint frameBuffer;
 			GLuint rboDepthStencil;
-			GLuint vaoCube, vaoQuad, vaoText;
-			GLuint vboCube, vboQuad, vboText;
+			GLuint meshCube, meshQuad;
+			GLuint buffCube, buffQuad;
 			SDL_Window*		window;
 
-			mat4 model, view, proj, ortho;
+			mat4 modelMat, viewMat, projMat, orthoMat;
 			GLuint uniColor, uniModel, uniView, uniProj, uniOrtho;
 			GLuint uniLightPos;
 			GLuint wireColor, wireModel, wireView, wireProj;
@@ -61,7 +63,8 @@ namespace Roivas
 
 			GLuint texColorBuffer;
 
-			std::vector<GLuint> TEXTURES;
+			std::map<std::string,GLuint> TEXTURE_LIST;
+			std::map<std::string,GLuint> MESH_LIST;
 			std::vector<GLuint> DEBUG_TEXT;
 			std::vector<GLuint> FONTMAPS;
 			std::vector<GLuint> SHADER_PROGRAMS;

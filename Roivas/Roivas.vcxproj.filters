@@ -23,6 +23,9 @@
     <Filter Include="Components">
       <UniqueIdentifier>{190a5944-97dc-4d3e-8cb6-50dad9726b02}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Factory">
+      <UniqueIdentifier>{44462c90-ce23-4439-aa42-c78b7bedfca4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Window.cpp">
@@ -73,6 +76,9 @@
     <ClCompile Include="..\jsoncpp\src\lib_json\json_writer.cpp">
       <Filter>Libraries</Filter>
     </ClCompile>
+    <ClCompile Include="Factory.cpp">
+      <Filter>Factory</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics.h">
@@ -118,30 +124,39 @@
     <ClInclude Include="FileIO.h">
       <Filter>Libraries</Filter>
     </ClInclude>
+    <ClInclude Include="Factory.h">
+      <Filter>Factory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Assets\Shaders\Hud.frag">
+    <None Include="Assets\Shaders\Hud.frag">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="..\Assets\Shaders\Hud.vert">
+    <None Include="Assets\Shaders\Hud.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="..\Assets\Shaders\Phong.frag">
+    <None Include="Assets\Shaders\Phong.frag">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="..\Assets\Shaders\Phong.vert">
+    <None Include="Assets\Shaders\Phong.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="..\Assets\Shaders\Screen.frag">
+    <None Include="Assets\Shaders\Screen.frag">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="..\Assets\Shaders\Screen.vert">
+    <None Include="Assets\Shaders\Screen.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="..\Assets\Shaders\Wireframe.frag">
+    <None Include="Assets\Shaders\Wireframe.frag">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="..\Assets\Shaders\Wireframe.vert">
+    <None Include="Assets\Shaders\Wireframe.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\Default.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\Default.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
   </ItemGroup>
