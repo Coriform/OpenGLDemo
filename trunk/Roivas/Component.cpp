@@ -5,33 +5,38 @@
 
 namespace Roivas
 {
-	Component::Component() : Type(CT_NONE)
+	Component::Component() : Type(CT_NONE), Owner(nullptr)
 	{
 		
 	}
 
-	Component::Component(ComponentType type) : Type(type) 
+	Component::Component(ComponentType type) : Type(type), Owner(nullptr)
 	{
 	
 	}
 
+	Component::Component(const Component& t) : Type(CT_NONE), Owner(nullptr)
+	{
+
+	}
+
 	Body* Component::GetBody()
 	{
-		return (Body*)(Owner->components[CT_Body]);
+		return (Body*)(Owner->Components[CT_Body]);
 	}
 
 	Model* Component::GetModel()
 	{
-		return (Model*)(Owner->components[CT_Model]);
+		return (Model*)(Owner->Components[CT_Model]);
 	}
 
 	Player* Component::GetPlayer()
 	{
-		return (Player*)(Owner->components[CT_Player]);
+		return (Player*)(Owner->Components[CT_Player]);
 	}
 
 	Transform* Component::GetTransform()
 	{
-		return (Transform*)(Owner->components[CT_Transform]);
+		return (Transform*)(Owner->Components[CT_Transform]);
 	}
 }

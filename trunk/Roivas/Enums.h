@@ -6,6 +6,7 @@ enum SystemType
 	SYS_Window = 0,
 
 	SYS_Graphics,
+	SYS_Factory,
 
 	SYS_TOTAL
 };
@@ -28,7 +29,8 @@ enum ComponentType
 // Shaders
 enum ShaderName
 {
-	SH_Phong	= 0,
+	SH_Default = 0,
+	SH_Phong,
 	SH_Screen,
 	SH_Hud,
 	SH_Wireframe,

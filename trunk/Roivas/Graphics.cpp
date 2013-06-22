@@ -58,6 +58,18 @@ namespace Roivas
 		// Initialize Camera
 		InitializeCamera();
 
+		// Build Shaders - automate this somehow
+		// Make sure this is in same order as enum list
+		CreateShaderProgram("Assets/Shaders/Default.vert",	"Assets/Shaders/Default.frag");
+		CreateShaderProgram("Assets/Shaders/Phong.vert",	"Assets/Shaders/Phong.frag");
+		CreateShaderProgram("Assets/Shaders/Screen.vert",	"Assets/Shaders/Screen.frag");
+		CreateShaderProgram("Assets/Shaders/Hud.vert",		"Assets/Shaders/Hud.frag");
+		CreateShaderProgram("Assets/Shaders/Wireframe.vert","Assets/Shaders/Wireframe.frag");
+
+		// Preload meshes and textures
+		PreloadAssets();
+
+
 		// DELETE; function used to create temporary geometry, VAOs, VBOs, and specify data layout for shaders
 		TempCreate();
 
@@ -65,10 +77,7 @@ namespace Roivas
 		glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 
 
-		////
-		FileIO fio;
-		fio.Test();
-		////
+		Entity* e = Factory::AddEntity("Assets/Objects/test2.json");
 	}
 
 	void Graphics::Update(float dt)
@@ -104,13 +113,17 @@ namespace Roivas
 
 		// Draw framerate
 		DrawDebugText(framerate);	
+
+		// Clears debug text from previous frame; might change this
+		DEBUG_TEXT.clear();
+
 	
 		// Update window with OpenGL context; Swap buffers
 		SDL_GL_SwapWindow(window);
 
 		Transform* t = new Transform();
 
-		testmodel = new Model();
+		
 		Entity* ent = new Entity();
 
 		ent->AddComponent(t);
@@ -126,9 +139,13 @@ namespace Roivas
 		int iii = 0;
 	}
 
-
-	void Graphics::TempCreate()
+	void Graphics::PreloadAssets()
 	{
+		testmodel = new Model();
+
+		// Load textures - automate this somehow
+		testmodel->DiffuseID = LoadTexture("Assets/Textures/sample.png");
+
 		// Cube vertices
 		float cubeVertices[] = {
 			-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
@@ -192,70 +209,49 @@ namespace Roivas
 			-1.0f,  1.0f,  0.0f, 1.0f
 		};
 
-
 		// Create VAOs
-		glGenVertexArrays( 1, &vaoCube );
-		glGenVertexArrays( 1, &vaoQuad );
+		glGenVertexArrays( 1, &meshCube );
+		glGenVertexArrays( 1, &meshQuad );
 
 		// Load vertex data
-		glGenBuffers( 1, &vboCube ); // Generate 1 buffer
-		glGenBuffers( 1, &vboQuad );
+		glGenBuffers( 1, &buffCube ); // Generate 1 buffer
+		glGenBuffers( 1, &buffQuad );
 
-		glBindBuffer( GL_ARRAY_BUFFER, vboCube );
+		glBindBuffer( GL_ARRAY_BUFFER, buffCube );
 		glBufferData( GL_ARRAY_BUFFER, sizeof( cubeVertices ), cubeVertices, GL_DYNAMIC_DRAW );
 
-		glBindBuffer( GL_ARRAY_BUFFER, vboQuad );
+		glBindBuffer( GL_ARRAY_BUFFER, buffQuad );
 		glBufferData( GL_ARRAY_BUFFER, sizeof( quadVertices ), quadVertices, GL_DYNAMIC_DRAW );
 
-		// Make sure this is in same order as enum list
-		CreateShaderProgram("Assets/Shaders/Phong.vert",	"Assets/Shaders/Phong.frag");
-		CreateShaderProgram("Assets/Shaders/Screen.vert",	"Assets/Shaders/Screen.frag");
-		CreateShaderProgram("Assets/Shaders/Hud.vert",		"Assets/Shaders/Hud.frag");
-		CreateShaderProgram("Assets/Shaders/Wireframe.vert","Assets/Shaders/Wireframe.frag");
+		testmodel->MeshID = meshCube;
+	}
+
+
+	void Graphics::TempCreate()
+	{
+		
 
 		//SHADER_PROGRAMS[SH_PHONG];
 
 		// Specify the layout of the vertex data
-		glBindVertexArray( vaoCube );
-		glBindBuffer( GL_ARRAY_BUFFER, vboCube );
+		glBindVertexArray( meshCube );
+		glBindBuffer( GL_ARRAY_BUFFER, buffCube );
 
-			GLint posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Phong), "position" );
+			GLint posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "position" );
 			glEnableVertexAttribArray( posAttrib );
 			glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0 );
 
-			GLint colAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Phong), "color" );
+			GLint colAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "color" );
 			glEnableVertexAttribArray( colAttrib );
 			glVertexAttribPointer( colAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 3*sizeof(float) ) );
 
-			GLint texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Phong), "texcoord" );
+			GLint texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "texcoord" );
 			glEnableVertexAttribArray( texAttrib );
 			glVertexAttribPointer( texAttrib, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 6*sizeof(float) ) );
 
 
-
-		////
-			/*
-		glBindVertexArray( vaoCube );
-		glBindBuffer( GL_ARRAY_BUFFER, vboCube );
-
-			posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_WIREFRAME), "position" );
-			glEnableVertexAttribArray( posAttrib );
-			glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0 );
-
-			colAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_WIREFRAME), "color" );
-			glEnableVertexAttribArray( colAttrib );
-			glVertexAttribPointer( colAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 3*sizeof(float) ) );
-
-			texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_WIREFRAME), "texcoord" );
-			glEnableVertexAttribArray( texAttrib );
-			glVertexAttribPointer( texAttrib, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 6*sizeof(float) ) );
-			*/
-		////
-
-
-
-		glBindVertexArray( vaoQuad );
-		glBindBuffer( GL_ARRAY_BUFFER, vboQuad );
+		glBindVertexArray( meshQuad );
+		glBindBuffer( GL_ARRAY_BUFFER, buffQuad );
 
 			posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Screen), "position" );
 			glEnableVertexAttribArray( posAttrib );
@@ -271,18 +267,6 @@ namespace Roivas
 			glEnableVertexAttribArray( posAttrib );
 			glVertexAttribPointer( posAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof( float ), 0 );
 
-
-		// Load textures
-		LoadTexture("Assets/Textures/sample.png");
-		LoadTexture("Assets/Textures/sample2.png");
-
-
-		glUseProgram( SHADER_PROGRAMS.at(SH_Phong) );
-		glUniform1i( glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "texKitten" ), 0 );
-		glUniform1i( glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "texPuppy" ), 1 );
-
-		glUseProgram( SHADER_PROGRAMS.at(SH_Screen) );
-		glUniform1i( glGetUniformLocation( SHADER_PROGRAMS.at(SH_Screen), "texFramebuffer" ), 0 );
 
 
 		////
@@ -308,9 +292,9 @@ namespace Roivas
 		////
 
 
-		uniView = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "view" );
-		uniProj = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "proj" );
-		uniModel = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "model" );
+		uniView = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Default), "view" );
+		uniProj = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Default), "proj" );
+		uniModel = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Default), "model" );
 		uniColor = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "overrideColor" );
 		uniLightPos = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "lightpos" );
 
@@ -319,7 +303,7 @@ namespace Roivas
 		wireModel = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "model" );
 		wireColor = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "wirecolor" );
 
-		model = mat4();
+		modelMat = mat4();
 
 		obj_position = vec3();
 
@@ -330,7 +314,6 @@ namespace Roivas
 	{
 		obj_position = vec3(1.0f,0,0);
 
-		DEBUG_TEXT.clear();
 		glPolygonMode(GL_FRONT, GL_FILL);
 
 		accum += dt;
@@ -342,32 +325,26 @@ namespace Roivas
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		glEnable( GL_DEPTH_TEST );			// Enable z buffering / occlusion testing
 
-		glBindVertexArray( vaoCube );		// Use the cube mesh		
+		glBindVertexArray( testmodel->MeshID );		// Use the cube mesh		
 		
 		glUseProgram( SHADER_PROGRAMS.at(SH_Phong) );		// Activate phong shader
 
-		glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( view ) );
-		glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( proj ) );
+		glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( viewMat ) );
+		glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( projMat ) );
 
-		if( TEXTURES.size() > 0 && TEXTURES.at(0) )
-		{
-			glActiveTexture( GL_TEXTURE0 );						// Specify which texture unit variable to store textures
-			glBindTexture( GL_TEXTURE_2D, TEXTURES.at(0) );		// Stores TEXTURES.at(0) into texture unit 0
-		}
+		//if( TEXTURES.size() > 0 && TEXTURES.at("Assets/Textures/sample.png") )
+		//{
+			glActiveTexture( GL_TEXTURE0 );					
+			glBindTexture( GL_TEXTURE_2D, testmodel->DiffuseID );		// Stores TEXTURES.at(0) into texture unit 0
+		//}
 
-		if( TEXTURES.size() > 1 && TEXTURES.at(1) )
-		{
-			glActiveTexture( GL_TEXTURE1 );
-			glBindTexture( GL_TEXTURE_2D, TEXTURES.at(1) );		// Stores TEXTURES.at(0) into texture unit 1
-		}
 
-		
-		model = mat4();		
-		model = glm::translate( model, obj_position );
-		model = glm::rotate( model, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
+		modelMat = mat4();		
+		modelMat = glm::translate( modelMat, obj_position );
+		modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
 		glUniform3f( uniColor, 1.0f, 1.0f, 1.0f );
 		glUniform3f( uniLightPos, light_pos.x, light_pos.y, light_pos.z );
-		glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( model ) );		// Pass the locally transformed model matrix to the scene shader		
+		glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
 		glDrawArrays( GL_TRIANGLES, 0, 36 );	// Draw first cube
 
 
@@ -382,10 +359,10 @@ namespace Roivas
 
 		glDepthMask( GL_FALSE ); // Don't write to depth buffer		
 
-		model = mat4();	
-		model = glm::translate( model, obj_position );
-		model = glm::translate( model, vec3(0, -EPSILON, 0));		
-		glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( model ) );	
+		modelMat = mat4();	
+		modelMat = glm::translate( modelMat, obj_position );
+		modelMat = glm::translate( modelMat, vec3(0, -EPSILON, 0));		
+		glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );	
 		glDrawArrays( GL_TRIANGLES, 36, 6 );		//  Reflection plane
 		
 		glDepthMask( GL_TRUE ); // Write to depth buffer
@@ -395,11 +372,11 @@ namespace Roivas
 		glStencilFunc( GL_EQUAL, 1, 0xFF ); // Pass test if stencil value is 1
 		glStencilMask( 0x00 ); // Don't write anything to stencil buffer		
 		
-		model = mat4();		
-		model = glm::translate( model, obj_position );
-		model = glm::rotate( model, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );
-		model = glm::scale( glm::translate( model, vec3( 0, -1, 0 ) ), vec3( 1, -1, 1 ) );		
-		glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( model ) );	
+		modelMat = mat4();		
+		modelMat = glm::translate( modelMat, obj_position );
+		modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );
+		modelMat = glm::scale( glm::translate( modelMat, vec3( 0, -1, 0 ) ), vec3( 1, -1, 1 ) );		
+		glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );	
 		glUniform3f( uniColor, 0.3f, 0.3f, 0.3f );
 		glDrawArrays( GL_TRIANGLES, 0, 36 );			// Draw inverted cube
 		
@@ -413,7 +390,7 @@ namespace Roivas
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		glDisable( GL_DEPTH_TEST );
 
-		glBindVertexArray( vaoQuad );
+		glBindVertexArray( meshQuad );
 		
 		glUseProgram( SHADER_PROGRAMS.at(SH_Screen) );
 
@@ -453,18 +430,18 @@ namespace Roivas
 
 		//glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 
-		glBindVertexArray( vaoCube );		// Use the cube mesh		
+		glBindVertexArray( testmodel->MeshID );		// Use the cube mesh		
 		
 		glUseProgram( SHADER_PROGRAMS.at(SH_Wireframe) );		// Activate phong shader
 
-		glUniformMatrix4fv( wireView, 1, GL_FALSE, MatToArray( view ) );
-		glUniformMatrix4fv( wireProj, 1, GL_FALSE, MatToArray( proj ) );
+		glUniformMatrix4fv( wireView, 1, GL_FALSE, MatToArray( viewMat ) );
+		glUniformMatrix4fv( wireProj, 1, GL_FALSE, MatToArray( projMat ) );
 
-		model = mat4();		
-		model = glm::translate( model, obj_position );
-		model = glm::rotate( model, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
+		modelMat = mat4();		
+		modelMat = glm::translate( modelMat, obj_position );
+		modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
 		glUniform3f( wireColor, 1.0f, 0.0f, 0.0f );
-		glUniformMatrix4fv( wireModel, 1, GL_FALSE, MatToArray( model ) );		// Pass the locally transformed model matrix to the scene shader		
+		glUniformMatrix4fv( wireModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
 		glDrawArrays( GL_TRIANGLES, 0, 36 );	// Draw first cube
 
 		glPolygonMode(GL_FRONT, GL_FILL);
@@ -481,27 +458,33 @@ namespace Roivas
 		glUseProgram(0);		// Set current shader to null
 		glColor3f(0.0, 0.0, 0.0); 
 		glRasterPos2f(-0.99f, 1-offset*2);
-		font->Render(text.c_str());
-
+		font->Render(text.c_str());	
 	}
 
-	void Graphics::LoadTexture(std::string path)
+	GLuint Graphics::LoadTexture(std::string path)
 	{
-		GLuint texture;
-		glGenTextures( 1, &texture );
-	
+		// Need to add code to assign texture GLuint to model
+
+		if( TEXTURE_LIST.find(path) != TEXTURE_LIST.end() )
+		{
+			return TEXTURE_LIST.at(path);
+		}
+
 		int width, height;
 		unsigned char* image = nullptr;
-	
-		glBindTexture( GL_TEXTURE_2D, texture );
+
 		image = SOIL_load_image( path.c_str(), &width, &height, 0, SOIL_LOAD_RGB );
 
 		if( image == nullptr )
 		{
 			std::cout << "Texture didn't load properly" << std::endl;
-			return;
+			return 0;
 		}
 
+		GLuint texture;
+		glGenTextures( 1, &texture );
+
+		glBindTexture( GL_TEXTURE_2D, texture );
 
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image );
 		SOIL_free_image_data( image );
@@ -511,7 +494,54 @@ namespace Roivas
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
-		TEXTURES.push_back(texture);
+		TEXTURE_LIST[path] = texture;
+
+		return texture;
+	}
+
+	GLuint Graphics::LoadMesh(std::string path)
+	{
+		// Need to add code to assign texture GLuint to model
+
+		if( MESH_LIST.find(path) != MESH_LIST.end() )
+		{
+			return MESH_LIST.at(path);
+		}
+
+		float vertices[10];
+		GLuint buff, mesh;
+
+
+		glGenVertexArrays( 1, &mesh );
+		glGenBuffers( 1, &buff );
+
+		glBindBuffer( GL_ARRAY_BUFFER, buff );
+		glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_DYNAMIC_DRAW );
+
+		// Specify the layout of the vertex data
+		glBindVertexArray( mesh );
+		glBindBuffer( GL_ARRAY_BUFFER, buff );
+
+			GLint posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "position" );
+			glEnableVertexAttribArray( posAttrib );
+			glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0 );
+
+			GLint colorAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "color" );
+			glEnableVertexAttribArray( colorAttrib );
+			glVertexAttribPointer( colorAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 3*sizeof(float) ) );
+
+			GLint normAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "normal" );
+			glEnableVertexAttribArray( normAttrib );
+			glVertexAttribPointer( normAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 6*sizeof(float) ) );
+
+			GLint texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "texcoord" );
+			glEnableVertexAttribArray( texAttrib );
+			glVertexAttribPointer( texAttrib, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 8*sizeof(float) ) );
+
+
+		MESH_LIST[path] = mesh;
+
+		return mesh;
 	}
 
 	void Graphics::LoadFontmap(std::string path)
@@ -614,7 +644,7 @@ namespace Roivas
 
 	void Graphics::UpdateCamera(float dt)
 	{
-		vec3 move(0,0,0);
+		vec3 move(0,0,0); 
 		float move_speed = 0.01f*dt;
 		
 		if( Input::GetInstance()->GetKey(SDLK_w) == true )
@@ -641,10 +671,10 @@ namespace Roivas
 
 		//glUseProgram( SHADER_PROGRAMS.at(SH_PHONG) );
 
-		view = glm::lookAt( cam_pos, cam_pos + cam_look, cam_up );
+		viewMat = glm::lookAt( cam_pos, cam_pos + cam_look, cam_up );
 		//glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( view ) );
 
-		proj = glm::perspective( 45.0f, screen_width / screen_height, 1.0f, 1000.0f );
+		projMat = glm::perspective( 45.0f, screen_width / screen_height, 1.0f, 1000.0f );
 		//glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( proj ) );
 	}
 
@@ -693,11 +723,11 @@ namespace Roivas
 		for( GLuint i : FRAGMENT_SHADERS )
 			glDeleteProgram(i);
 
-		glDeleteBuffers( 1, &vboCube );
-		glDeleteBuffers( 1, &vboQuad );
+		glDeleteBuffers( 1, &buffCube );
+		glDeleteBuffers( 1, &buffQuad );
 
-		glDeleteVertexArrays( 1, &vaoCube );
-		glDeleteVertexArrays( 1, &vaoQuad );
+		glDeleteVertexArrays( 1, &meshCube );
+		glDeleteVertexArrays( 1, &meshQuad );
 
 		glDeleteFramebuffers( 1, &frameBuffer );
 	}

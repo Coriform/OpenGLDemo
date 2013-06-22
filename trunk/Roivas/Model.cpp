@@ -3,8 +3,31 @@
 
 namespace Roivas
 {
-	Model::Model() : Component(CT_Model)
+	Model::Model() : MeshName(""), DiffuseName(""), MeshID(0), DiffuseID(0), Color(vec4()), Component(CT_Model)
 	{
 
+	}
+
+	Model::Model(const Model& m) : 
+		MeshName(m.MeshName), 
+		DiffuseName(m.DiffuseName), 
+		MeshID(m.MeshID), 
+		DiffuseID(m.DiffuseID), 
+		Color(m.Color), 
+		Component(CT_Model)
+	{
+
+	}
+
+	Model* Model::Clone()
+	{
+		return new Model(*this);
+	}
+
+	void Model::Deserialize(FileIO& fio, Json::Value& root)
+	{
+		fio.Read(root["Mesh"], MeshName);
+		fio.Read(root["DiffuseTexture"], DiffuseName);
+		fio.Read(root["Color"], Color);
 	}
 }
