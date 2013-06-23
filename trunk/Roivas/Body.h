@@ -10,6 +10,7 @@ namespace Roivas
 			Body();
 			Body(const Body& b);
 			Body* Clone();
+			void Initialize();
 			void Deserialize(FileIO& fio, Json::Value& root) {}
 	};
 }

@@ -57,6 +57,8 @@ int main(int argc, char** argv)
 	engine->Initialize();
 	engine->Run();
 
+	Core::FreeInstance();
+
 	SDL_Quit();
  
 	return 0;

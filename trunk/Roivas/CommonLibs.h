@@ -12,6 +12,8 @@
 #include <sstream>
 
 
+
+
 // when using debug mode, used to see file and line number of memory leaks
 // this should be AFTER #includes of outside libraries (the map of new to DEBUG_NEW can cause issues for outside libraries)
 // but before includes of our code to include all our code in the checks
@@ -24,4 +26,5 @@
 #endif
 
 #include <GL/glew.h>
-#include "Input.h"
+#include "Core.h"
+

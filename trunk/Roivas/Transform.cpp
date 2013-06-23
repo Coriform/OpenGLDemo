@@ -18,6 +18,11 @@ namespace Roivas
 		return new Transform(*this);
 	}
 
+	void Transform::Initialize()
+	{
+
+	}
+
 	void Transform::Deserialize(FileIO& fio, Json::Value& root)
 	{
 		fio.Read(root["Position"], Position);

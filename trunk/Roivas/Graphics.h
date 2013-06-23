@@ -19,17 +19,18 @@ namespace Roivas
 			~Graphics();
 			void Initialize();
 			void PreloadAssets();
+			GLuint LoadTexture(std::string path);
+			GLuint LoadMesh(std::string path);
 			void Update(float dt);
 			void UpdateScreenDims(int x, int y, int w, int h);
 			void UpdateCameraRotation(float x, float y);
 
+			void AddComponent(Model* m);
+			void RemoveComponent(Model* m);
 
 			void CameraPitch(float angle);
 			void CameraYaw(float angle);
 			void CameraRoll(float angle);			
-			
-
-			void TempCreate();
 
 		private:
 			void Draw3D(float dt);
@@ -39,9 +40,7 @@ namespace Roivas
 			void UpdateCamera(float dt);
 			void DrawDebugText(std::string path);
 
-			void CreateShaderProgram(std::string _vertSource, std::string _fragSource);
-			GLuint LoadTexture(std::string path);
-			GLuint LoadMesh(std::string path);
+			void CreateShaderProgram(std::string _vertSource, std::string _fragSource);			
 			void LoadFontmap(std::string path);
 			GLint LoadShader(std::string shader_filename, GLenum shader_type);
 			void SetupFonts();
@@ -71,6 +70,8 @@ namespace Roivas
 			std::vector<GLuint> VERTEX_SHADERS;
 			std::vector<GLuint> FRAGMENT_SHADERS;
 
+			std::vector<Model*> MODEL_LIST;
+
 			float screen_width, screen_height;
 			GLint screen_width_i, screen_height_i;		
 
@@ -89,7 +90,7 @@ namespace Roivas
 			GLfloat	cnt1;
 			GLfloat	cnt2;
 
-			vec3 light_pos;
+			Entity* light;
 
 			vec3 cam_pos;
 			vec3 cam_look;
@@ -97,10 +98,6 @@ namespace Roivas
 			vec3 cam_right;
 			quat cam_rot;
 
-			vec3 obj_position;
-
 			float pitch;
-
-			Model* testmodel;
 	};
 }

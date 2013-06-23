@@ -22,6 +22,19 @@ namespace Roivas
 		COMPONENT_MAP["Transform"] = new Transform();
 	}
 
+	Factory::~Factory()
+	{
+		RemoveAllEntities();
+	}
+
+	void Factory::Update(float dt)
+	{
+		for( unsigned i = 0; i < DELETION_LIST.size(); ++i )
+			RemoveEntity( DELETION_LIST[i] );
+
+		DELETION_LIST.clear();
+	}
+
 	Entity* Factory::AddEntity(std::string path)
 	{
 		return GetSystem(Factory)->AddEntityNS(path);
@@ -32,9 +45,14 @@ namespace Roivas
 		return GetSystem(Factory)->AddTempEntityNS(path);
 	}
 
+	void Factory::Destroy(Entity* e)
+	{
+		GetSystem(Factory)->DestroyNS(e);
+	}
+
 	Entity* Factory::AddEntityNS(std::string path)
 	{
-		Entity* entity = CreateEntity(path);
+		Entity* entity = CreateEntity("Assets/Objects/"+path);
 
 		if( entity == nullptr )
 			return nullptr;		
@@ -57,6 +75,8 @@ namespace Roivas
 		entity->ID = id;
 		entity->Temp = false;
 
+		entity->Initialize();
+
 		return entity;
 	}
 
@@ -68,6 +88,8 @@ namespace Roivas
 			return nullptr;	
 
 		entity->Temp = true;
+
+		entity->Initialize();
 
 		return entity;
 	}
@@ -116,5 +138,33 @@ namespace Roivas
 		}
 		
 		return entity;
+	}
+
+	void Factory::DestroyNS(Entity* e)
+	{
+		DELETION_LIST.push_back(e);
+	}
+
+	void Factory::RemoveEntity(Entity* e)
+	{
+		auto it_s = ENTITY_LIST.begin();
+		auto it_e = ENTITY_LIST.end();
+		for( ; it_s != it_e; ++it_s )
+		{
+			if( *it_s == e )
+			{
+				ENTITY_LIST.erase(it_s);
+				delete e;
+				return;
+			}
+		}
+	}
+
+	void Factory::RemoveAllEntities()
+	{
+		for( unsigned i = 0; i < ENTITY_LIST.size(); ++i )
+		{
+			RemoveEntity( ENTITY_LIST[i] );
+		}
 	}
 }

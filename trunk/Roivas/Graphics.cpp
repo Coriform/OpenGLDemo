@@ -1,6 +1,5 @@
 #include "CommonLibs.h"
 #include "Graphics.h"
-#include "Core.h"
 #include "Body.h"		// DELETE
 #include "Transform.h"	// DELETE
 #include "Entity.h"		// DELETE
@@ -69,21 +68,20 @@ namespace Roivas
 		// Preload meshes and textures
 		PreloadAssets();
 
-
-		// DELETE; function used to create temporary geometry, VAOs, VBOs, and specify data layout for shaders
-		TempCreate();
-
 		// Reset default framebuffer
 		glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 
-
-		Entity* e = Factory::AddEntity("Assets/Objects/test2.json");
-
-		Factory::AddEntity("Assets/Objects/test2.json");
-		Factory::AddEntity("Assets/Objects/test2.json");
-		Factory::AddEntity("Assets/Objects/test2.json");
-
-		Factory::AddEntity("Assets/Objects/test2.json");
+		
+		// TEST - load this in thru a level file eventually
+		Entity* e1 = Factory::AddEntity("test2.json");
+		e1->GetTransform()->Position = vec3(-1,0,0);
+		Entity* e2 = Factory::AddEntity("test2.json");
+		e2->GetTransform()->Position = vec3(1,0,0);
+		Entity* e3 = Factory::AddEntity("test3.json");
+		e3->GetTransform()->Position = vec3(0,0,-3);
+		
+		light = Factory::AddEntity("light.json");
+		light->GetTransform()->Position = vec3(1.5f,2.5f,2);
 	}
 
 	void Graphics::Update(float dt)
@@ -122,35 +120,14 @@ namespace Roivas
 
 		// Clears debug text from previous frame; might change this
 		DEBUG_TEXT.clear();
-
 	
 		// Update window with OpenGL context; Swap buffers
 		SDL_GL_SwapWindow(window);
-
-		Transform* t = new Transform();
-
-		
-		Entity* ent = new Entity();
-
-		ent->AddComponent(t);
-
-		testmodel->Owner = ent;
-		Body* b = testmodel->GetBody();
-
-		Transform* t2 = testmodel->GetTransform();
-
-		//FileIO fio;
-		//fio.Test();
-
-		int iii = 0;
 	}
 
 	void Graphics::PreloadAssets()
 	{
-		testmodel = new Model();
 
-		// Load textures - automate this somehow
-		testmodel->DiffuseID = LoadTexture("Assets/Textures/sample.png");
 
 		// Cube vertices
 		float cubeVertices[] = {
@@ -229,17 +206,7 @@ namespace Roivas
 		glBindBuffer( GL_ARRAY_BUFFER, buffQuad );
 		glBufferData( GL_ARRAY_BUFFER, sizeof( quadVertices ), quadVertices, GL_DYNAMIC_DRAW );
 
-		testmodel->MeshID = meshCube;
-	}
 
-
-	void Graphics::TempCreate()
-	{
-		
-
-		//SHADER_PROGRAMS[SH_PHONG];
-
-		// Specify the layout of the vertex data
 		glBindVertexArray( meshCube );
 		glBindBuffer( GL_ARRAY_BUFFER, buffCube );
 
@@ -254,6 +221,9 @@ namespace Roivas
 			GLint texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "texcoord" );
 			glEnableVertexAttribArray( texAttrib );
 			glVertexAttribPointer( texAttrib, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 6*sizeof(float) ) );
+
+
+		MESH_LIST["Box"] = meshCube;
 
 
 		glBindVertexArray( meshQuad );
@@ -273,7 +243,8 @@ namespace Roivas
 			glEnableVertexAttribArray( posAttrib );
 			glVertexAttribPointer( posAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof( float ), 0 );
 
-
+			
+		MESH_LIST["Quad"] = meshQuad;
 
 		////
 		
@@ -310,16 +281,10 @@ namespace Roivas
 		wireColor = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "wirecolor" );
 
 		modelMat = mat4();
-
-		obj_position = vec3();
-
-		light_pos = vec3(0,4,0);
 	}
 
 	void Graphics::Draw3D(float dt)
 	{
-		obj_position = vec3(1.0f,0,0);
-
 		glPolygonMode(GL_FRONT, GL_FILL);
 
 		accum += dt;
@@ -329,68 +294,72 @@ namespace Roivas
 		// Maybe: I bind the buffer, then I clear THE BUFFER???
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-		glEnable( GL_DEPTH_TEST );			// Enable z buffering / occlusion testing
-
-		glBindVertexArray( testmodel->MeshID );		// Use the cube mesh		
 		
-		glUseProgram( SHADER_PROGRAMS.at(SH_Phong) );		// Activate phong shader
 
-		glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( viewMat ) );
-		glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( projMat ) );
+		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
+		{
+			glEnable( GL_DEPTH_TEST );			// Enable z buffering / occlusion testing
 
-		//if( TEXTURES.size() > 0 && TEXTURES.at("Assets/Textures/sample.png") )
-		//{
+			glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
+		
+			glUseProgram( SHADER_PROGRAMS.at(SH_Phong) );		// Activate phong shader
+
+			glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( viewMat ) );
+			glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( projMat ) );
+
 			glActiveTexture( GL_TEXTURE0 );					
-			glBindTexture( GL_TEXTURE_2D, testmodel->DiffuseID );		// Stores TEXTURES.at(0) into texture unit 0
-		//}
+			glBindTexture( GL_TEXTURE_2D, MODEL_LIST[i]->DiffuseID );		// Stores TEXTURES.at(0) into texture unit 0
+
+			Transform* t = MODEL_LIST[i]->GetTransform();
+			vec3 light_pos = light->GetTransform()->Position;
+
+			modelMat = mat4();					
+			modelMat = glm::translate( modelMat, t->Position );
+			modelMat = glm::scale( modelMat, t->Scale );
+			modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
+			glUniform3f( uniColor, 1.0f, 1.0f, 1.0f );
+			glUniform3f( uniLightPos, light_pos.x, light_pos.y, light_pos.z );
+			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
+			glDrawArrays( GL_TRIANGLES, 0, 36 );	// Draw first cube
 
 
-		modelMat = mat4();		
-		modelMat = glm::translate( modelMat, obj_position );
-		modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
-		glUniform3f( uniColor, 1.0f, 1.0f, 1.0f );
-		glUniform3f( uniLightPos, light_pos.x, light_pos.y, light_pos.z );
-		glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
-		glDrawArrays( GL_TRIANGLES, 0, 36 );	// Draw first cube
+			glEnable( GL_STENCIL_TEST );			// Enable stencil teesting
 
+			// Draw floor
+			glStencilFunc( GL_ALWAYS, 1, 0xFF ); // Set any stencil to 1
+			glStencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
+			glStencilMask( 0xFF ); // Write to stencil buffer
 
-		glEnable( GL_STENCIL_TEST );			// Enable stencil teesting
+			glClear( GL_STENCIL_BUFFER_BIT ); // Clear stencil buffer (0 by default)
 
-		// Draw floor
-		glStencilFunc( GL_ALWAYS, 1, 0xFF ); // Set any stencil to 1
-		glStencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
-		glStencilMask( 0xFF ); // Write to stencil buffer
+			glDepthMask( GL_FALSE ); // Don't write to depth buffer		
 
-		glClear( GL_STENCIL_BUFFER_BIT ); // Clear stencil buffer (0 by default)
-
-		glDepthMask( GL_FALSE ); // Don't write to depth buffer		
-
-		modelMat = mat4();	
-		modelMat = glm::translate( modelMat, obj_position );
-		modelMat = glm::translate( modelMat, vec3(0, -EPSILON, 0));		
-		glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );	
-		glDrawArrays( GL_TRIANGLES, 36, 6 );		//  Reflection plane
+			modelMat = mat4();	
+			modelMat = glm::translate( modelMat, t->Position );
+			modelMat = glm::scale( modelMat, t->Scale );
+			modelMat = glm::translate( modelMat, vec3(0, -EPSILON, 0));		
+			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );	
+			glDrawArrays( GL_TRIANGLES, 36, 6 );		//  Reflection plane
 		
-		glDepthMask( GL_TRUE ); // Write to depth buffer
+			glDepthMask( GL_TRUE ); // Write to depth buffer
 
 
-		// Draw cube reflection
-		glStencilFunc( GL_EQUAL, 1, 0xFF ); // Pass test if stencil value is 1
-		glStencilMask( 0x00 ); // Don't write anything to stencil buffer		
+			// Draw cube reflection
+			glStencilFunc( GL_EQUAL, 1, 0xFF ); // Pass test if stencil value is 1
+			glStencilMask( 0x00 ); // Don't write anything to stencil buffer		
 		
-		modelMat = mat4();		
-		modelMat = glm::translate( modelMat, obj_position );
-		modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );
-		modelMat = glm::scale( glm::translate( modelMat, vec3( 0, -1, 0 ) ), vec3( 1, -1, 1 ) );		
-		glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );	
-		glUniform3f( uniColor, 0.3f, 0.3f, 0.3f );
-		glDrawArrays( GL_TRIANGLES, 0, 36 );			// Draw inverted cube
-		
+			modelMat = mat4();					
+			modelMat = glm::translate( modelMat, t->Position );
+			modelMat = glm::scale( modelMat, t->Scale );
+			modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );
+			modelMat = glm::scale( glm::translate( modelMat, vec3( 0, -1, 0 ) ), vec3( 1, -1, 1 ) );		
+			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );	
+			glUniform3f( uniColor, 0.3f, 0.3f, 0.3f );
+			glDrawArrays( GL_TRIANGLES, 0, 36 );			// Draw inverted cube
 
-		glDisable( GL_STENCIL_TEST );
+			glDisable( GL_STENCIL_TEST );
+		}
 
-
-		
 		// Bind default framebuffer and draw contents of our framebuffer
 		glBindFramebuffer( GL_FRAMEBUFFER, 0 );		// Default system frame buffer
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -403,15 +372,9 @@ namespace Roivas
 		glActiveTexture( GL_TEXTURE0 );
 
 		glBindTexture( GL_TEXTURE_2D, texColorBuffer );
-		//glBindTexture( GL_TEXTURE_2D, TEXTURES.at(2) );
 
 		// Screen quad; This contains the entire scene
 		glDrawArrays( GL_TRIANGLES, 0, 6 );
-
-
-
-		
-
 	}
 
 	void Graphics::DrawPP(float dt)
@@ -434,21 +397,25 @@ namespace Roivas
 		glPolygonMode(GL_FRONT, GL_LINE);
 		glPolygonMode(GL_BACK, GL_LINE);
 
-		//glBindFramebuffer( GL_FRAMEBUFFER, 0 );
-
-		glBindVertexArray( testmodel->MeshID );		// Use the cube mesh		
+		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
+		{
+			glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
 		
-		glUseProgram( SHADER_PROGRAMS.at(SH_Wireframe) );		// Activate phong shader
+			glUseProgram( SHADER_PROGRAMS.at(SH_Wireframe) );		// Activate phong shader
 
-		glUniformMatrix4fv( wireView, 1, GL_FALSE, MatToArray( viewMat ) );
-		glUniformMatrix4fv( wireProj, 1, GL_FALSE, MatToArray( projMat ) );
+			glUniformMatrix4fv( wireView, 1, GL_FALSE, MatToArray( viewMat ) );
+			glUniformMatrix4fv( wireProj, 1, GL_FALSE, MatToArray( projMat ) );
 
-		modelMat = mat4();		
-		modelMat = glm::translate( modelMat, obj_position );
-		modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
-		glUniform3f( wireColor, 1.0f, 0.0f, 0.0f );
-		glUniformMatrix4fv( wireModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
-		glDrawArrays( GL_TRIANGLES, 0, 36 );	// Draw first cube
+			Transform* t = MODEL_LIST[i]->GetTransform();
+
+			modelMat = mat4();		
+			modelMat = glm::translate( modelMat, t->Position );
+			modelMat = glm::scale( modelMat, t->Scale );
+			modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
+			glUniform3f( wireColor, 1.0f, 0.0f, 0.0f );
+			glUniformMatrix4fv( wireModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
+			glDrawArrays( GL_TRIANGLES, 0, 36 );	// Draw first cube
+		}
 
 		glPolygonMode(GL_FRONT, GL_FILL);
 		glPolygonMode(GL_BACK, GL_FILL);	
@@ -479,7 +446,9 @@ namespace Roivas
 		int width, height;
 		unsigned char* image = nullptr;
 
-		image = SOIL_load_image( path.c_str(), &width, &height, 0, SOIL_LOAD_RGB );
+		std::string fullpath = "Assets/Textures/" + path;
+
+		image = SOIL_load_image( fullpath.c_str(), &width, &height, 0, SOIL_LOAD_RGB );
 
 		if( image == nullptr )
 		{
@@ -508,15 +477,17 @@ namespace Roivas
 	GLuint Graphics::LoadMesh(std::string path)
 	{
 		// Need to add code to assign texture GLuint to model
+		//path = "Assets/Meshes/" + path;
 
 		if( MESH_LIST.find(path) != MESH_LIST.end() )
 		{
 			return MESH_LIST.at(path);
 		}
 
+		std::string fullpath = "Assets/Meshes/" + path;
+
 		float vertices[10];
 		GLuint buff, mesh;
-
 
 		glGenVertexArrays( 1, &mesh );
 		glGenBuffers( 1, &buff );
@@ -569,6 +540,25 @@ namespace Roivas
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 		FONTMAPS.push_back(texture);
+	}
+
+	void Graphics::AddComponent(Model* m)
+	{
+		MODEL_LIST.push_back(m);
+	}
+
+	void Graphics::RemoveComponent(Model* m)
+	{
+		auto it_s = MODEL_LIST.begin();
+		auto it_e = MODEL_LIST.end();
+		for( ; it_s != it_e; ++it_s )
+		{
+			if( *it_s == m )
+			{
+				MODEL_LIST.erase(it_s);
+				return;
+			}
+		}
 	}
 
 	void Graphics::CreateShaderProgram(std::string _vertSource, std::string _fragSource)

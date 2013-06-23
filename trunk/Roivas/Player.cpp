@@ -13,6 +13,11 @@ namespace Roivas
 
 	}
 
+	void Player::Initialize()
+	{
+
+	}
+
 	Player* Player::Clone()
 	{
 		return new Player(*this);

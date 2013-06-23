@@ -10,7 +10,9 @@ namespace Roivas
 			Entity();
 			Entity(const Entity& e);
 			Entity* Clone();
-			void AddComponent(Component* comp);			
+			void Initialize();
+			void Destroy();
+			void AddComponent(Component* comp);	
 			class Body*			GetBody()		{ return (class Body*)Components[CT_Body]; }
 			class Model*		GetModel()		{ return (class Model*)Components[CT_Model]; }
 			class Player*		GetPlayer()		{ return (class Player*)Components[CT_Player]; }
