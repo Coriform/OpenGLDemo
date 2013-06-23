@@ -38,9 +38,19 @@ namespace Roivas
 		}
 	}
 
+	void Core::StartSystems()
+	{
+		for( System* sys : systems )
+		{
+			if( sys )	sys->Start();
+		}
+	}
+
 	void Core::Run()
 	{
 		previous_time = SDL_GetTicks();
+
+		StartSystems();
 
 		while( state > 0 )
 		{

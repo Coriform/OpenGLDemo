@@ -10,6 +10,7 @@ namespace Roivas
 			Transform();
 			Transform(const Transform& t);
 			Transform* Clone();
+			void Initialize();
 			void Deserialize(FileIO& fio, Json::Value& root);
 
 		// Data

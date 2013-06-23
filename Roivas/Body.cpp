@@ -13,6 +13,11 @@ namespace Roivas
 
 	}
 
+	void Body::Initialize()
+	{
+
+	}
+
 	Body* Body::Clone()
 	{
 		return new Body(*this);

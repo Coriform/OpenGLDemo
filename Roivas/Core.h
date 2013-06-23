@@ -31,6 +31,7 @@ namespace Roivas
 
 			void Run();
 			void Initialize();
+			void StartSystems();
 			void UpdateSystems(float dt);
 			void SetState(int _state) { state = _state; }
 

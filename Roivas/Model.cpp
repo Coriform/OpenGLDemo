@@ -19,9 +19,19 @@ namespace Roivas
 
 	}
 
+	Model::~Model()
+	{
+		GetSystem(Graphics)->RemoveComponent(this);
+	}
+
 	Model* Model::Clone()
 	{
 		return new Model(*this);
+	}
+
+	void Model::Initialize()
+	{
+		GetSystem(Graphics)->AddComponent(this);
 	}
 
 	void Model::Deserialize(FileIO& fio, Json::Value& root)
@@ -29,5 +39,8 @@ namespace Roivas
 		fio.Read(root["Mesh"], MeshName);
 		fio.Read(root["DiffuseTexture"], DiffuseName);
 		fio.Read(root["Color"], Color);
+
+		MeshID		= GetSystem(Graphics)->LoadMesh(MeshName);
+		DiffuseID	= GetSystem(Graphics)->LoadTexture(DiffuseName); 
 	}
 }

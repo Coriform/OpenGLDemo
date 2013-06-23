@@ -9,7 +9,9 @@ namespace Roivas
 		public:
 			Model();
 			Model(const Model& m);
+			~Model();
 			Model* Clone();
+			void Initialize();
 			void Deserialize(FileIO& fio, Json::Value& root);
 
 		// Data
