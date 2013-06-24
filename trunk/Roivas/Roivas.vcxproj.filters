@@ -153,11 +153,5 @@
     <None Include="Assets\Shaders\Wireframe.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="Assets\Shaders\Default.frag">
-      <Filter>Graphics\Shaders</Filter>
-    </None>
-    <None Include="Assets\Shaders\Default.vert">
-      <Filter>Graphics\Shaders</Filter>
-    </None>
   </ItemGroup>
 </Project>

@@ -6,9 +6,16 @@
 #include "SDL.h"
 #include "SDL_opengl.h"
 #include <FTGL/ftgl.h>
+#include <assimp/Importer.hpp>
+#include <assimp/types.h>
+#include <assimp/scene.h> 
+#include <assimp/postprocess.h> 
 #include "SOIL.h"
 #include "System.h"
 #include "Model.h"
+
+#define aisgl_min(x,y) (x<y?x:y)
+#define aisgl_max(x,y) (y>x?y:x)
 
 namespace Roivas
 {
@@ -24,13 +31,17 @@ namespace Roivas
 			void Update(float dt);
 			void UpdateScreenDims(int x, int y, int w, int h);
 			void UpdateCameraRotation(float x, float y);
+			void UpdateLightPos(float x, float y);
 
 			void AddComponent(Model* m);
 			void RemoveComponent(Model* m);
 
 			void CameraPitch(float angle);
 			void CameraYaw(float angle);
-			void CameraRoll(float angle);			
+			void CameraRoll(float angle);		
+
+			void get_bounding_box_for_node (const aiNode* nd, aiVector3D* min, aiVector3D* max);
+			void get_bounding_box (aiVector3D* min, aiVector3D* max);
 
 		private:
 			void Draw3D(float dt);
@@ -43,6 +54,7 @@ namespace Roivas
 			void CreateShaderProgram(std::string _vertSource, std::string _fragSource);			
 			void LoadFontmap(std::string path);
 			GLint LoadShader(std::string shader_filename, GLenum shader_type);
+			void ProcessVertexData(float* vertices, GLuint& mesh, GLuint& buff, unsigned size);
 			void SetupFonts();
 			void InitializeCamera();
 
@@ -54,7 +66,7 @@ namespace Roivas
 
 			mat4 modelMat, viewMat, projMat, orthoMat;
 			GLuint uniColor, uniModel, uniView, uniProj, uniOrtho;
-			GLuint uniLightPos;
+			GLuint uniLightPos, uniEyePos;
 			GLuint wireColor, wireModel, wireView, wireProj;
 			
 
@@ -64,6 +76,7 @@ namespace Roivas
 
 			std::map<std::string,GLuint> TEXTURE_LIST;
 			std::map<std::string,GLuint> MESH_LIST;
+			std::map<GLuint, GLuint>	 MESH_VERTICES;
 			std::vector<GLuint> DEBUG_TEXT;
 			std::vector<GLuint> FONTMAPS;
 			std::vector<GLuint> SHADER_PROGRAMS;
@@ -81,6 +94,8 @@ namespace Roivas
 			FTGLPixmapFont* font;
 			//FTGLPolygonFont* font;
 
+			const aiScene* scene;
+
 			Uint32 ticks;
 			Uint32 fps;
 			std::string framerate;
@@ -97,6 +112,8 @@ namespace Roivas
 			vec3 cam_up;
 			vec3 cam_right;
 			quat cam_rot;
+
+			unsigned varray_size;
 
 			float pitch;
 	};

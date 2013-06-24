@@ -4,8 +4,8 @@
 			"Scale" : [ 0.25,0.25,0.25 ] 
 		},
 		"Model" : {
-			"Mesh" : "Box",
-			"DiffuseTexture" : "hello.bmp",
+			"Mesh" : "Light.dae",
+			"DiffuseTexture" : "Y_Button.png",
 			"Color" : [ 1.0,0.0,0.5,0.75 ]
 		}
 	}

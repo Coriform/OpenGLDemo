@@ -17,7 +17,8 @@ namespace Roivas
 		ticks(0),
 		fps(0),
 		pitch(0.0f),
-		accum(0.0f)
+		accum(0.0f),
+		varray_size(8)
 	{
 		// Initialize ticks counted for framerate
 		ticks = SDL_GetTicks();
@@ -33,7 +34,7 @@ namespace Roivas
 		glLoadIdentity();
 
 		// Clear color
-		glClearColor ( 1.0, 1.0, 1.0, 1.0 );
+		glClearColor ( 0.0, 0.0, 0.0, 0.0 );
 
 		// Shader model - Use this
 		glShadeModel(GL_SMOOTH);
@@ -74,11 +75,13 @@ namespace Roivas
 		
 		// TEST - load this in thru a level file eventually
 		Entity* e1 = Factory::AddEntity("test2.json");
-		e1->GetTransform()->Position = vec3(-1,0,0);
-		Entity* e2 = Factory::AddEntity("test2.json");
-		e2->GetTransform()->Position = vec3(1,0,0);
-		Entity* e3 = Factory::AddEntity("test3.json");
+		e1->GetTransform()->Position = vec3(-1.25,0,0);
+		Entity* e2 = Factory::AddEntity("test3.json");
+		e2->GetTransform()->Position = vec3(1.25,-1,0);
+		Entity* e3 = Factory::AddEntity("test4.json");
 		e3->GetTransform()->Position = vec3(0,0,-3);
+		Entity* e4 = Factory::AddEntity("test5.json");
+		e4->GetTransform()->Position = vec3(4,0.5,-2.5);
 		
 		light = Factory::AddEntity("light.json");
 		light->GetTransform()->Position = vec3(1.5f,2.5f,2);
@@ -110,7 +113,7 @@ namespace Roivas
 		DrawPP(dt);
 
 		// Debug drawing
-		DrawWireframe(dt);
+		//DrawWireframe(dt);
 
 		// HUD and other 2D drawing
 		Draw2D(dt);	
@@ -127,59 +130,9 @@ namespace Roivas
 
 	void Graphics::PreloadAssets()
 	{
-
-
-		// Cube vertices
-		float cubeVertices[] = {
-			-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-			 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-			 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-			-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-
-			-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-			 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-			 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-			-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-
-			-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-			-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-			-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-			-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-			-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-
-			 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-			 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-			 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-			 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-			 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-
-			-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-			 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-			 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-			-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-			-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-
-			-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-			 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-			 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-			-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-			-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-
-			-1.0f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-			 1.0f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-			 1.0f, -0.5f,  1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-			 1.0f, -0.5f,  1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-			-1.0f, -0.5f,  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-			-1.0f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f
-		};
+		meshCube = LoadMesh("Box.obj");;
+		MESH_LIST["Box"] = meshCube;
+		MESH_VERTICES[meshCube] = 36;
 
 		// Quad vertices
 		float quadVertices[] = {
@@ -192,48 +145,20 @@ namespace Roivas
 			-1.0f,  1.0f,  0.0f, 1.0f
 		};
 
-		// Create VAOs
-		glGenVertexArrays( 1, &meshCube );
 		glGenVertexArrays( 1, &meshQuad );
-
-		// Load vertex data
-		glGenBuffers( 1, &buffCube ); // Generate 1 buffer
 		glGenBuffers( 1, &buffQuad );
-
-		glBindBuffer( GL_ARRAY_BUFFER, buffCube );
-		glBufferData( GL_ARRAY_BUFFER, sizeof( cubeVertices ), cubeVertices, GL_DYNAMIC_DRAW );
 
 		glBindBuffer( GL_ARRAY_BUFFER, buffQuad );
 		glBufferData( GL_ARRAY_BUFFER, sizeof( quadVertices ), quadVertices, GL_DYNAMIC_DRAW );
 
-
-		glBindVertexArray( meshCube );
-		glBindBuffer( GL_ARRAY_BUFFER, buffCube );
-
-			GLint posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "position" );
-			glEnableVertexAttribArray( posAttrib );
-			glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0 );
-
-			GLint colAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "color" );
-			glEnableVertexAttribArray( colAttrib );
-			glVertexAttribPointer( colAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 3*sizeof(float) ) );
-
-			GLint texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "texcoord" );
-			glEnableVertexAttribArray( texAttrib );
-			glVertexAttribPointer( texAttrib, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 6*sizeof(float) ) );
-
-
-		MESH_LIST["Box"] = meshCube;
-
-
 		glBindVertexArray( meshQuad );
 		glBindBuffer( GL_ARRAY_BUFFER, buffQuad );
 
-			posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Screen), "position" );
+			GLuint posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Screen), "position" );
 			glEnableVertexAttribArray( posAttrib );
 			glVertexAttribPointer( posAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof( float ), 0 );
 
-			texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Screen), "texcoord" );
+			GLuint texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Screen), "texcoord" );
 			glEnableVertexAttribArray( texAttrib );
 			glVertexAttribPointer( texAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof( float ), (void*)( 2 * sizeof( float ) ) );
 
@@ -245,6 +170,7 @@ namespace Roivas
 
 			
 		MESH_LIST["Quad"] = meshQuad;
+		MESH_VERTICES[meshQuad] = 6;
 
 		////
 		
@@ -269,11 +195,12 @@ namespace Roivas
 		////
 
 
-		uniView = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Default), "view" );
-		uniProj = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Default), "proj" );
-		uniModel = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Default), "model" );
+		uniView = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "view" );
+		uniProj = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "proj" );
+		uniModel = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "model" );
 		uniColor = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "overrideColor" );
 		uniLightPos = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "lightpos" );
+		uniEyePos = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "eyepos" );
 
 		wireView = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "view" );
 		wireProj = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "proj" );
@@ -316,48 +243,15 @@ namespace Roivas
 			modelMat = mat4();					
 			modelMat = glm::translate( modelMat, t->Position );
 			modelMat = glm::scale( modelMat, t->Scale );
-			modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
+
+			if( MODEL_LIST[i]->MeshName != "Light.dae" )
+				modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
+
 			glUniform3f( uniColor, 1.0f, 1.0f, 1.0f );
 			glUniform3f( uniLightPos, light_pos.x, light_pos.y, light_pos.z );
+			glUniform3f( uniEyePos, cam_pos.x, cam_pos.y, cam_pos.z );
 			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
-			glDrawArrays( GL_TRIANGLES, 0, 36 );	// Draw first cube
-
-
-			glEnable( GL_STENCIL_TEST );			// Enable stencil teesting
-
-			// Draw floor
-			glStencilFunc( GL_ALWAYS, 1, 0xFF ); // Set any stencil to 1
-			glStencilOp( GL_KEEP, GL_KEEP, GL_REPLACE );
-			glStencilMask( 0xFF ); // Write to stencil buffer
-
-			glClear( GL_STENCIL_BUFFER_BIT ); // Clear stencil buffer (0 by default)
-
-			glDepthMask( GL_FALSE ); // Don't write to depth buffer		
-
-			modelMat = mat4();	
-			modelMat = glm::translate( modelMat, t->Position );
-			modelMat = glm::scale( modelMat, t->Scale );
-			modelMat = glm::translate( modelMat, vec3(0, -EPSILON, 0));		
-			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );	
-			glDrawArrays( GL_TRIANGLES, 36, 6 );		//  Reflection plane
-		
-			glDepthMask( GL_TRUE ); // Write to depth buffer
-
-
-			// Draw cube reflection
-			glStencilFunc( GL_EQUAL, 1, 0xFF ); // Pass test if stencil value is 1
-			glStencilMask( 0x00 ); // Don't write anything to stencil buffer		
-		
-			modelMat = mat4();					
-			modelMat = glm::translate( modelMat, t->Position );
-			modelMat = glm::scale( modelMat, t->Scale );
-			modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );
-			modelMat = glm::scale( glm::translate( modelMat, vec3( 0, -1, 0 ) ), vec3( 1, -1, 1 ) );		
-			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );	
-			glUniform3f( uniColor, 0.3f, 0.3f, 0.3f );
-			glDrawArrays( GL_TRIANGLES, 0, 36 );			// Draw inverted cube
-
-			glDisable( GL_STENCIL_TEST );
+			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
 		}
 
 		// Bind default framebuffer and draw contents of our framebuffer
@@ -374,7 +268,7 @@ namespace Roivas
 		glBindTexture( GL_TEXTURE_2D, texColorBuffer );
 
 		// Screen quad; This contains the entire scene
-		glDrawArrays( GL_TRIANGLES, 0, 6 );
+		glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(meshQuad) );
 	}
 
 	void Graphics::DrawPP(float dt)
@@ -414,7 +308,7 @@ namespace Roivas
 			modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
 			glUniform3f( wireColor, 1.0f, 0.0f, 0.0f );
 			glUniformMatrix4fv( wireModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
-			glDrawArrays( GL_TRIANGLES, 0, 36 );	// Draw first cube
+			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
 		}
 
 		glPolygonMode(GL_FRONT, GL_FILL);
@@ -429,7 +323,7 @@ namespace Roivas
 		float offset = font->LineHeight() / screen_height;		// Add this stuff to the function signature
 
 		glUseProgram(0);		// Set current shader to null
-		glColor3f(0.0, 0.0, 0.0); 
+		glColor3f(1.0, 1.0, 1.0); 
 		glRasterPos2f(-0.99f, 1-offset*2);
 		font->Render(text.c_str());	
 	}
@@ -485,41 +379,100 @@ namespace Roivas
 		}
 
 		std::string fullpath = "Assets/Meshes/" + path;
+	
+		Assimp::Importer importer;
+		scene = importer.ReadFile( fullpath,aiProcessPreset_TargetRealtime_MaxQuality );
 
-		float vertices[10];
+		if( !scene)
+		{
+			printf("%s\n", importer.GetErrorString());
+			return false;
+		}
+
+		std::cout << "Import of scene %s succeeded: <" << path.c_str() << ">" << std::endl;
+
 		GLuint buff, mesh;
+		unsigned vsize = 0;
 
-		glGenVertexArrays( 1, &mesh );
-		glGenBuffers( 1, &buff );
+		for( unsigned k = 0; k < scene->mNumMeshes; ++k )
+			vsize += scene->mMeshes[k]->mNumFaces * varray_size * 3;
 
-		glBindBuffer( GL_ARRAY_BUFFER, buff );
-		glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_DYNAMIC_DRAW );
+		float* vertices = (float*)malloc(sizeof(float) * vsize);		// #faces * #attributes * #tri vertices
+				
+		for( unsigned k = 0; k < scene->mNumMeshes; ++k )
+		{
+			unsigned index = 0;			
 
-		// Specify the layout of the vertex data
-		glBindVertexArray( mesh );
-		glBindBuffer( GL_ARRAY_BUFFER, buff );
+			for( unsigned i = 0; i < scene->mMeshes[k]->mNumFaces; ++i )
+			{
+				aiFace face = scene->mMeshes[k]->mFaces[i];
 
-			GLint posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "position" );
-			glEnableVertexAttribArray( posAttrib );
-			glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0 );
+				for( unsigned j = 0; j < face.mNumIndices; ++j, index+=varray_size )
+				{
+					if( scene->mMeshes[k]->HasPositions() )
+					{
+						vertices[index]		= scene->mMeshes[k]->mVertices[face.mIndices[j]].x;
+						vertices[index+1]	= scene->mMeshes[k]->mVertices[face.mIndices[j]].y;
+						vertices[index+2]	= scene->mMeshes[k]->mVertices[face.mIndices[j]].z;
+					}
 
-			GLint colorAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "color" );
-			glEnableVertexAttribArray( colorAttrib );
-			glVertexAttribPointer( colorAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 3*sizeof(float) ) );
+					if( scene->mMeshes[k]->HasNormals() )
+					{
+						vertices[index+3]	= scene->mMeshes[k]->mNormals[face.mIndices[j]].x;
+						vertices[index+4]	= scene->mMeshes[k]->mNormals[face.mIndices[j]].y;
+						vertices[index+5]	= scene->mMeshes[k]->mNormals[face.mIndices[j]].z;
+					}
 
-			GLint normAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "normal" );
-			glEnableVertexAttribArray( normAttrib );
-			glVertexAttribPointer( normAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 6*sizeof(float) ) );
+					if( scene->mMeshes[k]->HasTextureCoords(0) )
+					{
+						vertices[index+6]	= scene->mMeshes[k]->mTextureCoords[0][face.mIndices[j]].x;
+						vertices[index+7]	= scene->mMeshes[k]->mTextureCoords[0][face.mIndices[j]].y;
+					}
 
-			GLint texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Default), "texcoord" );
-			glEnableVertexAttribArray( texAttrib );
-			glVertexAttribPointer( texAttrib, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 8*sizeof(float) ) );
+					
+				}
+			}
+		}		
 
-
+		ProcessVertexData(vertices,mesh,buff,vsize);
 		MESH_LIST[path] = mesh;
+		MESH_VERTICES[mesh] = vsize/varray_size;
+
 
 		return mesh;
 	}
+
+	void Graphics::ProcessVertexData(float *vertices, GLuint& mesh, GLuint& buff, unsigned size)
+	{
+		glGenVertexArrays( 1, &mesh );
+		glBindVertexArray( mesh );
+		
+		glGenBuffers( 1, &buff );
+		glBindBuffer( GL_ARRAY_BUFFER, buff );
+		glBufferData( GL_ARRAY_BUFFER, size*sizeof(float), vertices, GL_DYNAMIC_DRAW );
+		//glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_DYNAMIC_DRAW );
+
+		// Specify the layout of the vertex data
+		
+		glBindBuffer( GL_ARRAY_BUFFER, buff );
+
+			GLint posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Phong), "position" );
+			glEnableVertexAttribArray( posAttrib );
+			glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0 );
+
+			GLint normAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Phong), "normal" );
+			glEnableVertexAttribArray( normAttrib );
+			glVertexAttribPointer( normAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 3*sizeof(float) ) );
+
+			GLint texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Phong), "texcoord" );
+			glEnableVertexAttribArray( texAttrib );
+			glVertexAttribPointer( texAttrib, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float) ) );
+
+
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER,0);
+	}
+
 
 	void Graphics::LoadFontmap(std::string path)
 	{
@@ -665,13 +618,8 @@ namespace Roivas
 
 		cam_look = cam_rot * vec3(0,0,-1);
 
-		//glUseProgram( SHADER_PROGRAMS.at(SH_PHONG) );
-
 		viewMat = glm::lookAt( cam_pos, cam_pos + cam_look, cam_up );
-		//glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( view ) );
-
-		projMat = glm::perspective( 45.0f, screen_width / screen_height, 1.0f, 1000.0f );
-		//glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( proj ) );
+		projMat = glm::perspective( 45.0f, screen_width / screen_height, 0.1f, 1000.0f );
 	}
 
 	void Graphics::UpdateCameraRotation(float x, float y)
@@ -708,6 +656,34 @@ namespace Roivas
 		cam_rot = glm::normalize( glm::rotate(cam_rot, angle, cam_look) );
 	}
 
+	void Graphics::UpdateLightPos(float x = 0, float y = 0)
+	{
+		vec3 move(0,0,0); 
+		quat turn = cam_rot;
+
+		float move_speed = 0.05f*x;
+		move += vec3(move_speed,0,0);
+
+		move_speed = 0.05f*y;	
+
+		if( Input::GetInstance()->GetKey(SDLK_RSHIFT) == true || Input::GetInstance()->GetKey(SDLK_LSHIFT) == true )
+		{
+			move -= vec3(0,move_speed,0);
+		}
+		else
+		{
+			move += vec3(0,0,move_speed);		
+
+			turn.x = 0;
+			turn.z = 0;
+			float mag = 1.0f / sqrt(turn.w*turn.w + turn.y*turn.y);
+			turn.w *= mag;
+			turn.y *= mag;
+		}
+
+		light->GetTransform()->Position += turn * move;
+	}
+
 	Graphics::~Graphics()
 	{
 		for( GLuint i : SHADER_PROGRAMS )
@@ -726,5 +702,39 @@ namespace Roivas
 		glDeleteVertexArrays( 1, &meshQuad );
 
 		glDeleteFramebuffers( 1, &frameBuffer );
+	}
+
+	void Graphics::get_bounding_box_for_node (const aiNode* nd, aiVector3D* min, aiVector3D* max)	
+	{
+		aiMatrix4x4 prev;
+		unsigned int n = 0, t;
+
+		for (; n < nd->mNumMeshes; ++n) {
+			const aiMesh* mesh = scene->mMeshes[nd->mMeshes[n]];
+			for (t = 0; t < mesh->mNumVertices; ++t) {
+
+				aiVector3D tmp = mesh->mVertices[t];
+
+				min->x = aisgl_min(min->x,tmp.x);
+				min->y = aisgl_min(min->y,tmp.y);
+				min->z = aisgl_min(min->z,tmp.z);
+
+				max->x = aisgl_max(max->x,tmp.x);
+				max->y = aisgl_max(max->y,tmp.y);
+				max->z = aisgl_max(max->z,tmp.z);
+			}
+		}
+
+		for (n = 0; n < nd->mNumChildren; ++n) {
+			get_bounding_box_for_node(nd->mChildren[n],min,max);
+		}
+	}
+
+	void Graphics::get_bounding_box (aiVector3D* min, aiVector3D* max)
+	{
+
+		min->x = min->y = min->z =  1e10f;
+		max->x = max->y = max->z = -1e10f;
+		get_bounding_box_for_node(scene->mRootNode,min,max);
 	}
 }
