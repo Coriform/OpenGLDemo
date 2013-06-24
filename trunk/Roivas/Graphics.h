@@ -40,9 +40,6 @@ namespace Roivas
 			void CameraYaw(float angle);
 			void CameraRoll(float angle);		
 
-			void get_bounding_box_for_node (const aiNode* nd, aiVector3D* min, aiVector3D* max);
-			void get_bounding_box (aiVector3D* min, aiVector3D* max);
-
 		private:
 			void Draw3D(float dt);
 			void DrawPP(float dt);			

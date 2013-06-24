@@ -152,7 +152,6 @@ namespace Roivas
 		glBufferData( GL_ARRAY_BUFFER, sizeof( quadVertices ), quadVertices, GL_DYNAMIC_DRAW );
 
 		glBindVertexArray( meshQuad );
-		glBindBuffer( GL_ARRAY_BUFFER, buffQuad );
 
 			GLuint posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Screen), "position" );
 			glEnableVertexAttribArray( posAttrib );
@@ -161,13 +160,6 @@ namespace Roivas
 			GLuint texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Screen), "texcoord" );
 			glEnableVertexAttribArray( texAttrib );
 			glVertexAttribPointer( texAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof( float ), (void*)( 2 * sizeof( float ) ) );
-
-			//
-
-			posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Hud), "position" );		// HUD shader
-			glEnableVertexAttribArray( posAttrib );
-			glVertexAttribPointer( posAttrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof( float ), 0 );
-
 			
 		MESH_LIST["Quad"] = meshQuad;
 		MESH_VERTICES[meshQuad] = 6;
@@ -182,6 +174,8 @@ namespace Roivas
 
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, screen_width_i, screen_height_i, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
 
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
@@ -358,7 +352,7 @@ namespace Roivas
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image );
 		SOIL_free_image_data( image );
 
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );;
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -702,39 +696,5 @@ namespace Roivas
 		glDeleteVertexArrays( 1, &meshQuad );
 
 		glDeleteFramebuffers( 1, &frameBuffer );
-	}
-
-	void Graphics::get_bounding_box_for_node (const aiNode* nd, aiVector3D* min, aiVector3D* max)	
-	{
-		aiMatrix4x4 prev;
-		unsigned int n = 0, t;
-
-		for (; n < nd->mNumMeshes; ++n) {
-			const aiMesh* mesh = scene->mMeshes[nd->mMeshes[n]];
-			for (t = 0; t < mesh->mNumVertices; ++t) {
-
-				aiVector3D tmp = mesh->mVertices[t];
-
-				min->x = aisgl_min(min->x,tmp.x);
-				min->y = aisgl_min(min->y,tmp.y);
-				min->z = aisgl_min(min->z,tmp.z);
-
-				max->x = aisgl_max(max->x,tmp.x);
-				max->y = aisgl_max(max->y,tmp.y);
-				max->z = aisgl_max(max->z,tmp.z);
-			}
-		}
-
-		for (n = 0; n < nd->mNumChildren; ++n) {
-			get_bounding_box_for_node(nd->mChildren[n],min,max);
-		}
-	}
-
-	void Graphics::get_bounding_box (aiVector3D* min, aiVector3D* max)
-	{
-
-		min->x = min->y = min->z =  1e10f;
-		max->x = max->y = max->z = -1e10f;
-		get_bounding_box_for_node(scene->mRootNode,min,max);
 	}
 }
