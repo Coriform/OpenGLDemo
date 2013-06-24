@@ -86,6 +86,8 @@ namespace Roivas
 			{
 				if( Input::GetInstance()->GetMouseButton(SDL_BUTTON_RIGHT) )
 					GetSystem(Graphics)->UpdateCameraRotation((float)event.motion.xrel*0.3f, (float)event.motion.yrel*0.3f);				
+				else if( Input::GetInstance()->GetMouseButton(SDL_BUTTON_LEFT) )
+					GetSystem(Graphics)->UpdateLightPos((float)event.motion.xrel*0.3f, (float)event.motion.yrel*0.3f);	
 			}
 			break;
 
