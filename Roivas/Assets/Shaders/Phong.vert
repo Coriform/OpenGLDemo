@@ -23,40 +23,13 @@ out vec3 LightPos;
 
 void main()
 {
-	Position = position;
-	Normal = (view * model * vec4(normal, 0.0)).xyz;
-	Texcoord = texcoord;
-	Color = overrideColor;
+	mat4 normmat = transpose( inverse( model ) );
 	
-	vec4 V = proj * view * model * vec4( position, 1.0 );
-	EyePos = V.xyz;
-	gl_Position = V;
+	Position	= ( model * vec4( position, 1.0 ) ).xyz;    //get the position of the vertex after translation, rotation, scaling
+    Normal		= ( normmat * vec4( normal, 1.0 ) ).xyz;       //get the normal direction, after translation, rotation, scaling
+	Texcoord	= texcoord;
+	LightPos	= lightpos;
+	EyePos		= eyepos;
 
-	LightPos = lightpos;
-	
+	gl_Position = proj * view * model * vec4( position, 1.0 );     //output position with projection
 }
-
-
-
-/*
-varying vec3 normalVec, lightVec, eyeVec, tanVec;
-attribute vec3 vertexTangent;
-
-void main(void)  
-{     
-	gl_Position = ftransform(); 
-	gl_TexCoord[0] = vec4(gl_MultiTexCoord0.s*24, gl_MultiTexCoord0.t*16, 1, 1);
-
-	vec4 V = gl_ModelViewMatrix * gl_Vertex;
-
-	// Calculate normalVec, lightVec, eyeVec here
-	normalVec = gl_NormalMatrix * gl_Normal;
-	lightVec = gl_LightSource[0].position.xyz - V.xyz; 	
-	eyeVec = vec3(0,0,0)-V.xyz;   
-
-	tanVec = gl_NormalMatrix * vertexTangent;
-
-	
-
-}
-*/

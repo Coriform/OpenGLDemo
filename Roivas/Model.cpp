@@ -3,7 +3,7 @@
 
 namespace Roivas
 {
-	Model::Model() : MeshName(""), DiffuseName(""), MeshID(0), DiffuseID(0), Color(vec4()), Component(CT_Model)
+	Model::Model() : MeshName(""), DiffuseName(""), MeshID(0), DiffuseID(0), Color(vec4()), WireColor(vec3(1,1,1)), Component(CT_Model)
 	{
 
 	}
@@ -14,6 +14,7 @@ namespace Roivas
 		MeshID(m.MeshID), 
 		DiffuseID(m.DiffuseID), 
 		Color(m.Color), 
+		WireColor(m.WireColor),
 		Component(CT_Model)
 	{
 
@@ -39,6 +40,7 @@ namespace Roivas
 		fio.Read(root["Mesh"], MeshName);
 		fio.Read(root["DiffuseTexture"], DiffuseName);
 		fio.Read(root["Color"], Color);
+		fio.Read(root["WireColor"], WireColor);
 
 		MeshID		= GetSystem(Graphics)->LoadMesh(MeshName);
 		DiffuseID	= GetSystem(Graphics)->LoadTexture(DiffuseName); 

@@ -43,6 +43,7 @@ namespace Roivas
 		private:
 			void Draw3D(float dt);
 			void DrawPP(float dt);			
+			void DrawEditor(float dt);
 			void DrawWireframe(float dt);		
 			void Draw2D(float dt);
 			void UpdateCamera(float dt);

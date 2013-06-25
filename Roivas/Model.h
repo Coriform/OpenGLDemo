@@ -19,6 +19,7 @@ namespace Roivas
 			std::string DiffuseName;
 			GLuint MeshID;			
 			GLuint DiffuseID;
-			vec4   Color;
+			vec4 Color;
+			vec3 WireColor;
 	};
 }
