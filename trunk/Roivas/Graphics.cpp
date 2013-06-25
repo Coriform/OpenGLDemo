@@ -71,17 +71,16 @@ namespace Roivas
 
 		// Reset default framebuffer
 		glBindFramebuffer( GL_FRAMEBUFFER, 0 );
-
 		
 		// TEST - load this in thru a level file eventually
 		Entity* e1 = Factory::AddEntity("test2.json");
-		e1->GetTransform()->Position = vec3(-1.25,0,0);
+		e1->GetTransform()->Position = vec3(-2.25,0,0);
 		Entity* e2 = Factory::AddEntity("test3.json");
-		e2->GetTransform()->Position = vec3(1.25,-1,0);
+		e2->GetTransform()->Position = vec3(2.25,-2,0);
 		Entity* e3 = Factory::AddEntity("test4.json");
-		e3->GetTransform()->Position = vec3(0,0,-3);
+		e3->GetTransform()->Position = vec3(0,0,-4);
 		Entity* e4 = Factory::AddEntity("test5.json");
-		e4->GetTransform()->Position = vec3(4,0.5,-2.5);
+		e4->GetTransform()->Position = vec3(5,1,-3.5);
 		
 		light = Factory::AddEntity("light.json");
 		light->GetTransform()->Position = vec3(1.5f,2.5f,2);
@@ -96,6 +95,7 @@ namespace Roivas
 			ss << "FPS: " << fps;
 			framerate = ss.str();
 			std::cout << "Frame rate frames per second: " << framerate << std::endl;
+			//std::cout << "Light pos: " << light->GetTransform()->Position.x << "," << light->GetTransform()->Position.y << "," << light->GetTransform()->Position.z << "," << std::endl;
 			fps = 0;
 			ticks = SDL_GetTicks();
 		}
@@ -113,6 +113,7 @@ namespace Roivas
 		DrawPP(dt);
 
 		// Debug drawing
+		DrawEditor(dt);
 		//DrawWireframe(dt);
 
 		// HUD and other 2D drawing
@@ -232,19 +233,20 @@ namespace Roivas
 			glBindTexture( GL_TEXTURE_2D, MODEL_LIST[i]->DiffuseID );		// Stores TEXTURES.at(0) into texture unit 0
 
 			Transform* t = MODEL_LIST[i]->GetTransform();
+
 			vec3 light_pos = light->GetTransform()->Position;
 
 			modelMat = mat4();					
 			modelMat = glm::translate( modelMat, t->Position );
 			modelMat = glm::scale( modelMat, t->Scale );
 
-			if( MODEL_LIST[i]->MeshName != "Light.dae" )
-				modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
+			modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
 
 			glUniform3f( uniColor, 1.0f, 1.0f, 1.0f );
 			glUniform3f( uniLightPos, light_pos.x, light_pos.y, light_pos.z );
 			glUniform3f( uniEyePos, cam_pos.x, cam_pos.y, cam_pos.z );
-			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
+			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader	
+
 			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
 		}
 
@@ -295,12 +297,46 @@ namespace Roivas
 			glUniformMatrix4fv( wireProj, 1, GL_FALSE, MatToArray( projMat ) );
 
 			Transform* t = MODEL_LIST[i]->GetTransform();
+			vec3 color = MODEL_LIST[i]->WireColor;
 
 			modelMat = mat4();		
 			modelMat = glm::translate( modelMat, t->Position );
 			modelMat = glm::scale( modelMat, t->Scale );
 			modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
-			glUniform3f( wireColor, 1.0f, 0.0f, 0.0f );
+			glUniform3f( wireColor, color.x, color.y, color.z );
+			glUniformMatrix4fv( wireModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
+			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
+		}
+
+		glPolygonMode(GL_FRONT, GL_FILL);
+		glPolygonMode(GL_BACK, GL_FILL);	
+	}
+
+	void Graphics::DrawEditor(float dt)
+	{		
+		// Draw wireframe geometry
+		glPolygonMode(GL_FRONT, GL_LINE);
+		glPolygonMode(GL_BACK, GL_LINE);
+
+		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
+		{
+			if( MODEL_LIST[i]->MeshName != "Light.dae" )
+				continue;
+
+			glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
+		
+			glUseProgram( SHADER_PROGRAMS.at(SH_Wireframe) );		// Activate phong shader
+
+			glUniformMatrix4fv( wireView, 1, GL_FALSE, MatToArray( viewMat ) );
+			glUniformMatrix4fv( wireProj, 1, GL_FALSE, MatToArray( projMat ) );
+
+			Transform* t = MODEL_LIST[i]->GetTransform();
+			vec3 color = MODEL_LIST[i]->WireColor;
+
+			modelMat = mat4();		
+			modelMat = glm::translate( modelMat, t->Position );
+			modelMat = glm::scale( modelMat, t->Scale );
+			glUniform3f( wireColor, color.x, color.y, color.z );
 			glUniformMatrix4fv( wireModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
 			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
 		}
@@ -652,8 +688,7 @@ namespace Roivas
 
 	void Graphics::UpdateLightPos(float x = 0, float y = 0)
 	{
-		vec3 move(0,0,0); 
-		quat turn = cam_rot;
+		vec3 move(0,0,0); 		
 
 		float move_speed = 0.05f*x;
 		move += vec3(move_speed,0,0);
@@ -663,19 +698,24 @@ namespace Roivas
 		if( Input::GetInstance()->GetKey(SDLK_RSHIFT) == true || Input::GetInstance()->GetKey(SDLK_LSHIFT) == true )
 		{
 			move -= vec3(0,move_speed,0);
+
+			light->GetTransform()->Position += move;
 		}
 		else
 		{
 			move += vec3(0,0,move_speed);		
 
+			quat turn = cam_rot;
 			turn.x = 0;
 			turn.z = 0;
 			float mag = 1.0f / sqrt(turn.w*turn.w + turn.y*turn.y);
 			turn.w *= mag;
 			turn.y *= mag;
+
+			light->GetTransform()->Position += turn * move;
 		}
 
-		light->GetTransform()->Position += turn * move;
+		
 	}
 
 	Graphics::~Graphics()
