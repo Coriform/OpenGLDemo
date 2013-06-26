@@ -79,6 +79,9 @@
     <ClCompile Include="Factory.cpp">
       <Filter>Factory</Filter>
     </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics.h">
@@ -126,6 +129,9 @@
     </ClInclude>
     <ClInclude Include="Factory.h">
       <Filter>Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

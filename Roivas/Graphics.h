@@ -13,6 +13,8 @@
 #include "SOIL.h"
 #include "System.h"
 #include "Model.h"
+#include "Light.h"
+#include "Transform.h"
 
 #define aisgl_min(x,y) (x<y?x:y)
 #define aisgl_max(x,y) (y>x?y:x)
@@ -31,10 +33,13 @@ namespace Roivas
 			void Update(float dt);
 			void UpdateScreenDims(int x, int y, int w, int h);
 			void UpdateCameraRotation(float x, float y);
+			void MouseSelectEntity(float x, float y, bool pressed);
 			void UpdateLightPos(float x, float y);
 
 			void AddComponent(Model* m);
+			void AddComponent(Light* m);
 			void RemoveComponent(Model* m);
+			void RemoveComponent(Light* m);
 
 			void CameraPitch(float angle);
 			void CameraYaw(float angle);
@@ -46,6 +51,7 @@ namespace Roivas
 			void DrawEditor(float dt);
 			void DrawWireframe(float dt);		
 			void Draw2D(float dt);
+			void SortModels(float dt);
 			void UpdateCamera(float dt);
 			void DrawDebugText(std::string path);
 
@@ -64,7 +70,7 @@ namespace Roivas
 
 			mat4 modelMat, viewMat, projMat, orthoMat;
 			GLuint uniColor, uniModel, uniView, uniProj, uniOrtho;
-			GLuint uniLightPos, uniEyePos;
+			GLuint uniLightPos, uniLightCol, uniLightRad, uniEyePos;
 			GLuint wireColor, wireModel, wireView, wireProj;
 			
 
@@ -82,6 +88,7 @@ namespace Roivas
 			std::vector<GLuint> FRAGMENT_SHADERS;
 
 			std::vector<Model*> MODEL_LIST;
+			std::vector<Light*> LIGHT_LIST;
 
 			float screen_width, screen_height;
 			GLint screen_width_i, screen_height_i;		
@@ -103,8 +110,6 @@ namespace Roivas
 			GLfloat	cnt1;
 			GLfloat	cnt2;
 
-			Entity* light;
-
 			vec3 cam_pos;
 			vec3 cam_look;
 			vec3 cam_up;
@@ -114,5 +119,21 @@ namespace Roivas
 			unsigned varray_size;
 
 			float pitch;
+
+			Entity* SelectedEntity;
+
+		// Comparator functor for sorting the model list by depth
+		struct ZSorting
+		{
+			ZSorting( const Graphics& g) : graphics(g) {}			
+			const Graphics& graphics;
+			bool operator() ( Model* a, Model* b ) 
+			{ 
+				vec3 posa = a->GetTransform()->Position;
+				vec3 posb = b->GetTransform()->Position;
+
+				return glm::distance( posa, graphics.cam_pos ) < glm::distance( posb, graphics.cam_pos );
+			}
+		};
 	};
 }

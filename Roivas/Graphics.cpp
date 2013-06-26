@@ -1,7 +1,6 @@
 #include "CommonLibs.h"
 #include "Graphics.h"
 #include "Body.h"		// DELETE
-#include "Transform.h"	// DELETE
 #include "Entity.h"		// DELETE
 #include "FileIO.h"		// DELETE
 
@@ -18,7 +17,8 @@ namespace Roivas
 		fps(0),
 		pitch(0.0f),
 		accum(0.0f),
-		varray_size(8)
+		varray_size(8),
+		SelectedEntity(nullptr)
 	{
 		// Initialize ticks counted for framerate
 		ticks = SDL_GetTicks();
@@ -82,8 +82,14 @@ namespace Roivas
 		Entity* e4 = Factory::AddEntity("test5.json");
 		e4->GetTransform()->Position = vec3(5,1,-3.5);
 		
-		light = Factory::AddEntity("light.json");
-		light->GetTransform()->Position = vec3(1.5f,2.5f,2);
+		Entity* l1 = Factory::AddEntity("light.json");
+		l1->GetTransform()->Position = vec3(1.5f,2.5f,2);
+
+		Entity* l2 = Factory::AddEntity("light.json");
+		l2->GetTransform()->Position = vec3();
+
+		//LIGHT_LIST.push_back(light);
+		//LIGHT_LIST.push_back( Factory::AddEntity("light.json") );
 	}
 
 	void Graphics::Update(float dt)
@@ -102,6 +108,8 @@ namespace Roivas
 
 		// Actual framerate value
 		++fps;
+
+		SortModels(dt);
 
 		// Updates current camera
 		UpdateCamera(dt);
@@ -190,12 +198,14 @@ namespace Roivas
 		////
 
 
-		uniView = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "view" );
-		uniProj = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "proj" );
-		uniModel = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "model" );
-		uniColor = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "overrideColor" );
+		uniView		= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "view" );
+		uniProj		= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "proj" );
+		uniModel	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "model" );
+		uniColor	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "overrideColor" );
 		uniLightPos = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "lightpos" );
-		uniEyePos = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "eyepos" );
+		uniLightCol = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "lightcolor" );
+		uniLightRad = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "lightradius" );
+		uniEyePos	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "eyepos" );
 
 		wireView = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "view" );
 		wireProj = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "proj" );
@@ -216,6 +226,25 @@ namespace Roivas
 		// Maybe: I bind the buffer, then I clear THE BUFFER???
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+		float light_positions[6];
+		float light_colors[6];
+		float light_radius[2];
+
+		for( unsigned i = 0; i < LIGHT_LIST.size(); ++i )
+		{
+			vec3 pos = LIGHT_LIST[i]->GetTransform()->Position;
+			light_positions[i*3]	= pos.x;
+			light_positions[i*3+1]	= pos.y;
+			light_positions[i*3+2]	= pos.z;
+
+			vec3 color = LIGHT_LIST[i]->Color;
+			light_colors[i*3]		= color.x;
+			light_colors[i*3+1]		= color.y;
+			light_colors[i*3+2]		= color.z;
+
+			light_radius[i]			= LIGHT_LIST[i]->Radius;
+		}
 		
 
 		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
@@ -234,8 +263,6 @@ namespace Roivas
 
 			Transform* t = MODEL_LIST[i]->GetTransform();
 
-			vec3 light_pos = light->GetTransform()->Position;
-
 			modelMat = mat4();					
 			modelMat = glm::translate( modelMat, t->Position );
 			modelMat = glm::scale( modelMat, t->Scale );
@@ -243,7 +270,11 @@ namespace Roivas
 			modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
 
 			glUniform3f( uniColor, 1.0f, 1.0f, 1.0f );
-			glUniform3f( uniLightPos, light_pos.x, light_pos.y, light_pos.z );
+
+			glUniform3fv( uniLightPos, 2, light_positions);
+			glUniform3fv( uniLightCol, 2, light_colors);
+			glUniform1fv( uniLightRad, 2, light_radius);
+
 			glUniform3f( uniEyePos, cam_pos.x, cam_pos.y, cam_pos.z );
 			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader	
 
@@ -530,6 +561,11 @@ namespace Roivas
 		MODEL_LIST.push_back(m);
 	}
 
+	void Graphics::AddComponent(Light* l)
+	{
+		LIGHT_LIST.push_back(l);
+	}
+
 	void Graphics::RemoveComponent(Model* m)
 	{
 		auto it_s = MODEL_LIST.begin();
@@ -539,6 +575,20 @@ namespace Roivas
 			if( *it_s == m )
 			{
 				MODEL_LIST.erase(it_s);
+				return;
+			}
+		}
+	}
+
+	void Graphics::RemoveComponent(Light* l)
+	{
+		auto it_s = LIGHT_LIST.begin();
+		auto it_e = LIGHT_LIST.end();
+		for( ; it_s != it_e; ++it_s )
+		{
+			if( *it_s == l )
+			{
+				LIGHT_LIST.erase(it_s);
 				return;
 			}
 		}
@@ -611,6 +661,11 @@ namespace Roivas
 		screen_height	= (float)h;
 
 		glViewport(0, 0, w, h);
+	}
+
+	void Graphics::SortModels(float dt)
+	{
+		std::sort( MODEL_LIST.begin(), MODEL_LIST.end(), ZSorting(*this) );
 	}
 
 	void Graphics::InitializeCamera()
@@ -686,8 +741,51 @@ namespace Roivas
 		cam_rot = glm::normalize( glm::rotate(cam_rot, angle, cam_look) );
 	}
 
+	void Graphics::MouseSelectEntity(float x, float y, bool pressed)
+	{
+		if( pressed == false )
+		{
+			SelectedEntity = nullptr;
+			return;
+		}
+
+		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
+		{
+			vec3 position   = MODEL_LIST[i]->GetTransform()->Position;
+
+			vec4 pos;
+			pos = viewMat * vec4(position,1.0f);
+			pos = projMat * pos;
+
+			pos.x /= pos.z;
+			pos.y /= pos.z;
+
+			pos.x = (pos.x + 1.0f) * screen_width / 2.0f;
+			pos.y = (pos.y + 1.0f) * screen_height / 2.0f;
+			pos.y = screen_height - pos.y;
+
+			if( pos.x < 0 || pos.x > screen_width || pos.y < 0 || pos.y > screen_height )
+				continue;
+
+			float dist		= glm::distance(position, cam_pos);
+			float radius	= 100.0f;//1.0f / dist * 1000.0f;
+
+			vec2 mouse_xy = vec2(x,y);
+			vec2 obj_xy   = vec2(pos.x,pos.y);
+
+			if( glm::distance(mouse_xy,obj_xy) < radius )
+			{
+				SelectedEntity = MODEL_LIST[i]->Owner;
+				return;
+			}
+		}
+	}
+
 	void Graphics::UpdateLightPos(float x = 0, float y = 0)
 	{
+		if( SelectedEntity == nullptr )
+			return;
+
 		vec3 move(0,0,0); 		
 
 		float move_speed = 0.05f*x;
@@ -699,7 +797,7 @@ namespace Roivas
 		{
 			move -= vec3(0,move_speed,0);
 
-			light->GetTransform()->Position += move;
+			SelectedEntity->GetTransform()->Position += move;
 		}
 		else
 		{
@@ -712,10 +810,8 @@ namespace Roivas
 			turn.w *= mag;
 			turn.y *= mag;
 
-			light->GetTransform()->Position += turn * move;
-		}
-
-		
+			SelectedEntity->GetTransform()->Position += turn * move;
+		}		
 	}
 
 	Graphics::~Graphics()
