@@ -76,6 +76,7 @@ namespace Roivas
 		switch( mousebutton )
 		{
 			case SDL_BUTTON_LEFT:
+				GetSystem(Graphics)->MouseSelectEntity( float(x), float(y), pressed );
 			break;
 
 			case SDL_BUTTON_MIDDLE:

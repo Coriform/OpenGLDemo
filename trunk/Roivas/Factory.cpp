@@ -17,6 +17,7 @@ namespace Roivas
 		:	System(SYS_Factory, "Factory")
 	{
 		COMPONENT_MAP["Body"] = new Body();
+		COMPONENT_MAP["Light"] = new Light();
 		COMPONENT_MAP["Model"] = new Model();
 		COMPONENT_MAP["Player"] = new Player();
 		COMPONENT_MAP["Transform"] = new Transform();
