@@ -4,12 +4,12 @@
 
 namespace Roivas
 {
-	Entity::Entity() : Components(), Temp(true), ID(-1)
+	Entity::Entity() : Components(), Static(true), Temp(true), ID(-1)
 	{
 
 	}
 
-	Entity::Entity(const Entity& e) : Components(), Temp(true), ID(-1)
+	Entity::Entity(const Entity& e) : Components(), Static(true), Temp(true), ID(-1)
 	{
 		for( unsigned i = 0; i < CT_Total; ++i )
 		{

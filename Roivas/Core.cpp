@@ -26,6 +26,12 @@ namespace Roivas
 				Factory *factory = new Factory();
 				AddSystem(factory);
 			}	
+
+			if (params.systems & (1 << SYS_Game)) 
+			{			
+				Game *game = new Game();
+				AddSystem(game);
+			}	
 			
 		}
 	}

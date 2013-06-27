@@ -113,7 +113,7 @@ namespace Roivas
 			vec3 cam_pos;
 			vec3 cam_look;
 			vec3 cam_up;
-			vec3 cam_right;
+			vec3 cam_right; 
 			quat cam_rot;
 
 			unsigned varray_size;

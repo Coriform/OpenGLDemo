@@ -14,6 +14,7 @@ namespace Roivas
 			void Update(float dt);
 			static Entity* AddEntity(std::string path);
 			static Entity* AddTempEntity(std::string path);
+			static Entity* BuildArchetype(std::string path);
 			static void Destroy(Entity* e);
 
 		private:
@@ -23,7 +24,7 @@ namespace Roivas
 			void RemoveEntity(Entity* e);
 			void RemoveAllEntities();
 			Entity* CreateEntity(std::string path);
-			Entity* BuildArchetype(std::string path);
+			Entity* BuildArchetypeNS(std::string path);
 			std::map<std::string,Entity*> ARCHETYPE_MAP;
 			std::map<std::string,Component*> COMPONENT_MAP;
 			std::vector<Entity*> ENTITY_LIST;
