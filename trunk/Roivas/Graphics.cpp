@@ -3,6 +3,7 @@
 #include "Body.h"		// DELETE
 #include "Entity.h"		// DELETE
 #include "FileIO.h"		// DELETE
+#include "Level.h"		// DELETE
 
 namespace Roivas
 {
@@ -71,7 +72,11 @@ namespace Roivas
 
 		// Reset default framebuffer
 		glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+
+		Level* lvl = new Level("TestLevel.json");
+		lvl->Load();
 		
+		/*
 		// TEST - load this in thru a level file eventually
 		Entity* e1 = Factory::AddEntity("test2.json");
 		e1->GetTransform()->Position = vec3(-2.25,0,0);
@@ -87,6 +92,7 @@ namespace Roivas
 
 		Entity* l2 = Factory::AddEntity("light.json");
 		l2->GetTransform()->Position = vec3();
+		*/
 
 		//LIGHT_LIST.push_back(light);
 		//LIGHT_LIST.push_back( Factory::AddEntity("light.json") );

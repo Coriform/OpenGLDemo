@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 	engine_parameters.audio			= false;
 	engine_parameters.borderless	= false;;
 	engine_parameters.level			= 1;
-	engine_parameters.systems		= 1 << SYS_Window | 1 << SYS_Graphics | 1 << SYS_Factory;
+	engine_parameters.systems		= 1 << SYS_Window | 1 << SYS_Graphics | 1 << SYS_Factory | 1 << SYS_Game;
 
 	/*
 	engine_parameters.systems = 1 << SYS_Input | 

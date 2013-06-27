@@ -7,6 +7,7 @@ enum SystemType
 
 	SYS_Graphics,
 	SYS_Factory,
+	SYS_Game,
 
 	SYS_TOTAL
 };

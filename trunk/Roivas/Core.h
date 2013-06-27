@@ -5,6 +5,7 @@
 #include "Window.h"
 #include "Graphics.h"
 #include "Factory.h"
+#include "Game.h"
 #include "Input.h"
 
 namespace Roivas

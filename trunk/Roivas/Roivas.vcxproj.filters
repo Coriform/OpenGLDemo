@@ -26,6 +26,9 @@
     <Filter Include="Factory">
       <UniqueIdentifier>{44462c90-ce23-4439-aa42-c78b7bedfca4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game">
+      <UniqueIdentifier>{bfb2c22b-856a-4fa0-b574-cc25babdc076}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Window.cpp">
@@ -82,6 +85,12 @@
     <ClCompile Include="Light.cpp">
       <Filter>Components</Filter>
     </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Level.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics.h">
@@ -132,6 +141,12 @@
     </ClInclude>
     <ClInclude Include="Light.h">
       <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Level.h">
+      <Filter>Game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

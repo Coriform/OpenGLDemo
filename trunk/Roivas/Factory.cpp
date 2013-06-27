@@ -46,6 +46,11 @@ namespace Roivas
 		return GetSystem(Factory)->AddTempEntityNS(path);
 	}
 
+	Entity* Factory::BuildArchetype(std::string path)
+	{
+		return GetSystem(Factory)->BuildArchetypeNS(path);
+	}
+
 	void Factory::Destroy(Entity* e)
 	{
 		GetSystem(Factory)->DestroyNS(e);
@@ -103,7 +108,7 @@ namespace Roivas
 			return ARCHETYPE_MAP.at(path)->Clone();
 		}
 
-		Entity* entity = BuildArchetype(path);
+		Entity* entity = BuildArchetypeNS(path);
 
 		if( entity == nullptr )
 			return nullptr;
@@ -113,7 +118,7 @@ namespace Roivas
 		return ARCHETYPE_MAP.at(path)->Clone();
 	}
 
-	Entity* Factory::BuildArchetype(std::string path)
+	Entity* Factory::BuildArchetypeNS(std::string path)
 	{
 		FileIO fio;
 		
