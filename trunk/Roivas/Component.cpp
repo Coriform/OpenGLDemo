@@ -20,9 +20,19 @@ namespace Roivas
 
 	}
 
+	Behavior* Component::GetBehavior()
+	{
+		return (Behavior*)(Owner->Components[CT_Behavior]);
+	}
+
 	Body* Component::GetBody()
 	{
 		return (Body*)(Owner->Components[CT_Body]);
+	}
+
+	Light* Component::GetLight()
+	{
+		return (Light*)(Owner->Components[CT_Light]);
 	}
 
 	Model* Component::GetModel()

@@ -18,7 +18,15 @@ namespace Roivas
 	{
 		for( unsigned i = 0; i < STATIC_LIST.size(); ++i )
 		{
-			Factory::AddEntity( STATIC_LIST[i].first );
+			Entity* e = Factory::AddEntity( STATIC_LIST[i].first );
+			Json::Value root = STATIC_LIST[i].second;
+
+			int id = root["Id"].asInt();
+			if( id != 0 )
+				e->ID = id;
+
+			FileIO fio;
+			e->LoadFromLevel(root);
 		}
 
 		return true;

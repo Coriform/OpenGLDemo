@@ -18,6 +18,7 @@ enum ComponentType
 {
 	CT_NONE = 0,
 
+	CT_Behavior,
 	CT_Body,
 	CT_Light,
 	CT_Model,

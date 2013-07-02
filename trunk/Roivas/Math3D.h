@@ -23,4 +23,11 @@ inline void Normalize( vec3& x )
 
 	if( sqr < -EPSILON || sqr > EPSILON )
 		x = x * glm::inversesqrt(sqr);
+
+	
+}
+
+inline mat4 Mat4( quat& q )
+{
+	return glm::mat4_cast(q);
 }

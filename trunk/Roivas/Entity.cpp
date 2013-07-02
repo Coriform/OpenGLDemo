@@ -35,6 +35,26 @@ namespace Roivas
 		}
 	}
 
+	void Entity::LoadFromLevel(Json::Value& root)
+	{
+		FileIO fio;
+
+		if( root["Body"].size() > 0 )
+			Components[CT_Body]->Deserialize( fio, root["Body"] );
+
+		if( root["Light"].size() > 0 )
+			Components[CT_Light]->Deserialize( fio, root["Light"] );
+
+		if( root["Model"].size() > 0 )
+			Components[CT_Model]->Deserialize( fio, root["Model"] );
+
+		if( root["Player"].size() > 0 )
+			Components[CT_Player]->Deserialize( fio, root["Player"] );
+
+		if( root["Transform"].size() > 0 )
+			Components[CT_Transform]->Deserialize( fio, root["Transform"] );
+	}
+
 	void Entity::Destroy()
 	{
 		Factory::Destroy(this);

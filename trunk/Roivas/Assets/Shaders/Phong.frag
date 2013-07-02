@@ -30,7 +30,7 @@ void main()
 	vec4 texColor = texture( tex, Texcoord );
 	outColor = vec4(0,0,0,0);
 
-	for( int i = 0; i < 2; ++i )
+	for( int i = 1; i < 2; ++i )
 	{
 		float dist		= length( Position -  lightpos[i] );				
 		float att		= 1.0 - pow(dist/lightradius[i], 2); 

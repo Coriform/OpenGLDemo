@@ -3,7 +3,9 @@
 #include "Core.h"
 #include "FileIO.h"
 
+#include "Behavior.h"
 #include "Body.h"
+#include "Light.h"
 #include "Model.h"
 #include "Player.h"
 #include "Transform.h"
@@ -16,6 +18,7 @@ namespace Roivas
 	Factory::Factory() 
 		:	System(SYS_Factory, "Factory")
 	{
+		COMPONENT_MAP["Behavior"] = new Behavior();
 		COMPONENT_MAP["Body"] = new Body();
 		COMPONENT_MAP["Light"] = new Light();
 		COMPONENT_MAP["Model"] = new Model();

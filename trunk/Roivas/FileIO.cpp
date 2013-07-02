@@ -70,7 +70,7 @@ namespace Roivas
 		data = value.asString();
 	}
 
-	void FileIO::Read(Json::Value& value, vec3&data)
+	void FileIO::Read(Json::Value& value, vec3& data)
 	{
 		if( value.size() != 3 )		return;
 
@@ -79,7 +79,17 @@ namespace Roivas
 		data.z = (float)value[2u].asDouble();
 	}
 
-	void FileIO::Read(Json::Value& value, vec4&data)
+	void FileIO::Read(Json::Value& value, vec4& data)
+	{
+		if( value.size() != 4 )		return;
+
+		data.x = (float)value[0u].asDouble();
+		data.y = (float)value[1u].asDouble();
+		data.z = (float)value[2u].asDouble();
+		data.w = (float)value[3u].asDouble();
+	}
+
+	void FileIO::Read(Json::Value& value, quat& data)
 	{
 		if( value.size() != 4 )		return;
 
