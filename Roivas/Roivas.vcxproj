@@ -151,6 +151,10 @@
     <None Include="Assets\Shaders\Screen.vert" />
     <None Include="Assets\Shaders\Wireframe.frag" />
     <None Include="Assets\Shaders\Wireframe.vert" />
+    <None Include="ShadowMap.frag" />
+    <None Include="ShadowMap.vert" />
+    <None Include="ShadowTex.frag" />
+    <None Include="ShadowTex.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

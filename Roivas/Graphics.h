@@ -78,6 +78,12 @@ namespace Roivas
 
 			GLuint texColorBuffer;
 
+			GLuint shadow_fbo;
+			GLuint shadow_tex;
+
+			void BindForWriting();
+			void BindForReading(GLenum TextureUnit);
+
 			std::map<std::string,GLuint> TEXTURE_LIST;
 			std::map<std::string,GLuint> MESH_LIST;
 			std::map<GLuint, GLuint>	 MESH_VERTICES;
