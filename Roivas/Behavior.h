@@ -4,18 +4,17 @@
 
 namespace Roivas
 {
-	class Transform : public Component
+	class Behavior : public Component
 	{
 		public:
-			Transform();
-			Transform(const Transform& t);
-			Transform* Clone();
+			Behavior();
+			Behavior(const Behavior& b);
+			~Behavior();
+			Behavior* Clone();
 			void Initialize();
 			void Deserialize(FileIO& fio, Json::Value& root);
 
 		// Data
-			vec3 Position;
-			vec3 Scale;
-			vec3 Rotation;
+
 	};
 }

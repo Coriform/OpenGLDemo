@@ -75,27 +75,6 @@ namespace Roivas
 
 		Level* lvl = new Level("TestLevel.json");
 		lvl->Load();
-		
-		/*
-		// TEST - load this in thru a level file eventually
-		Entity* e1 = Factory::AddEntity("test2.json");
-		e1->GetTransform()->Position = vec3(-2.25,0,0);
-		Entity* e2 = Factory::AddEntity("test3.json");
-		e2->GetTransform()->Position = vec3(2.25,-2,0);
-		Entity* e3 = Factory::AddEntity("test4.json");
-		e3->GetTransform()->Position = vec3(0,0,-4);
-		Entity* e4 = Factory::AddEntity("test5.json");
-		e4->GetTransform()->Position = vec3(5,1,-3.5);
-		
-		Entity* l1 = Factory::AddEntity("light.json");
-		l1->GetTransform()->Position = vec3(1.5f,2.5f,2);
-
-		Entity* l2 = Factory::AddEntity("light.json");
-		l2->GetTransform()->Position = vec3();
-		*/
-
-		//LIGHT_LIST.push_back(light);
-		//LIGHT_LIST.push_back( Factory::AddEntity("light.json") );
 	}
 
 	void Graphics::Update(float dt)
@@ -269,11 +248,18 @@ namespace Roivas
 
 			Transform* t = MODEL_LIST[i]->GetTransform();
 
-			modelMat = mat4();					
-			modelMat = glm::translate( modelMat, t->Position );
-			modelMat = glm::scale( modelMat, t->Scale );
+			modelMat = mat4();			
 
-			modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
+			modelMat = glm::translate( modelMat, t->Position );
+
+			if( MODEL_LIST[i]->Owner->GetBehavior() != nullptr )
+				modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );	
+
+			modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
+
+			modelMat = glm::scale( modelMat, t->Scale );
 
 			glUniform3f( uniColor, 1.0f, 1.0f, 1.0f );
 
@@ -337,9 +323,18 @@ namespace Roivas
 			vec3 color = MODEL_LIST[i]->WireColor;
 
 			modelMat = mat4();		
-			modelMat = glm::translate( modelMat, t->Position );
-			modelMat = glm::scale( modelMat, t->Scale );
-			modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );		
+
+			modelMat = glm::translate( modelMat, t->Position );		
+
+			if( MODEL_LIST[i]->Owner->GetBehavior() != nullptr )
+				modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );
+
+			modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
+
+			modelMat = glm::scale( modelMat, t->Scale );						
+
 			glUniform3f( wireColor, color.x, color.y, color.z );
 			glUniformMatrix4fv( wireModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
 			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
@@ -371,8 +366,13 @@ namespace Roivas
 			vec3 color = MODEL_LIST[i]->WireColor;
 
 			modelMat = mat4();		
-			modelMat = glm::translate( modelMat, t->Position );
+			modelMat = glm::translate( modelMat, t->Position );	
+			modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
 			modelMat = glm::scale( modelMat, t->Scale );
+			
+
 			glUniform3f( wireColor, color.x, color.y, color.z );
 			glUniformMatrix4fv( wireModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
 			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
