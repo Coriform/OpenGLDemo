@@ -180,5 +180,17 @@
     <None Include="Assets\Shaders\Wireframe.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
+    <None Include="ShadowTex.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="ShadowTex.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="ShadowMap.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="ShadowMap.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -63,6 +63,7 @@ namespace Roivas
 		// Make sure this is in same order as enum list
 		CreateShaderProgram("Assets/Shaders/Default.vert",	"Assets/Shaders/Default.frag");
 		CreateShaderProgram("Assets/Shaders/Phong.vert",	"Assets/Shaders/Phong.frag");
+		CreateShaderProgram("Assets/Shaders/ShadowTex.vert","Assets/Shaders/ShadowTex.frag");
 		CreateShaderProgram("Assets/Shaders/Screen.vert",	"Assets/Shaders/Screen.frag");
 		CreateShaderProgram("Assets/Shaders/Hud.vert",		"Assets/Shaders/Hud.frag");
 		CreateShaderProgram("Assets/Shaders/Wireframe.vert","Assets/Shaders/Wireframe.frag");
@@ -183,6 +184,38 @@ namespace Roivas
 		////
 
 
+
+		// Shadow maps
+		////
+
+		// Create the FBO
+		glGenFramebuffers(1, &shadow_fbo);    
+
+		// Create the depth buffer
+		glGenTextures(1, &shadow_tex);
+		glBindTexture(GL_TEXTURE_2D, shadow_tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, screen_width_i, screen_height_i, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, shadow_fbo);
+		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadow_tex, 0);
+
+		glDrawBuffer(GL_NONE); 
+
+		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		if( status != GL_FRAMEBUFFER_COMPLETE ) 
+		{
+			std::cout << "FB error, status: " << status << std::endl;
+			return;
+		} 
+
+		////
+
+
 		uniView		= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "view" );
 		uniProj		= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "proj" );
 		uniModel	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "model" );
@@ -200,17 +233,25 @@ namespace Roivas
 		modelMat = mat4();
 	}
 
+	void Graphics::BindForWriting()
+	{
+		glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, shadow_fbo);
+	} 
+
+	void Graphics::BindForReading(GLenum TextureUnit)
+	{
+		glActiveTexture(TextureUnit);
+		glBindTexture(GL_TEXTURE_2D, shadow_tex);
+	} 
+
 	void Graphics::Draw3D(float dt)
 	{
 		glPolygonMode(GL_FRONT, GL_FILL);
 
 		accum += dt;
 
-		glBindFramebuffer( GL_FRAMEBUFFER, frameBuffer );	// RW; uses frameBuffer object to store and read from
-		// If I put this ABOVE glBindFrameBuffer, acts like it doesn't clear
-		// Maybe: I bind the buffer, then I clear THE BUFFER???
+		
 
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		float light_positions[6];
 		float light_colors[6];
@@ -230,6 +271,92 @@ namespace Roivas
 
 			light_radius[i]			= LIGHT_LIST[i]->Radius;
 		}
+
+
+		////
+
+		glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, shadow_fbo );
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_FRONT);
+
+		glUseProgram( SHADER_PROGRAMS.at(SH_ShadowTex) );		// Activate phong shader
+
+		vec3 l_pos = LIGHT_LIST.at(1)->GetTransform()->Position;
+
+		mat4 shadow_view = glm::lookAt( l_pos, cam_pos + cam_look, cam_up );
+		mat4 shadow_proj = glm::perspective( 45.0f, screen_width / screen_height, 0.1f, 1000.0f );
+
+
+		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
+		{
+			glEnable( GL_DEPTH_TEST );			// Enable z buffering / occlusion testing
+
+			glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
+		
+			
+
+
+			glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( viewMat ) );
+			glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( projMat ) );
+
+			glActiveTexture( GL_TEXTURE1 );					
+			glBindTexture( GL_TEXTURE_2D, MODEL_LIST[i]->DiffuseID );		// Stores TEXTURES.at(0) into texture unit 0
+
+			Transform* t = MODEL_LIST[i]->GetTransform();
+
+			modelMat = mat4();			
+
+			modelMat = glm::translate( modelMat, t->Position );
+
+			if( MODEL_LIST[i]->Owner->GetBehavior() != nullptr )
+				modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );	
+
+			modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
+
+			modelMat = glm::scale( modelMat, t->Scale );
+
+			glUniform3f( uniEyePos, l_pos.x, l_pos.y, l_pos.z );
+			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader	
+
+			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
+
+		}
+
+
+		glDisable(GL_CULL_FACE);
+
+		glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, 0 );
+
+		glUseProgram(0);
+
+
+		////
+
+
+
+
+		
+
+
+		glBindFramebuffer( GL_FRAMEBUFFER, frameBuffer );	// RW; uses frameBuffer object to store and read from
+		// If I put this ABOVE glBindFrameBuffer, acts like it doesn't clear
+		// Maybe: I bind the buffer, then I clear THE BUFFER???
+
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+
+
+		
+
+
+
+		
+
+		
 		
 
 		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
@@ -239,6 +366,11 @@ namespace Roivas
 			glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
 		
 			glUseProgram( SHADER_PROGRAMS.at(SH_Phong) );		// Activate phong shader
+
+
+			////
+			//glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, shadow_fbo);
+			////
 
 			glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( viewMat ) );
 			glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( projMat ) );
@@ -271,6 +403,14 @@ namespace Roivas
 			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader	
 
 			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
+
+
+
+			////
+			//glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
+			////
+
+
 		}
 
 		// Bind default framebuffer and draw contents of our framebuffer
