@@ -200,7 +200,7 @@ namespace Roivas
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, shadow_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo);
 		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadow_tex, 0);
 
 		glDrawBuffer(GL_NONE); 
@@ -273,6 +273,16 @@ namespace Roivas
 		}
 
 
+
+		GLuint TextureID  = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "tex");
+
+		// Get a handle for our "MVP" uniform
+		//GLuint MatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "MVP");
+		//GLuint DepthBiasID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "DepthBiasMVP");
+		GLuint DepthBiasID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "shadow_trans");
+		GLuint ShadowMapID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "shadowtex");
+
+
 		////
 
 		glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, shadow_fbo );
@@ -288,6 +298,32 @@ namespace Roivas
 		mat4 shadow_view = glm::lookAt( l_pos, cam_pos + cam_look, cam_up );
 		mat4 shadow_proj = glm::perspective( 45.0f, screen_width / screen_height, 0.1f, 1000.0f );
 
+		float bias[16] = {	
+		0.5, 0.0, 0.0, 0.0, 
+		0.0, 0.5, 0.0, 0.0,
+		0.0, 0.0, 0.5, 0.0,
+		0.5, 0.5, 0.5, 1.0};
+
+		mat4 PL;
+		mat4 VL;
+
+		float light_dist = glm::distance( LIGHT_LIST.at(0)->GetTransform()->Position, vec3(0,0,0) );
+
+		// Calculate the light's view frustum parameters
+		float front = 0.5;
+		float h = 2.5f*front/light_dist;
+		float w = h; // * double(scene.width) / double(scene.height);
+
+		PL = glm::perspective( 45.0f, w/h, 0.1f, 5.0f+light_dist);
+		VL = glm::lookAt( LIGHT_LIST.at(0)->GetTransform()->Position, vec3(0,0,0), vec3(0,1,0) );
+
+		mat4 invv;
+
+		//mat4 ShadowTransformation = invv * VL * PL * glm::make_mat4(bias);
+		mat4 ShadowTransformation = shadow_proj * shadow_view * glm::make_mat4(bias);
+		
+		glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, MatToArray(ShadowTransformation) );
+
 
 		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
 		{
@@ -301,7 +337,7 @@ namespace Roivas
 			glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( viewMat ) );
 			glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( projMat ) );
 
-			glActiveTexture( GL_TEXTURE1 );					
+			glActiveTexture( GL_TEXTURE0 );					
 			glBindTexture( GL_TEXTURE_2D, MODEL_LIST[i]->DiffuseID );		// Stores TEXTURES.at(0) into texture unit 0
 
 			Transform* t = MODEL_LIST[i]->GetTransform();
@@ -325,6 +361,9 @@ namespace Roivas
 			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
 
 		}
+
+		
+		////
 
 
 		glDisable(GL_CULL_FACE);
@@ -353,8 +392,9 @@ namespace Roivas
 		
 
 
-
-		
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, shadow_tex);
+		glUniform1i(ShadowMapID, 1);
 
 		
 		
@@ -368,6 +408,14 @@ namespace Roivas
 			glUseProgram( SHADER_PROGRAMS.at(SH_Phong) );		// Activate phong shader
 
 
+
+			int loc = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "shadow_trans");
+			glUniformMatrix4fv( loc, 1, GL_FALSE, MatToArray(ShadowTransformation) );
+
+			//loc = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "shadowtex");
+			//glUniform1i(loc, 0);
+
+
 			////
 			//glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, shadow_fbo);
 			////
@@ -377,6 +425,7 @@ namespace Roivas
 
 			glActiveTexture( GL_TEXTURE0 );					
 			glBindTexture( GL_TEXTURE_2D, MODEL_LIST[i]->DiffuseID );		// Stores TEXTURES.at(0) into texture unit 0
+			glUniform1i(TextureID, 0);
 
 			Transform* t = MODEL_LIST[i]->GetTransform();
 

@@ -11,6 +11,9 @@ in vec3 Normal;
 in vec2 Texcoord;
 in vec3 Color;
 
+uniform sampler2D shadowtex;
+in vec4 Shadowcoord;
+
 uniform vec3 eyepos;
 uniform vec3 overrideColor;
 
@@ -43,9 +46,35 @@ void main()
 		vec3 ambient	= clamp( texColor.xyz * ambient_light, 0.0, 1.0 );	
 		vec3 diffuse	= clamp( max( dot( N, L ), 0.0 ), 0.0, 1.0 ) * lightcolor[i] * texColor.xyz;              
 		vec3 specular	= clamp( pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * model_specular;
+
+
+
+		float EPSILON = 0.005;    
+
+		float light_depth = texture2DProj(shadowtex,  Shadowcoord).w + EPSILON;
+		float pixel_depth = Shadowcoord.w;
+
+		//vec4 color = PhongLighting();
+		//vec4 shadow = AmbientLighting();
+
+		//if( pixel_depth > 4 )
+		//shadow = PhongLighting() - (1.0/pixel_depth*2);
+
+		float xw = Shadowcoord.x/Shadowcoord.w;
+		float yw = Shadowcoord.y/Shadowcoord.w;
+
+		vec4 color = vec4( ( ambient + diffuse + specular ) * att, 1.0);
+
+		if( Shadowcoord.w > EPSILON && xw > EPSILON && xw < 1-EPSILON && yw > 0 && yw < 1-EPSILON ) {
+
+			if( pixel_depth > light_depth )
+				color = vec4(ambient,1.0);
+		}
        
-		outColor		+= vec4( ( ambient + diffuse + specular ) * att, 1.0); 
+		//outColor		+= vec4( ( ambient + diffuse + specular ) * att, 1.0); 
+		outColor += color;
 	}
+
 }
 
 
