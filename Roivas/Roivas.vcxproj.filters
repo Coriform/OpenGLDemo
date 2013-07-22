@@ -29,6 +29,9 @@
     <Filter Include="Game">
       <UniqueIdentifier>{bfb2c22b-856a-4fa0-b574-cc25babdc076}</UniqueIdentifier>
     </Filter>
+    <Filter Include="TUT">
+      <UniqueIdentifier>{eedcef13-8c2e-4159-8b14-6a67acb515cc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Window.cpp">
@@ -94,6 +97,18 @@
     <ClCompile Include="Behavior.cpp">
       <Filter>Components</Filter>
     </ClCompile>
+    <ClCompile Include="objloader.cpp">
+      <Filter>TUT</Filter>
+    </ClCompile>
+    <ClCompile Include="tangentspace.cpp">
+      <Filter>TUT</Filter>
+    </ClCompile>
+    <ClCompile Include="vboindexer.cpp">
+      <Filter>TUT</Filter>
+    </ClCompile>
+    <ClCompile Include="controls.cpp">
+      <Filter>TUT</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics.h">
@@ -154,6 +169,18 @@
     <ClInclude Include="Behavior.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="objloader.hpp">
+      <Filter>TUT</Filter>
+    </ClInclude>
+    <ClInclude Include="tangentspace.hpp">
+      <Filter>TUT</Filter>
+    </ClInclude>
+    <ClInclude Include="vboindexer.hpp">
+      <Filter>TUT</Filter>
+    </ClInclude>
+    <ClInclude Include="controls.hpp">
+      <Filter>TUT</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Shaders\Hud.frag">
@@ -180,16 +207,10 @@
     <None Include="Assets\Shaders\Wireframe.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="ShadowTex.frag">
+    <None Include="Assets\Shaders\ShadowTex.frag">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="ShadowTex.vert">
-      <Filter>Graphics\Shaders</Filter>
-    </None>
-    <None Include="ShadowMap.vert">
-      <Filter>Graphics\Shaders</Filter>
-    </None>
-    <None Include="ShadowMap.frag">
+    <None Include="Assets\Shaders\ShadowTex.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
   </ItemGroup>

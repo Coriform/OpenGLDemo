@@ -5,6 +5,13 @@
 #include "FileIO.h"		// DELETE
 #include "Level.h"		// DELETE
 
+
+
+//// TUT
+#include "objloader.hpp"
+#include "vboindexer.hpp"
+////
+
 namespace Roivas
 {
 	Graphics::Graphics(SDL_Window* _window, float s_width, float s_height) : System(SYS_Graphics, "Graphics"), 
@@ -35,29 +42,43 @@ namespace Roivas
 		glLoadIdentity();
 
 		// Clear color
-		glClearColor ( 0.0, 0.0, 0.0, 0.0 );
+		glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
 		// Shader model - Use this
 		glShadeModel(GL_SMOOTH);
  
 		//2D rendering
 		glMatrixMode(GL_PROJECTION);
-		
- 
+	
+	//// TUT
+ //
 		// Enable depth checking
 		glEnable(GL_DEPTH_TEST);
+
+		////
+		glDepthFunc(GL_LESS);	// TUT
+		////
 
 		// Enable alpha blending
 		glEnable(GL_BLEND);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glEnable(GL_ALPHA_TEST);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		////
+		glEnable(GL_CULL_FACE);	// TUT
+		////
+////
 
 		// Create and assign fonts
 		SetupFonts();
 
 		// Initialize Camera
 		InitializeCamera();
+		
+
+
+
 
 		// Build Shaders - automate this somehow
 		// Make sure this is in same order as enum list
@@ -70,6 +91,9 @@ namespace Roivas
 
 		// Preload meshes and textures
 		PreloadAssets();
+
+		//// TUT Preload!
+		TutPreload();
 
 		// Reset default framebuffer
 		glBindFramebuffer( GL_FRAMEBUFFER, 0 );
@@ -95,19 +119,26 @@ namespace Roivas
 		// Actual framerate value
 		++fps;
 
-		SortModels(dt);
+		//// commented for TUT
+		//SortModels(dt);
 
 		// Updates current camera
 		UpdateCamera(dt);
 
 		// Primary drawing functions; draws the geometry and lighting calculations
-		Draw3D(dt);		
+		//Draw3D(dt);		
+
+
+		//// TUT
+		DrawTut(dt);
+		////
+
 
 		// Post-processing effects
-		DrawPP(dt);
+		//DrawPP(dt);
 
 		// Debug drawing
-		DrawEditor(dt);
+		//DrawEditor(dt);
 		//DrawWireframe(dt);
 
 		// HUD and other 2D drawing
@@ -123,8 +154,74 @@ namespace Roivas
 		SDL_GL_SwapWindow(window);
 	}
 
+
+
+
+	//// TUT
+	void Graphics::TutPreload()
+	{
+		glGenVertexArrays(1, &VertexArrayID);
+		glBindVertexArray(VertexArrayID);
+
+		depthProgramID = CreateShaderProgram( "Assets/Shaders/DepthRTT.vertexshader", "Assets/Shaders/DepthRTT.fragmentshader" );
+
+		// Get a handle for our "MVP" uniform
+		depthMatrixID = glGetUniformLocation(depthProgramID, "depthMVP");
+
+		// Read our .obj file		
+		loadOBJ("room_thickwalls.obj", vertices, uvs, normals);
+
+		
+		indexVBO(vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals);
+
+
+		// Load it into a VBO
+		glGenBuffers(1, &vertexbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glBufferData(GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof(glm::vec3), &indexed_vertices[0], GL_STATIC_DRAW);
+
+		glGenBuffers(1, &uvbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+		glBufferData(GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof(glm::vec2), &indexed_uvs[0], GL_STATIC_DRAW);
+
+		glGenBuffers(1, &normalbuffer);
+		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+		glBufferData(GL_ARRAY_BUFFER, indexed_normals.size() * sizeof(glm::vec3), &indexed_normals[0], GL_STATIC_DRAW);
+
+		// Generate a buffer for the indices as well
+		glGenBuffers(1, &elementbuffer);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
+
+		// ---------------------------------------------
+		// Render to Texture - specific code begins here
+		// ---------------------------------------------
+
+
+		// Create and compile our GLSL program from the shaders
+		programID = CreateShaderProgram( "Assets/Shaders/ShadowMapping.vertexshader", "Assets/Shaders/ShadowMapping.fragmentshader" );
+
+		// Get a handle for our "myTextureSampler" uniform
+		TextureID  = glGetUniformLocation(programID, "myTextureSampler");
+
+		// Get a handle for our "MVP" uniform
+		MatrixID = glGetUniformLocation(programID, "MVP");
+		ViewMatrixID = glGetUniformLocation(programID, "V");
+		ModelMatrixID = glGetUniformLocation(programID, "M");
+		DepthBiasID = glGetUniformLocation(programID, "DepthBiasMVP");
+		ShadowMapID = glGetUniformLocation(programID, "shadowMap");
+	
+		// Get a handle for our "LightPosition" uniform
+		lightInvDirID = glGetUniformLocation(programID, "LightInvDirection_worldspace");
+
+	}
+	////
+
+
+
 	void Graphics::PreloadAssets()
 	{
+
 		meshCube = LoadMesh("Box.obj");;
 		MESH_LIST["Box"] = meshCube;
 		MESH_VERTICES[meshCube] = 36;
@@ -161,11 +258,11 @@ namespace Roivas
 
 		////
 		
-		glGenFramebuffers( 1, &frameBuffer );
-		glBindFramebuffer( GL_FRAMEBUFFER, frameBuffer );
+		glGenFramebuffers( 1, &screen_fbo );
+		glBindFramebuffer( GL_FRAMEBUFFER, screen_fbo );
 
-		glGenTextures( 1, &texColorBuffer );
-		glBindTexture( GL_TEXTURE_2D, texColorBuffer );
+		glGenTextures( 1, &screen_tex );
+		glBindTexture( GL_TEXTURE_2D, screen_tex );
 
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, screen_width_i, screen_height_i, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
 
@@ -173,8 +270,10 @@ namespace Roivas
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 
-		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0 );
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screen_tex, 0 );
 
 		glGenRenderbuffers( 1, &rboDepthStencil );
 		glBindRenderbuffer( GL_RENDERBUFFER, rboDepthStencil );
@@ -185,25 +284,30 @@ namespace Roivas
 
 
 
-		// Shadow maps
+		// Shadow map
 		////
 
 		// Create the FBO
 		glGenFramebuffers(1, &shadow_fbo);    
+		glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo);
 
-		// Create the depth buffer
+
 		glGenTextures(1, &shadow_tex);
 		glBindTexture(GL_TEXTURE_2D, shadow_tex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, screen_width_i, screen_height_i, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, screen_width_i, screen_height_i, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+	
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadow_tex, 0);
+		//glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screen_tex, 0 );
 
-		glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo);
-		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadow_tex, 0);
+		//glDrawBuffer(GL_NONE); 
 
-		glDrawBuffer(GL_NONE); 
+		glDrawBuffer(GL_NONE);
 
 		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -231,6 +335,8 @@ namespace Roivas
 		wireColor = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "wirecolor" );
 
 		modelMat = mat4();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void Graphics::BindForWriting()
@@ -243,6 +349,186 @@ namespace Roivas
 		glActiveTexture(TextureUnit);
 		glBindTexture(GL_TEXTURE_2D, shadow_tex);
 	} 
+
+	void Graphics::DrawTut(float dt)
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+
+		// Render to our framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo);
+		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+
+		// We don't use bias in the shader, but instead we draw back faces, 
+		// which are already separated from the front faces by a small distance 
+		// (if your geometry is made this way)
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK); // Cull back-facing triangles -> draw only front-facing triangles
+
+		// Clear the screen
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Use our shader
+		glUseProgram(depthProgramID);
+
+		glm::vec3 lightInvDir = glm::vec3(0.5f,2,2);
+
+		// Compute the MVP matrix from the light's point of view
+		glm::mat4 depthProjectionMatrix = glm::ortho<float>(-10,10,-10,10,-10,20);
+		glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
+
+		glm::mat4 depthModelMatrix = glm::mat4(1.0);
+		glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * depthModelMatrix;
+
+		// Send our transformation to the currently bound shader, in the "MVP" uniform
+		glUniformMatrix4fv(depthMatrixID, 1, GL_FALSE, &depthMVP[0][0]);
+
+		// 1rst attribute buffer : vertices
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glVertexAttribPointer(
+			0,  // The attribute we want to configure
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		// Index buffer
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+
+		// Draw the triangles !
+		glDrawElements(
+			GL_TRIANGLES,      // mode
+			indices.size(),    // count
+			GL_UNSIGNED_SHORT, // type
+			(void*)0           // element array buffer offset
+		);
+
+		glDisableVertexAttribArray(0);
+
+
+
+		// Render to the screen
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK); // Cull back-facing triangles -> draw only front-facing triangles
+
+		// Clear the screen
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Use our shader
+		glUseProgram(programID);
+
+		// Compute the MVP matrix from keyboard and mouse input
+		glm::mat4 ProjectionMatrix = projMat;
+		glm::mat4 ViewMatrix = viewMat;
+		//ViewMatrix = glm::lookAt(glm::vec3(14,6,4), glm::vec3(0,1,0), glm::vec3(0,1,0));
+		glm::mat4 ModelMatrix = glm::mat4(1.0);
+		glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
+		
+		glm::mat4 biasMatrix(
+			0.5, 0.0, 0.0, 0.0, 
+			0.0, 0.5, 0.0, 0.0,
+			0.0, 0.0, 0.5, 0.0,
+			0.5, 0.5, 0.5, 1.0
+		);
+
+		glm::mat4 depthBiasMVP = biasMatrix*depthMVP;
+
+		// Send our transformation to the currently bound shader, 
+		// in the "MVP" uniform
+		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &ModelMatrix[0][0]);
+		glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
+		glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, &depthBiasMVP[0][0]);
+
+		glUniform3f(lightInvDirID, lightInvDir.x, lightInvDir.y, lightInvDir.z);
+
+		// Bind our texture in Texture Unit 0
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(1)->DiffuseID);
+		// Set our "myTextureSampler" sampler to user Texture Unit 0
+		glUniform1i(TextureID, 0);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, shadow_tex);
+		glUniform1i(ShadowMapID, 1);
+
+		// 1rst attribute buffer : vertices
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		glVertexAttribPointer(
+			0,                  // attribute
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		// 2nd attribute buffer : UVs
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+		glVertexAttribPointer(
+			1,                                // attribute
+			2,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			(void*)0                          // array buffer offset
+		);
+
+		// 3rd attribute buffer : normals
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+		glVertexAttribPointer(
+			2,                                // attribute
+			3,                                // size
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			(void*)0                          // array buffer offset
+		);
+
+		// Index buffer
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+
+		// Draw the triangles !
+		glDrawElements(
+			GL_TRIANGLES,      // mode
+			indices.size(),    // count
+			GL_UNSIGNED_SHORT, // type
+			(void*)0           // element array buffer offset
+		);
+
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(2);
+
+
+
+
+
+		// Optionally render the shadowmap (for debug only)
+
+		// Render only on a corner of the window (or we we won't see the real rendering...)
+		glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
+
+		// Use our shader
+		glUseProgram(SHADER_PROGRAMS.at(SH_Screen));
+		glBindVertexArray( meshQuad );
+
+		// Bind our texture in Texture Unit 0
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, shadow_tex);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(meshQuad) );
+
+	}
 
 	void Graphics::Draw3D(float dt)
 	{
@@ -274,158 +560,50 @@ namespace Roivas
 
 
 
-		GLuint TextureID  = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "tex");
-
-		// Get a handle for our "MVP" uniform
-		//GLuint MatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "MVP");
-		//GLuint DepthBiasID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "DepthBiasMVP");
-		GLuint DepthBiasID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "shadow_trans");
-		GLuint ShadowMapID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "shadowtex");
+	
 
 
-		////
+		// Shadows
 
-		glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, shadow_fbo );
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		glBindFramebuffer( GL_FRAMEBUFFER, shadow_fbo );
 
+		glViewport(0,0,screen_width_i,screen_height_i);
 		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT);
+		glCullFace(GL_BACK); // Cull back-facing triangles -> draw only front-facing triangles
 
-		glUseProgram( SHADER_PROGRAMS.at(SH_ShadowTex) );		// Activate phong shader
-
-		vec3 l_pos = LIGHT_LIST.at(1)->GetTransform()->Position;
-
-		mat4 shadow_view = glm::lookAt( l_pos, cam_pos + cam_look, cam_up );
-		mat4 shadow_proj = glm::perspective( 45.0f, screen_width / screen_height, 0.1f, 1000.0f );
-
-		float bias[16] = {	
-		0.5, 0.0, 0.0, 0.0, 
-		0.0, 0.5, 0.0, 0.0,
-		0.0, 0.0, 0.5, 0.0,
-		0.5, 0.5, 0.5, 1.0};
-
-		mat4 PL;
-		mat4 VL;
-
-		float light_dist = glm::distance( LIGHT_LIST.at(0)->GetTransform()->Position, vec3(0,0,0) );
-
-		// Calculate the light's view frustum parameters
-		float front = 0.5;
-		float h = 2.5f*front/light_dist;
-		float w = h; // * double(scene.width) / double(scene.height);
-
-		PL = glm::perspective( 45.0f, w/h, 0.1f, 5.0f+light_dist);
-		VL = glm::lookAt( LIGHT_LIST.at(0)->GetTransform()->Position, vec3(0,0,0), vec3(0,1,0) );
-
-		mat4 invv;
-
-		//mat4 ShadowTransformation = invv * VL * PL * glm::make_mat4(bias);
-		mat4 ShadowTransformation = shadow_proj * shadow_view * glm::make_mat4(bias);
-		
-		glUniformMatrix4fv(DepthBiasID, 1, GL_FALSE, MatToArray(ShadowTransformation) );
-
-
-		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
-		{
-			glEnable( GL_DEPTH_TEST );			// Enable z buffering / occlusion testing
-
-			glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
-		
-			
-
-
-			glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( viewMat ) );
-			glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( projMat ) );
-
-			glActiveTexture( GL_TEXTURE0 );					
-			glBindTexture( GL_TEXTURE_2D, MODEL_LIST[i]->DiffuseID );		// Stores TEXTURES.at(0) into texture unit 0
-
-			Transform* t = MODEL_LIST[i]->GetTransform();
-
-			modelMat = mat4();			
-
-			modelMat = glm::translate( modelMat, t->Position );
-
-			if( MODEL_LIST[i]->Owner->GetBehavior() != nullptr )
-				modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );	
-
-			modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
-			modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
-			modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
-
-			modelMat = glm::scale( modelMat, t->Scale );
-
-			glUniform3f( uniEyePos, l_pos.x, l_pos.y, l_pos.z );
-			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader	
-
-			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
-
-		}
-
-		
-		////
-
-
-		glDisable(GL_CULL_FACE);
-
-		glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, 0 );
-
-		glUseProgram(0);
-
-
-		////
-
-
-
-
+		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+		glClear( GL_DEPTH_BUFFER_BIT );
 		
 
-
-		glBindFramebuffer( GL_FRAMEBUFFER, frameBuffer );	// RW; uses frameBuffer object to store and read from
-		// If I put this ABOVE glBindFrameBuffer, acts like it doesn't clear
-		// Maybe: I bind the buffer, then I clear THE BUFFER???
-
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		glUseProgram( SHADER_PROGRAMS.at(SH_ShadowTex) );
 
 
+		glm::vec3 lightInvDir = glm::vec3(0.5f,2,2);
+		// Compute the MVP matrix from the light's point of view
+		glm::mat4 depthProjectionMatrix = glm::ortho<float>(-10,10,-10,10,-10,20);
+		glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
+		glm::mat4 depthModelMatrix = glm::mat4(1.0);
+		glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * depthModelMatrix;
 
-		
+		vec3 light_pos (2.0f, 10.0f, 0.0f);
+		vec3 light_target (2.0f, 0.0f, 0.0f);
+		vec3 up_dir (0.0f, 0.0f, -1.0f);
 
+		depthViewMatrix = glm::lookAt( light_pos, light_target, up_dir );
 
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, shadow_tex);
-		glUniform1i(ShadowMapID, 1);
-
-		
+		float nearf = 1.0f;
+		float farf = 100.0f;
+		float fov = 45.0f;
+		float aspect = 1.0f;
+		mat4 caster_proj_mat = glm::perspective (fov, aspect, nearf, farf);
 		
 
 		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
 		{
-			glEnable( GL_DEPTH_TEST );			// Enable z buffering / occlusion testing
-
 			glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
 		
-			glUseProgram( SHADER_PROGRAMS.at(SH_Phong) );		// Activate phong shader
-
-
-
-			int loc = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "shadow_trans");
-			glUniformMatrix4fv( loc, 1, GL_FALSE, MatToArray(ShadowTransformation) );
-
-			//loc = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "shadowtex");
-			//glUniform1i(loc, 0);
-
-
-			////
-			//glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, shadow_fbo);
-			////
-
-			glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( viewMat ) );
-			glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( projMat ) );
-
-			glActiveTexture( GL_TEXTURE0 );					
-			glBindTexture( GL_TEXTURE_2D, MODEL_LIST[i]->DiffuseID );		// Stores TEXTURES.at(0) into texture unit 0
-			glUniform1i(TextureID, 0);
+			glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( depthViewMatrix ) );
+			glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( depthProjectionMatrix ) );
 
 			Transform* t = MODEL_LIST[i]->GetTransform();
 
@@ -454,13 +632,69 @@ namespace Roivas
 			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
 
 
+		}
 
-			////
-			//glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
-			////
+
+
+
+
+		glBindFramebuffer( GL_FRAMEBUFFER, screen_fbo );	// RW; uses frameBuffer object to store and read from
+		// If I put this ABOVE glBindFrameBuffer, acts like it doesn't clear
+		// Maybe: I bind the buffer, then I clear THE BUFFER???
+
+		glDisable( GL_CULL_FACE );
+
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); 
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		
+
+
+		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
+		{
+			glEnable( GL_DEPTH_TEST );			// Enable z buffering / occlusion testing
+
+			glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
+		
+			glUseProgram( SHADER_PROGRAMS.at(SH_Phong) );		// Activate phong shader
+
+
+
+			glUniformMatrix4fv( uniView, 1, GL_FALSE, MatToArray( viewMat ) );
+			glUniformMatrix4fv( uniProj, 1, GL_FALSE, MatToArray( projMat ) );
+
+
+			glActiveTexture( GL_TEXTURE0 );					
+			glBindTexture( GL_TEXTURE_2D, MODEL_LIST[i]->DiffuseID );		// Stores TEXTURES.at(0) into texture unit 0
+
+			Transform* t = MODEL_LIST[i]->GetTransform();
+
+			modelMat = mat4();			
+
+			modelMat = glm::translate( modelMat, t->Position );
+
+			if( MODEL_LIST[i]->Owner->GetBehavior() != nullptr )
+				modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );	
+
+			modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
+
+			modelMat = glm::scale( modelMat, t->Scale );
+
+			glUniform3f( uniColor, 1.0f, 1.0f, 1.0f );
+
+			glUniform3fv( uniLightPos, 2, light_positions);
+			glUniform3fv( uniLightCol, 2, light_colors);
+			glUniform1fv( uniLightRad, 2, light_radius);
+
+			glUniform3f( uniEyePos, cam_pos.x, cam_pos.y, cam_pos.z );
+			glUniformMatrix4fv( uniModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader	
+
+			glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
 
 
 		}
+
 
 		// Bind default framebuffer and draw contents of our framebuffer
 		glBindFramebuffer( GL_FRAMEBUFFER, 0 );		// Default system frame buffer
@@ -473,10 +707,29 @@ namespace Roivas
 
 		glActiveTexture( GL_TEXTURE0 );
 
-		glBindTexture( GL_TEXTURE_2D, texColorBuffer );
+		glBindTexture( GL_TEXTURE_2D, screen_tex );
 
 		// Screen quad; This contains the entire scene
 		glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(meshQuad) );
+
+
+
+
+
+		////
+
+		glBindVertexArray( meshQuad );
+		glViewport(0,0,400,400);
+		glUseProgram( SHADER_PROGRAMS.at(SH_Screen) );
+
+		glActiveTexture( GL_TEXTURE0 );
+		glBindTexture( GL_TEXTURE_2D, shadow_tex );
+
+		//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE );
+		//glTexParameteri( GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE );
+
+		glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(meshQuad) );
+
 	}
 
 	void Graphics::DrawPP(float dt)
@@ -495,6 +748,8 @@ namespace Roivas
 
 	void Graphics::DrawWireframe(float dt)
 	{		
+		glViewport(0,0,screen_width_i,screen_height_i);
+
 		// Draw wireframe geometry
 		glPolygonMode(GL_FRONT, GL_LINE);
 		glPolygonMode(GL_BACK, GL_LINE);
@@ -535,6 +790,8 @@ namespace Roivas
 
 	void Graphics::DrawEditor(float dt)
 	{		
+		glViewport(0,0,screen_width_i,screen_height_i);
+
 		// Draw wireframe geometry
 		glPolygonMode(GL_FRONT, GL_LINE);
 		glPolygonMode(GL_BACK, GL_LINE);
@@ -580,7 +837,7 @@ namespace Roivas
 
 		glUseProgram(0);		// Set current shader to null
 		glColor3f(1.0, 1.0, 1.0); 
-		glRasterPos2f(-0.99f, 1-offset*2);
+		//glRasterPos2f(-0.99f, 1-offset*2);
 		font->Render(text.c_str());	
 	}
 
@@ -700,6 +957,9 @@ namespace Roivas
 
 	void Graphics::ProcessVertexData(float *vertices, GLuint& mesh, GLuint& buff, unsigned size)
 	{
+		if( SHADER_PROGRAMS.size() == 0 )
+			return;
+
 		glGenVertexArrays( 1, &mesh );
 		glBindVertexArray( mesh );
 		
@@ -789,7 +1049,7 @@ namespace Roivas
 		}
 	}
 
-	void Graphics::CreateShaderProgram(std::string _vertSource, std::string _fragSource)
+	GLint Graphics::CreateShaderProgram(std::string _vertSource, std::string _fragSource)
 	{
 		GLuint vertShader = LoadShader(_vertSource, GL_VERTEX_SHADER);
 		GLuint fragShader = LoadShader(_fragSource, GL_FRAGMENT_SHADER);
@@ -804,6 +1064,8 @@ namespace Roivas
 		glLinkProgram( shaderProgram );	
 
 		SHADER_PROGRAMS.push_back(shaderProgram);
+
+		return shaderProgram;
 	}
 
 
@@ -1026,6 +1288,7 @@ namespace Roivas
 		glDeleteVertexArrays( 1, &meshCube );
 		glDeleteVertexArrays( 1, &meshQuad );
 
-		glDeleteFramebuffers( 1, &frameBuffer );
+		glDeleteFramebuffers( 1, &screen_fbo );
+		glDeleteFramebuffers( 1, &shadow_fbo );
 	}
 }

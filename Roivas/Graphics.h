@@ -55,14 +55,13 @@ namespace Roivas
 			void UpdateCamera(float dt);
 			void DrawDebugText(std::string path);
 
-			void CreateShaderProgram(std::string _vertSource, std::string _fragSource);			
+			GLint CreateShaderProgram(std::string _vertSource, std::string _fragSource);			
 			void LoadFontmap(std::string path);
 			GLint LoadShader(std::string shader_filename, GLenum shader_type);
 			void ProcessVertexData(float* vertices, GLuint& mesh, GLuint& buff, unsigned size);
 			void SetupFonts();
 			void InitializeCamera();
 
-			GLuint frameBuffer;
 			GLuint rboDepthStencil;
 			GLuint meshCube, meshQuad;
 			GLuint buffCube, buffQuad;
@@ -76,7 +75,8 @@ namespace Roivas
 
 			SDL_Surface *HUD;			
 
-			GLuint texColorBuffer;
+			GLuint screen_fbo;
+			GLuint screen_tex;
 
 			GLuint shadow_fbo;
 			GLuint shadow_tex;
@@ -127,6 +127,42 @@ namespace Roivas
 			float pitch;
 
 			Entity* SelectedEntity;
+
+
+
+
+			////
+			//TUT
+			GLuint VertexArrayID;
+			void TutPreload();
+			GLuint depthProgramID;
+			GLuint depthMatrixID;
+
+			void DrawTut(float dt);
+			std::vector<glm::vec3> vertices;
+			std::vector<glm::vec2> uvs;
+			std::vector<glm::vec3> normals;
+			std::vector<unsigned short> indices;
+			std::vector<glm::vec3> indexed_vertices;
+			std::vector<glm::vec2> indexed_uvs;
+			std::vector<glm::vec3> indexed_normals;
+			GLuint vertexbuffer;
+			GLuint uvbuffer;
+			GLuint normalbuffer;
+			GLuint elementbuffer;
+
+			GLuint programID;
+			GLuint texID;
+			GLuint TextureID;
+
+			GLuint MatrixID;
+			GLuint ViewMatrixID;
+			GLuint ModelMatrixID;
+			GLuint DepthBiasID;
+			GLuint ShadowMapID;
+			GLuint lightInvDirID;
+
+			////
 
 		// Comparator functor for sorting the model list by depth
 		struct ZSorting
