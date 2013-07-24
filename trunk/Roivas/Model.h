@@ -16,8 +16,7 @@ namespace Roivas
 
 		// Data
 			std::string MeshName;
-			std::string DiffuseName;
-			GLuint MeshID;			
+			std::string DiffuseName;		
 			GLuint DiffuseID;
 			vec4 Color;
 			vec3 WireColor;

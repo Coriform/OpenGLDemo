@@ -36,10 +36,12 @@ void main()
 
 	vec3 color = Ambient + Diffuse + Specular;
 
-	float bias = 0.005;
+
+//	// Shadows
+	float bias = 0.001;
 
 	float light_depth = texture( shadow_sampler, vec3(ShadowCoord.xy,  (ShadowCoord.z-bias)/ShadowCoord.w) ) + bias;
-	float pixel_depth = ShadowCoord.w;	
+	float pixel_depth = ShadowCoord.z;	
 
 	float xw = ShadowCoord.x/ShadowCoord.w;
 	float yw = ShadowCoord.y/ShadowCoord.w;
@@ -49,8 +51,8 @@ void main()
 		if( pixel_depth > light_depth )
 			color = Ambient;
 	}
+//
 
 	outColor = vec4(color,1);
-	
-
+	//outColor = vec4(gl_FragCoord.z/2, gl_FragCoord.z/2, gl_FragCoord.z/2, gl_FragCoord.z/2 );
 }

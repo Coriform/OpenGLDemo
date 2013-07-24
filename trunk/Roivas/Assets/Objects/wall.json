@@ -5,7 +5,7 @@
 		},
 		"Model" : {
 			"Mesh" : "Box.obj",
-			"DiffuseTexture" : "_grey.png"
+			"DiffuseTexture" : "drkwood2.jpg"
 		}
 	}
 }
