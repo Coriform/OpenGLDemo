@@ -31,6 +31,16 @@ namespace Roivas
 		std::vector<unsigned short> Indices;
 	};
 
+	struct Attrib
+	{
+		glm::vec3 position;
+		glm::vec2 uv;
+		glm::vec3 normal;
+		bool operator<(const Attrib that) const{
+			return memcmp((void*)this, (void*)&that, sizeof(Attrib))>0;
+		};
+	};
+
 	class Graphics : public System
 	{
 		public:
@@ -39,7 +49,7 @@ namespace Roivas
 			void Initialize();
 			void PreloadAssets();
 			GLuint LoadTexture(std::string path);
-			GLuint LoadMesh(std::string path, GLuint& vertexbuffer, GLuint& uvbuffer, GLuint& normalbuffer, GLuint& elementbuffer, std::vector<unsigned short>& indices);
+			void LoadMesh(std::string path, GLuint& vertexbuffer, GLuint& uvbuffer, GLuint& normalbuffer, GLuint& elementbuffer, std::vector<unsigned short>& indices);
 
 			void Update(float dt);
 			void UpdateScreenDims(int x, int y, int w, int h);
@@ -69,7 +79,14 @@ namespace Roivas
 			GLint CreateShaderProgram(std::string _vertSource, std::string _fragSource);			
 			void LoadFontmap(std::string path);
 			GLint LoadShader(std::string shader_filename, GLenum shader_type);
-			void ProcessVertexData(float* vertices, GLuint& mesh, GLuint& buff, unsigned size);
+			//void ProcessVertexData(float* vertices, GLuint& mesh, GLuint& buff, unsigned size);
+			void ProcessVertexData(std::vector<glm::vec3> & in_vertices,std::vector<glm::vec2> & in_uvs,std::vector<glm::vec3> & in_normals,	std::vector<unsigned short> & out_indices,
+		std::vector<glm::vec3> & out_vertices,std::vector<glm::vec2> & out_uvs,std::vector<glm::vec3> & out_normals	);
+			bool getSimilarVertexIndex_fast( 
+	Attrib & packed, 
+	std::map<Attrib,unsigned short> & VertexToOutIndex,
+	unsigned short & result
+	);
 			void SetupFonts();
 			void InitializeCamera();
 
@@ -82,6 +99,14 @@ namespace Roivas
 			GLuint uniColor, uniModel, uniView, uniProj, uniOrtho;
 			GLuint uniLightPos, uniLightCol, uniLightRad, uniEyePos;
 			GLuint wireColor, wireModel, wireView, wireProj;
+			GLuint TextureID, ShadowMapID;
+			GLuint MatrixID;
+			GLuint ViewMatrixID;
+			GLuint ProjMatrixID;
+			GLuint ModelMatrixID;
+			GLuint DepthBiasID;
+			GLuint lightInvDirID;
+			GLuint depthMatrixID;
 			
 
 			SDL_Surface *HUD;			
@@ -97,7 +122,6 @@ namespace Roivas
 
 			std::map<std::string,GLuint> TEXTURE_LIST;
 			std::map<std::string,MeshData> MESH_LIST;
-			std::map<GLuint, GLuint>	 MESH_VERTICES;
 			std::vector<GLuint> DEBUG_TEXT;
 			std::vector<GLuint> FONTMAPS;
 			std::vector<GLuint> SHADER_PROGRAMS;
@@ -140,37 +164,6 @@ namespace Roivas
 			Entity* SelectedEntity;
 
 
-
-
-			////
-			//TUT
-			GLuint VertexArrayID;
-			void TutPreload();
-			GLuint depthProgramID;
-			GLuint depthMatrixID;
-
-			void DrawTut(float dt);
-			
-			std::vector<unsigned short> indices;
-			GLuint vertexbuffer;
-			GLuint uvbuffer;
-			GLuint normalbuffer;
-			GLuint elementbuffer;
-
-			GLuint programID;
-			GLuint texID;
-			GLuint TextureID;
-
-			GLuint MatrixID;
-			GLuint ViewMatrixID;
-			GLuint ProjMatrixID;
-			GLuint ModelMatrixID;
-			GLuint DepthBiasID;
-			GLuint ShadowMapID;
-			GLuint lightInvDirID;
-
-			////
-
 		// Comparator functor for sorting the model list by depth
 		struct ZSorting
 		{
@@ -184,5 +177,7 @@ namespace Roivas
 				return glm::distance( posa, graphics.cam_pos ) < glm::distance( posb, graphics.cam_pos );
 			}
 		};
+
+		
 	};
 }

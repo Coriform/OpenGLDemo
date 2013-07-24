@@ -76,6 +76,7 @@
 					"Id" : 34,
 					"Transform" : {
 						"Position" : [ 0.0,-2,3 ],
+						"Scale" : [ 36,36,0.25 ],
 						"Rotation" : [ 90,0,0 ]
 					}
 				} 
