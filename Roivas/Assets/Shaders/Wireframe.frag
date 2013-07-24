@@ -1,9 +1,8 @@
-#version 150
+#version 330 core
 
-in vec3 Position;
+layout(location = 0) out vec4 outColor;
+
 in vec3 Color;
-
-out vec4 outColor;
 
 void main()
 {

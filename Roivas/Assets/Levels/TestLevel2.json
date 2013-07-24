@@ -1,0 +1,13 @@
+{
+"Level" : {
+		"room.json" : 
+		{
+			"Entities" : 
+			[ 
+				{
+					"Id" : 11
+				}
+			]
+		}
+	}
+}
