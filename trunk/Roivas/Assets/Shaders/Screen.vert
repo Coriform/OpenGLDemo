@@ -1,13 +1,12 @@
-#version 150
+#version 330 core
 
-in vec2 position;
-in vec2 texcoord;
+layout(location = 0) in vec3 position;
+
 out vec2 Texcoord;
-out vec2 Position;
 
-void main() 
+void main()
 {
-	Texcoord = texcoord;
-	Position = position;
-	gl_Position = vec4( Position, 0, 1.0 );
+	gl_Position =  vec4(position, 1);
+	Texcoord = (position.xy + vec2(1,1)) / 2.0;
 }
+

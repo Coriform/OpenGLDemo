@@ -21,6 +21,16 @@
 
 namespace Roivas
 {
+	struct MeshData
+	{
+		GLuint MeshID;			
+		GLuint VertexBuffer;
+		GLuint UVBuffer;
+		GLuint NormalBuffer;
+		GLuint ElementBuffer;
+		std::vector<unsigned short> Indices;
+	};
+
 	class Graphics : public System
 	{
 		public:
@@ -29,7 +39,8 @@ namespace Roivas
 			void Initialize();
 			void PreloadAssets();
 			GLuint LoadTexture(std::string path);
-			GLuint LoadMesh(std::string path);
+			GLuint LoadMesh(std::string path, GLuint& vertexbuffer, GLuint& uvbuffer, GLuint& normalbuffer, GLuint& elementbuffer, std::vector<unsigned short>& indices);
+
 			void Update(float dt);
 			void UpdateScreenDims(int x, int y, int w, int h);
 			void UpdateCameraRotation(float x, float y);
@@ -85,7 +96,7 @@ namespace Roivas
 			void BindForReading(GLenum TextureUnit);
 
 			std::map<std::string,GLuint> TEXTURE_LIST;
-			std::map<std::string,GLuint> MESH_LIST;
+			std::map<std::string,MeshData> MESH_LIST;
 			std::map<GLuint, GLuint>	 MESH_VERTICES;
 			std::vector<GLuint> DEBUG_TEXT;
 			std::vector<GLuint> FONTMAPS;
@@ -139,13 +150,8 @@ namespace Roivas
 			GLuint depthMatrixID;
 
 			void DrawTut(float dt);
-			std::vector<glm::vec3> vertices;
-			std::vector<glm::vec2> uvs;
-			std::vector<glm::vec3> normals;
+			
 			std::vector<unsigned short> indices;
-			std::vector<glm::vec3> indexed_vertices;
-			std::vector<glm::vec2> indexed_uvs;
-			std::vector<glm::vec3> indexed_normals;
 			GLuint vertexbuffer;
 			GLuint uvbuffer;
 			GLuint normalbuffer;
@@ -157,6 +163,7 @@ namespace Roivas
 
 			GLuint MatrixID;
 			GLuint ViewMatrixID;
+			GLuint ProjMatrixID;
 			GLuint ModelMatrixID;
 			GLuint DepthBiasID;
 			GLuint ShadowMapID;

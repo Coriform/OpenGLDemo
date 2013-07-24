@@ -21,5 +21,11 @@ namespace Roivas
 			GLuint DiffuseID;
 			vec4 Color;
 			vec3 WireColor;
+
+			GLuint VertexBuffer;
+			GLuint UVBuffer;
+			GLuint NormalBuffer;
+			GLuint ElementBuffer;
+			std::vector<unsigned short> Indices;
 	};
 }

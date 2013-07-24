@@ -1,14 +1,11 @@
-#version 150
+#version 330 core
 
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 proj;
+layout(location = 0) in vec3 vertexPosition_modelspace;
 
-in vec3 position;
-out vec3 Position;
+uniform mat4 depthMVP;
 
 void main()
 {
-	gl_Position = proj * view * model * vec4( position, 1.0 );     //output position with projection
-	Position = gl_Position.xyz;
+	gl_Position =  depthMVP * vec4(vertexPosition_modelspace,1);
 }
+

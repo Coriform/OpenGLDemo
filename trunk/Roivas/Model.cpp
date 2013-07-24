@@ -3,7 +3,19 @@
 
 namespace Roivas
 {
-	Model::Model() : MeshName(""), DiffuseName(""), MeshID(0), DiffuseID(0), Color(vec4()), WireColor(vec3(1,1,1)), Component(CT_Model)
+	Model::Model() : 
+		MeshName(""), 
+		DiffuseName(""), 
+		MeshID(0), 
+		VertexBuffer(0),
+		UVBuffer(0),
+		NormalBuffer(0),
+		ElementBuffer(0),
+		Indices(0),
+		DiffuseID(0), 
+		Color(vec4()), 
+		WireColor(vec3(1,1,1)), 
+		Component(CT_Model)
 	{
 
 	}
@@ -12,6 +24,11 @@ namespace Roivas
 		MeshName(m.MeshName), 
 		DiffuseName(m.DiffuseName), 
 		MeshID(m.MeshID), 
+		VertexBuffer(m.VertexBuffer),
+		UVBuffer(m.UVBuffer),
+		NormalBuffer(m.NormalBuffer),
+		ElementBuffer(m.ElementBuffer),
+		Indices(m.Indices),
 		DiffuseID(m.DiffuseID), 
 		Color(m.Color), 
 		WireColor(m.WireColor),
@@ -42,7 +59,8 @@ namespace Roivas
 		fio.Read(root["Color"], Color);
 		fio.Read(root["WireColor"], WireColor);
 
-		MeshID		= GetSystem(Graphics)->LoadMesh(MeshName);
+		//MeshID		= GetSystem(Graphics)->LoadMesh(MeshName);
+		MeshID			= GetSystem(Graphics)->LoadMesh(MeshName, VertexBuffer, UVBuffer, NormalBuffer, ElementBuffer, Indices);
 		DiffuseID	= GetSystem(Graphics)->LoadTexture(DiffuseName); 
 	}
 }

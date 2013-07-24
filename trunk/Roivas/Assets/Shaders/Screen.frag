@@ -1,11 +1,11 @@
-#version 150
+#version 330 core
+
+layout(location = 0) out vec4 outColor;
 
 in vec2 Texcoord;
-in vec2 Position;
-out vec4 outColor;
-uniform sampler2D texFramebuffer;
+uniform sampler2D tex;
 
 void main() 
 {
-	outColor = texture( texFramebuffer, Texcoord );
+	outColor = texture2D( tex, Texcoord );
 }
