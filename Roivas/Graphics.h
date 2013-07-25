@@ -15,6 +15,7 @@
 #include "Model.h"
 #include "Light.h"
 #include "Transform.h"
+#include "Shader.h"
 
 #define aisgl_min(x,y) (x<y?x:y)
 #define aisgl_max(x,y) (y>x?y:x)
@@ -166,6 +167,8 @@ namespace Roivas
 			unsigned varray_size;
 
 			float pitch;
+
+			int shadow_size;
 
 			Entity* SelectedEntity;
 

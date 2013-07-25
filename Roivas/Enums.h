@@ -33,12 +33,12 @@ enum ComponentType
 enum ShaderName
 {
 	SH_Default = 0,
-	SH_Phong,
-	SH_ShadowTex,
-	//SH_SHADOWMAP,
 	SH_Screen,
 	SH_Hud,
 	SH_Wireframe,
+	SH_ShadowTex,
+	SH_Lighting,
+	SH_LightingSSM,
 
 	SD_TOTAL
 };
