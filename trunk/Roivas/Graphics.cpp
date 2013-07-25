@@ -222,6 +222,7 @@ namespace Roivas
 		// Get a handle for our "myTextureSampler" uniform
 		TextureID  = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "tex_sampler");
 		ShadowMapID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "shadow_sampler");
+		NormalMapID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "norm_sampler");
 
 		// Get a handle for our "MVP" uniform
 		MatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "MVP");
@@ -354,6 +355,8 @@ namespace Roivas
 		mat4 ModelMatrix = mat4();
 		mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
+		glm::mat4 ModelViewMatrix = ViewMatrix * ModelMatrix;
+
 		mat4 depthBiasMVP = biasMatrix*depthMVP;
 
 		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
@@ -394,8 +397,12 @@ namespace Roivas
 			glUniform1i(TextureID, 0);
 
 			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->NormalID);
+			glUniform1i(NormalMapID, 1);
+
+			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, shadow_tex);
-			glUniform1i(ShadowMapID, 1);
+			glUniform1i(ShadowMapID, 2);
 
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
@@ -680,7 +687,7 @@ namespace Roivas
 		return texture;
 	}
 
-	void Graphics::LoadMesh(std::string path, GLuint& vertexbuffer, GLuint& uvbuffer, GLuint& normalbuffer, GLuint& elementbuffer, std::vector<unsigned short>& indices)
+	void Graphics::LoadMesh(std::string path, GLuint& vbuff, GLuint& uvbuff, GLuint& nbuff, GLuint& ebuff, std::vector<unsigned short>& indices)
 	{
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec2> uvs;
@@ -694,10 +701,10 @@ namespace Roivas
 		if( MESH_LIST.find(path) != MESH_LIST.end() )
 		{
 			MeshData data = MESH_LIST.at(path);
-			vertexbuffer = data.VertexBuffer;
-			uvbuffer = data.UVBuffer;
-			normalbuffer = data.NormalBuffer;
-			elementbuffer = data.ElementBuffer;
+			vbuff	= data.VertexBuffer;
+			uvbuff	= data.UVBuffer;
+			nbuff	= data.NormalBuffer;
+			ebuff	= data.ElementBuffer;
 			indices = data.Indices;
 			return;
 		}
@@ -744,50 +751,59 @@ namespace Roivas
 					{
 						aiVector3D temp = scene->mMeshes[k]->mTextureCoords[0][face.mIndices[j]];
 						uvs.push_back( vec2( temp.x, temp.y ) );
-					}					
+					}	
 				}
 			}
 		}		
 
 		ProcessVertexData(vertices, uvs, normals, indices, indexed_vertices, indexed_uvs, indexed_normals);
 		
-		// Load it into a VBO
-		glGenBuffers(1, &vertexbuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+		// VBO vertices
+		glGenBuffers(1, &vbuff);
+		glBindBuffer(GL_ARRAY_BUFFER, vbuff);
 		glBufferData(GL_ARRAY_BUFFER, indexed_vertices.size() * sizeof(glm::vec3), &indexed_vertices[0], GL_STATIC_DRAW);
 
-		glGenBuffers(1, &uvbuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
+		// VBO tex coords
+		glGenBuffers(1, &uvbuff);
+		glBindBuffer(GL_ARRAY_BUFFER, uvbuff);
 		glBufferData(GL_ARRAY_BUFFER, indexed_uvs.size() * sizeof(glm::vec2), &indexed_uvs[0], GL_STATIC_DRAW);
 
-		glGenBuffers(1, &normalbuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+		// VBO normals
+		glGenBuffers(1, &nbuff);
+		glBindBuffer(GL_ARRAY_BUFFER, nbuff);
 		glBufferData(GL_ARRAY_BUFFER, indexed_normals.size() * sizeof(glm::vec3), &indexed_normals[0], GL_STATIC_DRAW);
 
 		// Generate a buffer for the indices as well
-		glGenBuffers(1, &elementbuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+		glGenBuffers(1, &ebuff);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebuff);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short), &indices[0], GL_STATIC_DRAW);
 
 		MeshData meshdata;
-		meshdata.MeshID = 0;
-		meshdata.VertexBuffer = vertexbuffer;
-		meshdata.UVBuffer = uvbuffer;
-		meshdata.NormalBuffer = normalbuffer;
-		meshdata.ElementBuffer = elementbuffer;
-		meshdata.Indices = indices;
+		meshdata.VertexBuffer	= vbuff;
+		meshdata.UVBuffer		= uvbuff;
+		meshdata.NormalBuffer	= nbuff;
+		meshdata.ElementBuffer	= ebuff;
+		meshdata.Indices		= indices;
 		MESH_LIST[path] = meshdata;
 	}
 
-	void Graphics::ProcessVertexData(std::vector<glm::vec3> & in_vertices,std::vector<glm::vec2> & in_uvs,std::vector<glm::vec3> & in_normals,	std::vector<unsigned short> & out_indices,
-		std::vector<glm::vec3> & out_vertices,std::vector<glm::vec2> & out_uvs,std::vector<glm::vec3> & out_normals	)
+	void Graphics::ProcessVertexData(
+		std::vector<glm::vec3> & in_vertices,
+		std::vector<glm::vec2> & in_uvs,
+		std::vector<glm::vec3> & in_normals,
+
+		std::vector<unsigned short> & out_indices,
+		std::vector<glm::vec3> & out_vertices,
+		std::vector<glm::vec2> & out_uvs,
+		std::vector<glm::vec3> & out_normals )
 	{
 		std::map<Attrib,unsigned short> VertexToOutIndex;
 
 		// For each input vertex
-		for ( unsigned int i=0; i<in_vertices.size(); i++ ){
+		for ( unsigned int i=0; i<in_vertices.size(); i++ )
+		{
 
-			Attrib packed;// = {in_vertices[i], in_uvs[i], in_normals[i]};
+			Attrib packed;
 
 			if( in_vertices.size() > 0 )
 				packed.position = in_vertices.at(i);
@@ -803,9 +819,11 @@ namespace Roivas
 			unsigned short index;
 			bool found = getSimilarVertexIndex_fast( packed, VertexToOutIndex, index);
 
-			if ( found ){ // A similar vertex is already in the VBO, use it instead !
+			if ( found )
+			{ // A similar vertex is already in the VBO, use it instead !
 				out_indices.push_back( index );
-			}else
+			}
+			else
 			{ // If not, it needs to be added in the output data.
 				if( in_vertices.size() > 0 )
 					out_vertices.push_back( in_vertices[i]);
@@ -823,8 +841,9 @@ namespace Roivas
 		}
 	}
 
-	bool Graphics::getSimilarVertexIndex_fast( 
-	Attrib & packed, 
+
+
+	bool Graphics::getSimilarVertexIndex_fast( Attrib & packed, 
 	std::map<Attrib,unsigned short> & VertexToOutIndex,
 	unsigned short & result
 	){
@@ -836,43 +855,6 @@ namespace Roivas
 			return true;
 		}
 	}
-
-	/*
-	void Graphics::ProcessVertexData(float *vertices, GLuint& mesh, GLuint& buff, unsigned size)
-	{
-		if( SHADER_PROGRAMS.size() == 0 )
-			return;
-
-		glGenVertexArrays( 1, &mesh );
-		glBindVertexArray( mesh );
-		
-		glGenBuffers( 1, &buff );
-		glBindBuffer( GL_ARRAY_BUFFER, buff );
-		glBufferData( GL_ARRAY_BUFFER, size*sizeof(float), vertices, GL_DYNAMIC_DRAW );
-		//glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_DYNAMIC_DRAW );
-
-		// Specify the layout of the vertex data
-		
-		glBindBuffer( GL_ARRAY_BUFFER, buff );
-
-			GLint posAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Phong), "position" );
-			glEnableVertexAttribArray( posAttrib );
-			glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0 );
-
-			GLint normAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Phong), "normal" );
-			glEnableVertexAttribArray( normAttrib );
-			glVertexAttribPointer( normAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)( 3*sizeof(float) ) );
-
-			GLint texAttrib = glGetAttribLocation( SHADER_PROGRAMS.at(SH_Phong), "texcoord" );
-			glEnableVertexAttribArray( texAttrib );
-			glVertexAttribPointer( texAttrib, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float) ) );
-
-
-		glBindVertexArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER,0);
-	}
-	*/
-
 
 	void Graphics::LoadFontmap(std::string path)
 	{

@@ -17,6 +17,7 @@ out vec4 ShadowCoord;
 uniform mat4 MVP;
 uniform mat4 V;
 uniform mat4 M;
+uniform mat3 MV3x3;
 uniform mat4 P;
 uniform vec3 LightInvDirection_worldspace;
 uniform mat4 DepthBiasMVP;

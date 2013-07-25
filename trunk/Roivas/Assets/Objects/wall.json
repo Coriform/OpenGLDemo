@@ -5,7 +5,8 @@
 		},
 		"Model" : {
 			"Mesh" : "Box.obj",
-			"DiffuseTexture" : "drkwood2.jpg"
+			"DiffuseTexture" : "crack_ice.png",
+			"NormalTexture" : "crack_NRM.png"
 		}
 	}
 }
