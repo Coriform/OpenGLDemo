@@ -1,12 +1,42 @@
 {
 "Level" : {
-		"room.json" : 
+		"test2.json" : 
 		{
 			"Entities" : 
 			[ 
 				{
-					"Id" : 11
+					"Id" : 11,
+					"Transform" : {
+						"Position" : [ -2.25,0.0,0.0 ]
+					}
 				}
+			]
+		},
+		"lost_empire.json" : 
+		{
+			"Entities" : 
+			[ 
+				{
+					"Id" : 14
+				}
+			]
+		},
+		"light.json" : 
+		{			
+			"Entities" : 
+			[ 
+				{
+					"Id" : 15,
+					"Transform" : {
+						"Position" : [ 1.5,2.5,2.0 ]
+					}
+				},
+				{ 
+					"Id" : 16,
+					"Transform" : {
+						"Position" : [ 0.0,0.0,0.0 ]
+					}
+				} 
 			]
 		}
 	}

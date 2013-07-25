@@ -3,7 +3,7 @@
 
 namespace Roivas
 {
-	Transform::Transform() : Position(vec3()), Scale(vec3()), Rotation(vec3()), Component(CT_Transform)
+	Transform::Transform() : Position(vec3()), Scale(vec3(1,1,1)), Rotation(vec3()), Component(CT_Transform)
 	{
 
 	}

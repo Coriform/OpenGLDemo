@@ -1,5 +1,6 @@
 {
 "Entity" : {
+		"Transform" : {},
 		"Model" : {
 			"Mesh" : "room_thickwalls.obj",
 			"DiffuseTexture" : "crack_ice.png"

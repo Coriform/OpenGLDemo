@@ -1,0 +1,9 @@
+{
+"Entity" : {
+		"Transform" : {},
+		"Model" : {
+			"Mesh" : "lost_empire.obj",
+			"DiffuseTexture" : "crack_ice.png"
+		}
+	}
+}

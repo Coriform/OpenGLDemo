@@ -38,7 +38,7 @@ void main()
 
 
 //	// Shadows
-	float bias = 0.001;
+	float bias = 0.005;
 
 	float light_depth = texture( shadow_sampler, vec3(ShadowCoord.xy,  (ShadowCoord.z-bias)/ShadowCoord.w) ) + bias;
 	float pixel_depth = ShadowCoord.z;	
