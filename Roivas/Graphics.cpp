@@ -1,16 +1,6 @@
 #include "CommonLibs.h"
 #include "Graphics.h"
-#include "Body.h"		// DELETE
-#include "Entity.h"		// DELETE
-#include "FileIO.h"		// DELETE
-#include "Level.h"		// DELETE
 
-
-
-//// TUT
-#include "objloader.hpp"
-#include "vboindexer.hpp"
-////
 
 namespace Roivas
 {
@@ -107,8 +97,8 @@ namespace Roivas
 		// Actual framerate value
 		++fps;
 
-		//// commented for TUT
-		//SortModels(dt);
+		// Depth sorting
+		SortModels(dt);
 
 		// Updates current camera
 		UpdateCamera(dt);
@@ -141,13 +131,6 @@ namespace Roivas
 
 	void Graphics::PreloadAssets()
 	{
-
-		//meshCube = LoadMesh("Box.obj");;
-		//MESH_LIST["Box"] = meshCube;
-		//MESH_VERTICES[meshCube] = 36;
-
-				
-
 		static const GLfloat g_quad_vertex_buffer_data[] = { 
 			-1.0f, -1.0f, 0.0f,
 			 1.0f, -1.0f, 0.0f,
@@ -164,9 +147,6 @@ namespace Roivas
 		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(g_quad_vertex_buffer_data), g_quad_vertex_buffer_data, GL_STATIC_DRAW);
 
-
-		////
-		
 		glGenFramebuffers( 1, &screen_fbo );
 		glBindFramebuffer( GL_FRAMEBUFFER, screen_fbo );
 
@@ -184,22 +164,23 @@ namespace Roivas
 
 		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screen_tex, 0 );
 
+		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		if( status != GL_FRAMEBUFFER_COMPLETE ) 
+		{
+			std::cout << "FB error, status: " << status << std::endl;
+			return;
+		} 
+
 		glGenRenderbuffers( 1, &rboDepthStencil );
 		glBindRenderbuffer( GL_RENDERBUFFER, rboDepthStencil );
 		glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screen_width_i, screen_height_i );
 		glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboDepthStencil );
 
-		////
 
-
-
-		// Shadow map
-		////
-
-		// Create the FBO
+		// Shadow map fbo
 		glGenFramebuffers(1, &shadow_fbo);    
 		glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo);
-
 
 		glGenTextures(1, &shadow_tex);
 		glBindTexture(GL_TEXTURE_2D, shadow_tex);
@@ -212,21 +193,16 @@ namespace Roivas
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 	
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadow_tex, 0);
-		//glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screen_tex, 0 );
-
-		//glDrawBuffer(GL_NONE); 
 
 		glDrawBuffer(GL_NONE);
 
-		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
 		if( status != GL_FRAMEBUFFER_COMPLETE ) 
 		{
 			std::cout << "FB error, status: " << status << std::endl;
 			return;
 		} 
-
-		////
 
 
 		uniView		= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "view" );
@@ -254,8 +230,7 @@ namespace Roivas
 		ModelMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "M");
 		DepthBiasID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "DepthBiasMVP");
 
-		depthMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_ShadowTex), "depthMVP");
-		
+		depthMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_ShadowTex), "depthMVP");		
 	
 		// Get a handle for our "LightPosition" uniform
 		lightInvDirID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "LightInvDirection_worldspace");
@@ -278,7 +253,7 @@ namespace Roivas
 
 	void Graphics::Draw3D(float dt)
 	{
-		//accum += dt;
+		accum += dt;
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
@@ -295,9 +270,9 @@ namespace Roivas
 
 		glUseProgram( SHADER_PROGRAMS.at(SH_ShadowTex) );
 
-		vec3 lightInvDir = vec3(0.5f,2,2);
+		vec3 lightInvDir = vec3(1,1,1);
 
-		mat4 depthProjectionMatrix = glm::ortho<float>(-10,10,-10,10,-10,10);
+		mat4 depthProjectionMatrix = glm::ortho<float>(-20,20,-20,20,-10,50);
 		mat4 depthViewMatrix = glm::lookAt(lightInvDir, vec3(0,0,0), vec3(0,1,0));
 
 		//viewMat = glm::lookAt( cam_pos, cam_pos + cam_look, cam_up );
@@ -401,6 +376,8 @@ namespace Roivas
 
 			modelMat = glm::scale( modelMat, t->Scale );
 
+			depthMVP = depthProjectionMatrix * depthViewMatrix * modelMat;
+			depthBiasMVP = biasMatrix*depthMVP;
 
 			MVP = ProjectionMatrix * ViewMatrix * modelMat;
 
@@ -531,6 +508,10 @@ namespace Roivas
 			glUniformMatrix4fv( wireProj, 1, GL_FALSE, &projMat[0][0] );
 
 			Transform* t = MODEL_LIST[i]->GetTransform();
+
+			if( t == nullptr )
+				continue;
+
 			vec3 color = MODEL_LIST[i]->WireColor;
 
 			modelMat = mat4();		
@@ -599,6 +580,10 @@ namespace Roivas
 			glUniformMatrix4fv( wireProj, 1, GL_FALSE, MatToArray( projMat ) );
 
 			Transform* t = MODEL_LIST[i]->GetTransform();
+
+			if( t == nullptr )
+				continue;
+
 			vec3 color = MODEL_LIST[i]->WireColor;
 
 			modelMat = mat4();		
@@ -724,11 +709,12 @@ namespace Roivas
 
 		if( !scene)
 		{
+			std::cout << "Mesh didn't load: ";
 			printf("%s\n", importer.GetErrorString());
 			return;
 		}
 
-		std::cout << "Import of scene %s succeeded: <" << path.c_str() << ">" << std::endl;
+		std::cout << "Import of scene succeeded: <" << path.c_str() << ">" << std::endl;
 
 		// For each mesh
 		for( unsigned k = 0; k < scene->mNumMeshes; ++k )
@@ -801,7 +787,16 @@ namespace Roivas
 		// For each input vertex
 		for ( unsigned int i=0; i<in_vertices.size(); i++ ){
 
-			Attrib packed = {in_vertices[i], in_uvs[i], in_normals[i]};
+			Attrib packed;// = {in_vertices[i], in_uvs[i], in_normals[i]};
+
+			if( in_vertices.size() > 0 )
+				packed.position = in_vertices.at(i);
+
+			if( in_uvs.size() > 0 )
+				packed.uv = in_uvs.at(i);
+
+			if( in_normals.size() > 0 )
+				packed.normal = in_normals.at(i);
 		
 
 			// Try to find a similar vertex in out_XXXX
@@ -810,10 +805,17 @@ namespace Roivas
 
 			if ( found ){ // A similar vertex is already in the VBO, use it instead !
 				out_indices.push_back( index );
-			}else{ // If not, it needs to be added in the output data.
-				out_vertices.push_back( in_vertices[i]);
-				out_uvs     .push_back( in_uvs[i]);
-				out_normals .push_back( in_normals[i]);
+			}else
+			{ // If not, it needs to be added in the output data.
+				if( in_vertices.size() > 0 )
+					out_vertices.push_back( in_vertices[i]);
+
+				if( in_uvs.size() > 0 )
+					out_uvs     .push_back( in_uvs[i]);
+
+				if( in_normals.size() > 0 )
+					out_normals .push_back( in_normals[i]);
+
 				unsigned short newindex = (unsigned short)out_vertices.size() - 1;
 				out_indices .push_back( newindex );
 				VertexToOutIndex[ packed ] = newindex;

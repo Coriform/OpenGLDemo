@@ -103,7 +103,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Component.cpp" />
-    <ClCompile Include="controls.cpp" />
     <ClCompile Include="Core.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Factory.cpp" />
@@ -115,11 +114,8 @@
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Model.cpp" />
-    <ClCompile Include="objloader.cpp" />
     <ClCompile Include="Player.cpp" />
-    <ClCompile Include="tangentspace.cpp" />
     <ClCompile Include="Transform.cpp" />
-    <ClCompile Include="vboindexer.cpp" />
     <ClCompile Include="Window.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
     </ClCompile>
@@ -129,7 +125,6 @@
     <ClInclude Include="Body.h" />
     <ClInclude Include="CommonLibs.h" />
     <ClInclude Include="Component.h" />
-    <ClInclude Include="controls.hpp" />
     <ClInclude Include="Core.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Enums.h" />
@@ -142,12 +137,9 @@
     <ClInclude Include="Math3D.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Factory.h" />
-    <ClInclude Include="objloader.hpp" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="System.h" />
-    <ClInclude Include="tangentspace.hpp" />
     <ClInclude Include="Transform.h" />
-    <ClInclude Include="vboindexer.hpp" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
