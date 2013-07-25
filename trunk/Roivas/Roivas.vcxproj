@@ -115,6 +115,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Window.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
@@ -138,6 +139,7 @@
     <ClInclude Include="Model.h" />
     <ClInclude Include="Factory.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Window.h" />
@@ -145,8 +147,10 @@
   <ItemGroup>
     <None Include="Assets\Shaders\Hud.frag" />
     <None Include="Assets\Shaders\Hud.vert" />
-    <None Include="Assets\Shaders\Phong.frag" />
-    <None Include="Assets\Shaders\Phong.vert" />
+    <None Include="Assets\Shaders\Lighting.frag" />
+    <None Include="Assets\Shaders\Lighting.vert" />
+    <None Include="Assets\Shaders\LightingWithSSM.frag" />
+    <None Include="Assets\Shaders\LightingWithSSM.vert" />
     <None Include="Assets\Shaders\Screen.frag" />
     <None Include="Assets\Shaders\Screen.vert" />
     <None Include="Assets\Shaders\ShadowTex.frag" />

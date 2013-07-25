@@ -16,6 +16,7 @@ namespace Roivas
 		pitch(0.0f),
 		accum(0.0f),
 		varray_size(8),
+		shadow_size(1),
 		SelectedEntity(nullptr)
 	{
 		// Initialize ticks counted for framerate
@@ -60,12 +61,15 @@ namespace Roivas
 		
 		// Build Shaders - automate this somehow
 		// Make sure this is in same order as enum list
-		CreateShaderProgram("Assets/Shaders/Default.vert",	"Assets/Shaders/Default.frag");
-		CreateShaderProgram("Assets/Shaders/Phong.vert",	"Assets/Shaders/Phong.frag");
-		CreateShaderProgram("Assets/Shaders/ShadowTex.vert","Assets/Shaders/ShadowTex.frag");
-		CreateShaderProgram("Assets/Shaders/Screen.vert",	"Assets/Shaders/Screen.frag");
-		CreateShaderProgram("Assets/Shaders/Hud.vert",		"Assets/Shaders/Hud.frag");
-		CreateShaderProgram("Assets/Shaders/Wireframe.vert","Assets/Shaders/Wireframe.frag");
+		CreateShaderProgram("Assets/Shaders/Default.vert",			"Assets/Shaders/Default.frag");			// SH_Default
+		CreateShaderProgram("Assets/Shaders/Screen.vert",			"Assets/Shaders/Screen.frag");			// SH_Screen
+		CreateShaderProgram("Assets/Shaders/Hud.vert",				"Assets/Shaders/Hud.frag");				// SH_Hud
+		CreateShaderProgram("Assets/Shaders/Wireframe.vert",		"Assets/Shaders/Wireframe.frag");		// SH_Wireframe
+		CreateShaderProgram("Assets/Shaders/ShadowTex.vert",		"Assets/Shaders/ShadowTex.frag");		// SH_ShadowTex
+		CreateShaderProgram("Assets/Shaders/Lighting.vert",			"Assets/Shaders/Lighting.frag");		// SH_Lighting
+		CreateShaderProgram("Assets/Shaders/LightingWithSSM.vert",	"Assets/Shaders/LightingWithSSM.frag");	// SH_LightingSSM
+
+		//shadow_size = 1;
 
 		// Preload meshes and textures
 		PreloadAssets();
@@ -75,6 +79,8 @@ namespace Roivas
 
 		Level* lvl = new Level("TestLevel.json");
 		lvl->Load();
+
+		
 
 		//Level* lvl2 = new Level("TestLevel2.json");
 		//lvl2->Load();
@@ -184,7 +190,7 @@ namespace Roivas
 
 		glGenTextures(1, &shadow_tex);
 		glBindTexture(GL_TEXTURE_2D, shadow_tex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, screen_width_i, screen_height_i, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, screen_width_i*shadow_size, screen_height_i*shadow_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -205,14 +211,40 @@ namespace Roivas
 		} 
 
 
-		uniView		= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "view" );
-		uniProj		= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "proj" );
-		uniModel	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "model" );
-		uniColor	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "overrideColor" );
-		uniLightPos = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "lightpos" );
-		uniLightCol = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "lightcolor" );
-		uniLightRad = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "lightradius" );
-		uniEyePos	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_Phong), "eyepos" );
+		//
+		//
+		// ToDo:
+		// View
+		// Projection
+		// Model
+		//
+		// MatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "MVP");
+		// glUniformMatrix4fv(MatrixID,		1, GL_FALSE, &MVP[0][0]);
+		//
+		// Shader->GetUniform(DepthBiasMVP)
+		// Shader->SetUniform1i()
+		// Shader->SetUniform4fv()
+		// Shader->SetUniform3f()
+		//
+		// shader_program = SHADER_PROGRAMS.at(SH_LightingSSM)
+		//
+		// "MVP", MVP[0][0]
+		// Shader->SetUniform4fv( std::string name, float[4][4]& mat )
+		// {
+		//		glUniformMatrix4fv( glGetUniformLocation(shader_program, name), 1, GL_FALSE, mat )
+		// }
+		//
+		//
+
+
+		uniView		= glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "view" );
+		uniProj		= glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "proj" );
+		uniModel	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "model" );
+		uniColor	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "overrideColor" );
+		uniLightPos = glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "lightpos" );
+		uniLightCol = glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "lightcolor" );
+		uniLightRad = glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "lightradius" );
+		uniEyePos	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "eyepos" );
 
 		wireView = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "view" );
 		wireProj = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "proj" );
@@ -220,21 +252,21 @@ namespace Roivas
 		wireColor = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "wirecolor" );
 
 		// Get a handle for our "myTextureSampler" uniform
-		TextureID  = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "tex_sampler");
-		ShadowMapID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "shadow_sampler");
-		NormalMapID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "norm_sampler");
+		TextureID  = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "tex_sampler");
+		ShadowMapID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "shadow_sampler");
+		NormalMapID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "norm_sampler");
 
 		// Get a handle for our "MVP" uniform
-		MatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "MVP");
-		ViewMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "V");
-		ProjMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "P");
-		ModelMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "M");
-		DepthBiasID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "DepthBiasMVP");
+		MatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "MVP");
+		ViewMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "V");
+		ProjMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "P");
+		ModelMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "M");
+		DepthBiasID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "DepthBiasMVP");
 
 		depthMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_ShadowTex), "depthMVP");		
 	
 		// Get a handle for our "LightPosition" uniform
-		lightInvDirID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_Phong), "LightInvDirection_worldspace");
+		lightInvDirID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "LightInvDirection_worldspace");
 
 		modelMat = mat4();
 
@@ -261,7 +293,7 @@ namespace Roivas
 
 		// Shadows
 		glBindFramebuffer( GL_FRAMEBUFFER, shadow_fbo );
-		glViewport(0,0,screen_width_i,screen_height_i);
+		glViewport(0, 0, screen_width_i*shadow_size, screen_height_i*shadow_size);
 		
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK); // Cull back-facing triangles -> draw only front-facing triangles
@@ -273,7 +305,7 @@ namespace Roivas
 
 		vec3 lightInvDir = vec3(1,1,1);
 
-		mat4 depthProjectionMatrix = glm::ortho<float>(-20,20,-20,20,-10,50);
+		mat4 depthProjectionMatrix = glm::ortho<float>(-20,20,-20,20,-20,10);
 		mat4 depthViewMatrix = glm::lookAt(lightInvDir, vec3(0,0,0), vec3(0,1,0));
 
 		//viewMat = glm::lookAt( cam_pos, cam_pos + cam_look, cam_up );
@@ -341,7 +373,7 @@ namespace Roivas
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		
-		glUseProgram( SHADER_PROGRAMS.at(SH_Phong) );
+		glUseProgram( SHADER_PROGRAMS.at(SH_Lighting) );
 
 		mat4 biasMatrix(
 			0.5, 0.0, 0.0, 0.0, 

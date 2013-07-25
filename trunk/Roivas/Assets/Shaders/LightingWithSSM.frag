@@ -24,7 +24,7 @@ const vec3 model_specular = vec3(1,1,1);
 const float shininess = 30.0;
 const float radius = 10.0;
 
-const float bias = 0.005;
+const float bias = 0.01;
 
 
 // http://www.thetenthplanet.de/archives/1180
@@ -52,49 +52,46 @@ vec3 perturb_normal( vec3 N, vec3 V, vec2 texcoord )
     // assume N, the interpolated vertex normal and 
     // V, the view vector (vertex to eye)
 	vec3 map = texture(norm_sampler, texcoord ).xyz;
+
+	if( map.r < bias && map.g < bias && map.b < bias )
+		return normalize(N);
+
 	map = map * 255./127. - 128./127.;
     mat3 TBN = cotangent_frame(N, -V, texcoord);
     return normalize(TBN * map);
 }
 
-
+vec2 poissonDisk[4] = vec2[]( 
+   vec2( -0.94201624, -0.39906216 ), 
+   vec2( 0.94558609, -0.76890725 ), 
+   vec2( -0.094184101, -0.92938870 ), 
+   vec2( 0.34495938, 0.29387760 )
+);
 
 void main()
 {
 	vec4 texColor = texture( tex_sampler, UV );
-	//vec4 normColor = texture( norm_sampler, UV)*2.0-1.0;
-	vec4 normColor = texture( norm_sampler, UV);
 
 	vec3 L  = normalize( LightDirection);
 	vec3 E  = normalize( EyeDirection );
-	vec3 N  = normalize( Normal );
-	vec3 PN = perturb_normal(N, E, UV);	
+	vec3 N  = normalize( Normal );	
+	vec3 PN = perturb_normal(N, E, UV);	// Normal mapping
 	vec3 R  = reflect(-L,PN);
 
 	vec3 Ambient	= clamp( texColor.xyz * ambient_light, 0.0, 1.0 );		
 	vec3 Diffuse	= clamp( max( dot( N, L ), 0.0 ), 0.0, 1.0 ) * vec3(1,1,1) * texColor.xyz;              
 	vec3 Specular	= clamp( pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * model_specular;
 
-	vec3 color = Ambient + Diffuse + Specular;
 
-	
+	// Shadows
+	float visibility=1.0;
 
-
-//	// Shadows
-
-	float light_depth = texture( shadow_sampler, vec3(ShadowCoord.xy,  (ShadowCoord.z-bias)/ShadowCoord.w) ) + bias;
-	float pixel_depth = ShadowCoord.z;	
-
-	float xw = ShadowCoord.x/ShadowCoord.w;
-	float yw = ShadowCoord.y/ShadowCoord.w;
-
-	if( ShadowCoord.w > bias && xw > bias && xw < 1-bias && yw > 0 && yw < 1-bias ) 
-	{
-		if( pixel_depth > light_depth )
-			color = Ambient;
+	for (int i=0;i<4;i++)
+	{		
+		visibility -= 0.2*(1.0-texture( shadow_sampler, vec3(ShadowCoord.xy + poissonDisk[i]/1000.0,  (ShadowCoord.z-bias)/ShadowCoord.w) ));
 	}
 
-//
+	vec3 color = Ambient + visibility * Diffuse + visibility * Specular;
 
 	outColor = vec4(color,1);
 }
