@@ -22,8 +22,7 @@
 namespace Roivas
 {
 	struct MeshData
-	{
-		GLuint MeshID;			
+	{		
 		GLuint VertexBuffer;
 		GLuint UVBuffer;
 		GLuint NormalBuffer;
@@ -49,7 +48,7 @@ namespace Roivas
 			void Initialize();
 			void PreloadAssets();
 			GLuint LoadTexture(std::string path);
-			void LoadMesh(std::string path, GLuint& vertexbuffer, GLuint& uvbuffer, GLuint& normalbuffer, GLuint& elementbuffer, std::vector<unsigned short>& indices);
+			void LoadMesh(std::string path, GLuint& vb, GLuint& uvb, GLuint& nb, GLuint& eb, std::vector<unsigned short>& ind);
 
 			void Update(float dt);
 			void UpdateScreenDims(int x, int y, int w, int h);
@@ -80,13 +79,20 @@ namespace Roivas
 			void LoadFontmap(std::string path);
 			GLint LoadShader(std::string shader_filename, GLenum shader_type);
 			//void ProcessVertexData(float* vertices, GLuint& mesh, GLuint& buff, unsigned size);
-			void ProcessVertexData(std::vector<glm::vec3> & in_vertices,std::vector<glm::vec2> & in_uvs,std::vector<glm::vec3> & in_normals,	std::vector<unsigned short> & out_indices,
-		std::vector<glm::vec3> & out_vertices,std::vector<glm::vec2> & out_uvs,std::vector<glm::vec3> & out_normals	);
+			void ProcessVertexData(
+				std::vector<glm::vec3>& in_vertices,
+				std::vector<glm::vec2>& in_uvs,
+				std::vector<glm::vec3>& in_normals,	
+				std::vector<unsigned short>& out_indices,
+				std::vector<glm::vec3>& out_vertices,
+				std::vector<glm::vec2>& out_uvs,
+				std::vector<glm::vec3>& out_normals );
 			bool getSimilarVertexIndex_fast( 
-	Attrib & packed, 
-	std::map<Attrib,unsigned short> & VertexToOutIndex,
-	unsigned short & result
-	);
+			Attrib & packed, 
+			std::map<Attrib,unsigned short> & VertexToOutIndex,
+			unsigned short & result
+			);
+
 			void SetupFonts();
 			void InitializeCamera();
 
@@ -99,7 +105,7 @@ namespace Roivas
 			GLuint uniColor, uniModel, uniView, uniProj, uniOrtho;
 			GLuint uniLightPos, uniLightCol, uniLightRad, uniEyePos;
 			GLuint wireColor, wireModel, wireView, wireProj;
-			GLuint TextureID, ShadowMapID;
+			GLuint TextureID, ShadowMapID, NormalMapID;
 			GLuint MatrixID;
 			GLuint ViewMatrixID;
 			GLuint ProjMatrixID;

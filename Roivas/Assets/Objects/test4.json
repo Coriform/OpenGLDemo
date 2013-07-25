@@ -6,6 +6,7 @@
 		"Model" : {
 			"Mesh" : "Box.obj",
 			"DiffuseTexture" : "crack_ice.png",
+			"NormalTexture" : "crack_NRM.png",
 			"Color" : [ 1.0,0.0,0.5,0.75 ]
 		},
 		"Behavior" : {
