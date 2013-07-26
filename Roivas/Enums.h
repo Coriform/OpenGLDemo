@@ -25,7 +25,7 @@ enum ComponentType
 	CT_Player,
 	CT_Transform,
 
-	CT_Total
+	CT_TOTAL
 };
 
 
@@ -41,5 +41,17 @@ enum ShaderName
 	SH_LightingSSM,
 
 	SD_TOTAL
+};
+
+
+// Types of lights
+enum LightingType
+{
+	LT_Directional,
+	LT_SpotLight,
+	LT_PointLight,
+	LT_CapsuleLight,
+
+	LT_TOTAL
 };
 

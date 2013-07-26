@@ -82,7 +82,7 @@
 				} 
 			]
 		},
-		"light.json" : 
+		"directionlight.json" : 
 		{			
 			"Entities" : 
 			[ 
@@ -90,14 +90,20 @@
 					"Id" : 15,
 					"Transform" : {
 						"Position" : [ 1.5,2.5,2.0 ]
+					},
+					"Light" : {
+						"Color" : [ 0.0,0.0,1.0 ]
 					}
 				},
 				{ 
 					"Id" : 16,
 					"Transform" : {
 						"Position" : [ 0.0,0.0,0.0 ]
+					},
+					"Light" : {
+						"Color" : [ 1.0,0.0,0.0 ]
 					}
-				} 
+				}
 			]
 		}
 	}

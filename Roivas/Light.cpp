@@ -3,12 +3,24 @@
 
 namespace Roivas
 {
-	Light::Light() : Color(vec3(1.0f,1.0f,1.0f)), Radius(10.0f), Component(CT_Light)
+	Light::Light() : 
+		Color(vec3(1.0f,1.0f,1.0f)), 
+		Direction(vec3(0.0f,-1.0f,0.0f)), 
+		Radius(10.0f), 
+		LightType("Directional"),
+		Type(LT_Directional), 
+		Component(CT_Light)
 	{
 
 	}
 
-	Light::Light(const Light& l) : Color(l.Color), Radius(l.Radius), Component(CT_Light)
+	Light::Light(const Light& l) : 
+		Color(l.Color), 
+		Direction(l.Direction), 
+		Radius(l.Radius), 
+		LightType(l.LightType),
+		Type(l.Type), 
+		Component(CT_Light)
 	{
 
 	}
@@ -31,6 +43,20 @@ namespace Roivas
 	void Light::Deserialize(FileIO& fio, Json::Value& root)
 	{
 		fio.Read(root["Color"], Color);
-		fio.Read(root["Radius"], Radius);
+		fio.Read(root["Direction"], Direction);
+		fio.Read(root["Radius"], Radius);		
+
+		Direction = glm::normalize(Direction);
+
+		fio.Read(root["LightType"], LightType);
+
+		if( LightType == "SpotLight" )
+			Type = LT_SpotLight;
+		else if( LightType == "PointLight" )
+			Type = LT_PointLight;
+		else if( LightType == "CapsuleLight" )
+			Type = LT_CapsuleLight;
+		else
+			Type = LT_Directional;		
 	}
 }

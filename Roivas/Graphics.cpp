@@ -13,9 +13,13 @@ namespace Roivas
 		debug_surface(nullptr),
 		ticks(0),
 		fps(0),
+		num_lights(0),
 		pitch(0.0f),
 		accum(0.0f),
 		varray_size(8),
+		current_lighting(SH_Lighting),
+		shadows_enabled(true),
+		normal_mapping_enabled(true),
 		shadow_size(1),
 		SelectedEntity(nullptr)
 	{
@@ -80,7 +84,8 @@ namespace Roivas
 		Level* lvl = new Level("TestLevel.json");
 		lvl->Load();
 
-		
+		// Load light data into vectors
+		ProcessLights();
 
 		//Level* lvl2 = new Level("TestLevel2.json");
 		//lvl2->Load();
@@ -211,78 +216,27 @@ namespace Roivas
 		} 
 
 
-		//
-		//
-		// ToDo:
-		// View
-		// Projection
-		// Model
-		//
-		// MatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "MVP");
-		// glUniformMatrix4fv(MatrixID,		1, GL_FALSE, &MVP[0][0]);
-		//
-		// Shader->GetUniform(DepthBiasMVP)
-		// Shader->SetUniform1i()
-		// Shader->SetUniform4fv()
-		// Shader->SetUniform3f()
-		//
-		// shader_program = SHADER_PROGRAMS.at(SH_LightingSSM)
-		//
-		// "MVP", MVP[0][0]
-		// Shader->SetUniform4fv( std::string name, float[4][4]& mat )
-		// {
-		//		glUniformMatrix4fv( glGetUniformLocation(shader_program, name), 1, GL_FALSE, mat )
-		// }
-		//
-		//
+		//uniView		= glGetUniformLocation( SHADERS.at(SH_LightingSSM).ShaderProgram, "view" );
+		//uniProj		= glGetUniformLocation( SHADERS.at(SH_LightingSSM).ShaderProgram, "proj" );
+		//uniModel	= glGetUniformLocation( SHADERS.at(SH_LightingSSM).ShaderProgram, "model" );
+		//uniColor	= glGetUniformLocation( SHADERS.at(SH_LightingSSM).ShaderProgram, "overrideColor" );
+		uniLightPos = glGetUniformLocation( SHADERS.at(current_lighting).ShaderProgram, "lightpos" );
+		uniLightCol = glGetUniformLocation( SHADERS.at(current_lighting).ShaderProgram, "lightcolor" );
+		uniLightRad = glGetUniformLocation( SHADERS.at(current_lighting).ShaderProgram, "lightradius" );
+		uniEyePos	= glGetUniformLocation( SHADERS.at(current_lighting).ShaderProgram, "eyepos" );
 
-
-		uniView		= glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "view" );
-		uniProj		= glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "proj" );
-		uniModel	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "model" );
-		uniColor	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "overrideColor" );
-		uniLightPos = glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "lightpos" );
-		uniLightCol = glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "lightcolor" );
-		uniLightRad = glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "lightradius" );
-		uniEyePos	= glGetUniformLocation( SHADER_PROGRAMS.at(SH_LightingSSM), "eyepos" );
-
-		wireView = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "view" );
-		wireProj = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "proj" );
-		wireModel = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "model" );
-		wireColor = glGetUniformLocation( SHADER_PROGRAMS.at(SH_Wireframe), "wirecolor" );
-
-		// Get a handle for our "myTextureSampler" uniform
-		TextureID  = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "tex_sampler");
-		ShadowMapID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "shadow_sampler");
-		NormalMapID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "norm_sampler");
-
-		// Get a handle for our "MVP" uniform
-		MatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "MVP");
-		ViewMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "V");
-		ProjMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "P");
-		ModelMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "M");
-		DepthBiasID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "DepthBiasMVP");
-
-		depthMatrixID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_ShadowTex), "depthMVP");		
+		//wireView  = glGetUniformLocation( SHADERS.at(SH_Wireframe).ShaderProgram, "view" );
+		//wireProj  = glGetUniformLocation( SHADERS.at(SH_Wireframe).ShaderProgram, "proj" );
+		//wireModel = glGetUniformLocation( SHADERS.at(SH_Wireframe).ShaderProgram, "model" );
+		//wireColor = glGetUniformLocation( SHADERS.at(SH_Wireframe).ShaderProgram, "wirecolor" );
 	
 		// Get a handle for our "LightPosition" uniform
-		lightInvDirID = glGetUniformLocation(SHADER_PROGRAMS.at(SH_LightingSSM), "LightInvDirection_worldspace");
+		//lightInvDirID = glGetUniformLocation(SHADERS.at(SH_LightingSSM).ShaderProgram, "LightInvDirection_worldspace");
 
 		modelMat = mat4();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
-
-	void Graphics::BindForWriting()
-	{
-		glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, shadow_fbo);
-	} 
-
-	void Graphics::BindForReading(GLenum TextureUnit)
-	{
-		glActiveTexture(TextureUnit);
-		glBindTexture(GL_TEXTURE_2D, shadow_tex);
-	} 
 
 	void Graphics::Draw3D(float dt)
 	{
@@ -290,8 +244,52 @@ namespace Roivas
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
+		ProcessLights();
 
-		// Shadows
+		if( shadows_enabled == true )
+			ShadowPass(dt);
+
+		LightingPass(dt);
+
+
+
+
+
+		/*
+		glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
+
+		// Use our shader
+		glUseProgram( SHADERS.at(SH_Screen).ShaderProgram );
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, shadow_tex);
+
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+		glDisableVertexAttribArray(0);
+		*/
+
+
+	}
+
+	void Graphics::ShadowPass(float dt)
+	{
+
+		//DELETE
+		vec3 lightInvDir = LIGHT_LIST.at(0)->Direction;//vec3(1,1,1);
+
+
 		glBindFramebuffer( GL_FRAMEBUFFER, shadow_fbo );
 		glViewport(0, 0, screen_width_i*shadow_size, screen_height_i*shadow_size);
 		
@@ -301,20 +299,10 @@ namespace Roivas
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 
-		glUseProgram( SHADER_PROGRAMS.at(SH_ShadowTex) );
+		glUseProgram( SHADERS.at(SH_ShadowTex).ShaderProgram );
 
-		vec3 lightInvDir = vec3(1,1,1);
-
-		mat4 depthProjectionMatrix = glm::ortho<float>(-20,20,-20,20,-20,10);
-		mat4 depthViewMatrix = glm::lookAt(lightInvDir, vec3(0,0,0), vec3(0,1,0));
-
-		//viewMat = glm::lookAt( cam_pos, cam_pos + cam_look, cam_up );
-		//projMat = glm::perspective( 45.0f, screen_width / screen_height, 0.1f, 1000.0f );
-
-		mat4 depthModelMatrix = mat4(1.0);
-		mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * depthModelMatrix;
-
-		
+		depthProjMat = glm::ortho<float>(-20,20,-20,20,-20,10);
+		depthViewMat = glm::lookAt(lightInvDir, vec3(0,0,0), vec3(0,1,0));
 
 		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
 		{
@@ -336,9 +324,9 @@ namespace Roivas
 
 			modelMat = glm::scale( modelMat, t->Scale );
 
-			depthMVP = depthProjectionMatrix * depthViewMatrix * modelMat;
+			depthMVP = depthProjMat * depthViewMat * modelMat;
 
-			glUniformMatrix4fv(depthMatrixID, 1, GL_FALSE, &depthMVP[0][0]);
+			SHADERS[SH_ShadowTex].SetUniform4fv( "depthMVP", &depthMVP[0][0] );
 
 			glEnableVertexAttribArray(0);
 
@@ -363,7 +351,12 @@ namespace Roivas
 			glDisableVertexAttribArray(0);
 
 		}
+	}
 
+	void Graphics::LightingPass(float dt)
+	{
+		//DELETE
+		vec3 lightInvDir = LIGHT_LIST.at(0)->Direction; //vec3(1,1,1);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
@@ -373,7 +366,7 @@ namespace Roivas
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		
-		glUseProgram( SHADER_PROGRAMS.at(SH_Lighting) );
+		glUseProgram( SHADERS.at(current_lighting).ShaderProgram );
 
 		mat4 biasMatrix(
 			0.5, 0.0, 0.0, 0.0, 
@@ -382,12 +375,8 @@ namespace Roivas
 			0.5, 0.5, 0.5, 1.0
 		);
 
-		mat4 ProjectionMatrix = projMat;
-		mat4 ViewMatrix = viewMat;
-		mat4 ModelMatrix = mat4();
-		mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
-		glm::mat4 ModelViewMatrix = ViewMatrix * ModelMatrix;
+		//glm::mat4 ModelViewMatrix = ViewMatrix * ModelMatrix;
 
 		mat4 depthBiasMVP = biasMatrix*depthMVP;
 
@@ -411,30 +400,40 @@ namespace Roivas
 
 			modelMat = glm::scale( modelMat, t->Scale );
 
-			depthMVP = depthProjectionMatrix * depthViewMatrix * modelMat;
+			depthMVP = depthProjMat * depthViewMat * modelMat;
 			depthBiasMVP = biasMatrix*depthMVP;
 
-			MVP = ProjectionMatrix * ViewMatrix * modelMat;
+			MVP = projMat * viewMat * modelMat;
+			
+			SHADERS[current_lighting].SetUniform1i( "num_lights", num_lights );
+			SHADERS[current_lighting].SetUniform3fArray( "lightpos",	num_lights, light_positions );
+			SHADERS[current_lighting].SetUniform3fArray( "lightcolor",	num_lights, light_colors );
+			SHADERS[current_lighting].SetUniform3fArray( "lightdir",	num_lights, light_directions );
+			SHADERS[current_lighting].SetUniform1fArray( "lightradius", num_lights, light_radius );
+			SHADERS[current_lighting].SetUniform1iArray( "lighttype", num_lights, light_types );
 
-			glUniformMatrix4fv(MatrixID,		1, GL_FALSE, &MVP[0][0]);
-			glUniformMatrix4fv(ModelMatrixID,	1, GL_FALSE, &modelMat[0][0]);
-			glUniformMatrix4fv(ViewMatrixID,	1, GL_FALSE, &ViewMatrix[0][0]);
-			glUniformMatrix4fv(ProjMatrixID,	1, GL_FALSE, &ProjectionMatrix[0][0]);
-			glUniformMatrix4fv(DepthBiasID,		1, GL_FALSE, &depthBiasMVP[0][0]);
+			SHADERS[current_lighting].SetUniform4fv( "MVP", &MVP[0][0] );
+			SHADERS[current_lighting].SetUniform4fv( "M", &modelMat[0][0]);
+			SHADERS[current_lighting].SetUniform4fv( "V", &viewMat[0][0]);
+			SHADERS[current_lighting].SetUniform4fv( "P", &projMat[0][0] );
+			SHADERS[current_lighting].SetUniform4fv( "DepthBiasMVP", &depthBiasMVP[0][0] );
 
-			glUniform3f(lightInvDirID, lightInvDir.x, lightInvDir.y, lightInvDir.z);
+			SHADERS[current_lighting].SetUniform3f( "LightInvDirection_worldspace", lightInvDir );
+
+			SHADERS[current_lighting].SetUniform1i( "normal_mapping", normal_mapping_enabled );
+
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->DiffuseID);
-			glUniform1i(TextureID, 0);
+			SHADERS[current_lighting].SetUniform1i( "tex_sampler", 0 );
 
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->NormalID);
-			glUniform1i(NormalMapID, 1);
+			SHADERS[current_lighting].SetUniform1i( "norm_sampler", 1 );
 
 			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, shadow_tex);
-			glUniform1i(ShadowMapID, 2);
+			SHADERS[current_lighting].SetUniform1i( "shadow_sampler", 2 );
 
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
@@ -485,32 +484,36 @@ namespace Roivas
 			glDisableVertexAttribArray(1);
 			glDisableVertexAttribArray(2);
 		}
+	}
 
+	void Graphics::ProcessLights()
+	{
+		num_lights = LIGHT_LIST.size();
 
-		glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
+		if( num_lights > MAX_LIGHTS )
+			num_lights = MAX_LIGHTS;
 
-		// Use our shader
-		glUseProgram( SHADER_PROGRAMS.at(SH_Screen) );
+		for( unsigned i = 0; i < num_lights; ++i )
+		{
+			vec3 pos = LIGHT_LIST[i]->GetTransform()->Position;
+			light_positions[i*3]	= pos.x;
+			light_positions[i*3+1]	= pos.y;
+			light_positions[i*3+2]	= pos.z;
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, shadow_tex);
+			vec3 color = LIGHT_LIST[i]->Color;
+			light_colors[i*3]		= color.x;
+			light_colors[i*3+1]		= color.y;
+			light_colors[i*3+2]		= color.z;
 
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
-		glVertexAttribPointer(
-			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-		);
+			vec3 dir = LIGHT_LIST[i]->Direction;
+			light_directions[i*3]	= dir.x;
+			light_directions[i*3+1]	= dir.y;
+			light_directions[i*3+2]	= dir.z;
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
-		glDisableVertexAttribArray(0);
+			light_radius[i]	= LIGHT_LIST[i]->Radius;
 
-
+			light_types[i] = LIGHT_LIST[i]->Type;
+		}
 	}
 
 	void Graphics::DrawPP(float dt)
@@ -541,10 +544,10 @@ namespace Roivas
 		{
 			//glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
 		
-			glUseProgram( SHADER_PROGRAMS.at(SH_Wireframe) );		// Activate phong shader
+			glUseProgram( SHADERS.at(SH_Wireframe).ShaderProgram );		// Activate phong shader
 
-			glUniformMatrix4fv( wireView, 1, GL_FALSE, &viewMat[0][0] );
-			glUniformMatrix4fv( wireProj, 1, GL_FALSE, &projMat[0][0] );
+			SHADERS[SH_Wireframe].SetUniform4fv( "view", &viewMat[0][0] );
+			SHADERS[SH_Wireframe].SetUniform4fv( "proj", &projMat[0][0] );
 
 			Transform* t = MODEL_LIST[i]->GetTransform();
 
@@ -566,8 +569,11 @@ namespace Roivas
 
 			modelMat = glm::scale( modelMat, t->Scale );						
 
-			glUniform3f( wireColor, color.x, color.y, color.z );
-			glUniformMatrix4fv( wireModel, 1, GL_FALSE, &modelMat[0][0] );		// Pass the locally transformed model matrix to the scene shader		
+			//glUniform3f( wireColor, color.x, color.y, color.z );
+			//glUniformMatrix4fv( wireModel, 1, GL_FALSE, &modelMat[0][0] );		// Pass the locally transformed model matrix to the scene shader	
+
+			SHADERS[SH_Wireframe].SetUniform3f( "wirecolor", color );
+			SHADERS[SH_Wireframe].SetUniform4fv( "model", &modelMat[0][0] );
 			//glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
 
 			glEnableVertexAttribArray(0);
@@ -613,10 +619,10 @@ namespace Roivas
 
 			//glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
 		
-			glUseProgram( SHADER_PROGRAMS.at(SH_Wireframe) );		// Activate phong shader
+			glUseProgram( SHADERS.at(SH_Wireframe).ShaderProgram );		// Activate phong shader
 
-			glUniformMatrix4fv( wireView, 1, GL_FALSE, MatToArray( viewMat ) );
-			glUniformMatrix4fv( wireProj, 1, GL_FALSE, MatToArray( projMat ) );
+			SHADERS[SH_Wireframe].SetUniform4fv( "view", &viewMat[0][0] );
+			SHADERS[SH_Wireframe].SetUniform4fv( "proj", &projMat[0][0] );
 
 			Transform* t = MODEL_LIST[i]->GetTransform();
 
@@ -633,8 +639,8 @@ namespace Roivas
 			modelMat = glm::scale( modelMat, t->Scale );
 			
 
-			glUniform3f( wireColor, color.x, color.y, color.z );
-			glUniformMatrix4fv( wireModel, 1, GL_FALSE, MatToArray( modelMat ) );		// Pass the locally transformed model matrix to the scene shader		
+			SHADERS[SH_Wireframe].SetUniform3f( "wirecolor", color );
+			SHADERS[SH_Wireframe].SetUniform4fv( "model", &modelMat[0][0] );		
 			
 			//glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
 
@@ -849,7 +855,7 @@ namespace Roivas
 
 			// Try to find a similar vertex in out_XXXX
 			unsigned short index;
-			bool found = getSimilarVertexIndex_fast( packed, VertexToOutIndex, index);
+			bool found = CompareVertex( packed, VertexToOutIndex, index);
 
 			if ( found )
 			{ // A similar vertex is already in the VBO, use it instead !
@@ -875,14 +881,16 @@ namespace Roivas
 
 
 
-	bool Graphics::getSimilarVertexIndex_fast( Attrib & packed, 
-	std::map<Attrib,unsigned short> & VertexToOutIndex,
-	unsigned short & result
-	){
-		std::map<Attrib,unsigned short>::iterator it = VertexToOutIndex.find(packed);
-		if ( it == VertexToOutIndex.end() ){
+	bool Graphics::CompareVertex( Attrib & packed, std::map<Attrib,unsigned short> & vert_out, unsigned short & result )
+	{
+		std::map<Attrib,unsigned short>::iterator it = vert_out.find(packed);
+
+		if ( it == vert_out.end() )
+		{
 			return false;
-		}else{
+		}
+		else
+		{
 			result = it->second;
 			return true;
 		}
@@ -952,16 +960,13 @@ namespace Roivas
 		GLuint vertShader = LoadShader(_vertSource, GL_VERTEX_SHADER);
 		GLuint fragShader = LoadShader(_fragSource, GL_FRAGMENT_SHADER);
 
-		VERTEX_SHADERS.push_back(vertShader);
-		FRAGMENT_SHADERS.push_back(fragShader);
-
 		GLuint shaderProgram = glCreateProgram();
 		glAttachShader( shaderProgram, vertShader );
 		glAttachShader( shaderProgram, fragShader );
 		glBindFragDataLocation( shaderProgram, 0, "outColor" );
 		glLinkProgram( shaderProgram );	
 
-		SHADER_PROGRAMS.push_back(shaderProgram);
+		SHADERS.push_back( Shader(shaderProgram) );
 
 		return shaderProgram;
 	}
@@ -1171,14 +1176,8 @@ namespace Roivas
 
 	Graphics::~Graphics()
 	{
-		for( GLuint i : SHADER_PROGRAMS )
-			glDeleteProgram(i);
-
-		for( GLuint i : VERTEX_SHADERS )
-			glDeleteProgram(i);
-
-		for( GLuint i : FRAGMENT_SHADERS )
-			glDeleteProgram(i);
+		for( Shader s : SHADERS )
+			glDeleteProgram(s.ShaderProgram);
 
 		glDeleteBuffers( 1, &buffCube );
 		glDeleteBuffers( 1, &buffQuad );

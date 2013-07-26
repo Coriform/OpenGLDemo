@@ -16,6 +16,9 @@ namespace Roivas
 
 		// Data
 			vec3 Color;
+			vec3 Direction;
 			float Radius;
+			std::string LightType;
+			LightingType Type;
 	};
 }

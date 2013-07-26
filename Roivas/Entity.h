@@ -22,7 +22,7 @@ namespace Roivas
 			class Transform*	GetTransform()	{ return (class Transform*)Components[CT_Transform]; }
 
 		// Data
-			Component* Components[CT_Total];
+			Component* Components[CT_TOTAL];
 			GLint ID;
 			bool Static;
 			bool Temp;

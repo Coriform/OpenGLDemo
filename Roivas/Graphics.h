@@ -17,8 +17,8 @@
 #include "Transform.h"
 #include "Shader.h"
 
-#define aisgl_min(x,y) (x<y?x:y)
-#define aisgl_max(x,y) (y>x?y:x)
+
+#define MAX_LIGHTS 50
 
 namespace Roivas
 {
@@ -64,7 +64,13 @@ namespace Roivas
 
 			void CameraPitch(float angle);
 			void CameraYaw(float angle);
-			void CameraRoll(float angle);		
+			void CameraRoll(float angle);	
+
+			void ProcessLights();
+
+			GLuint current_lighting;
+			bool shadows_enabled;
+			bool normal_mapping_enabled;
 
 		private:
 			void Draw3D(float dt);
@@ -76,23 +82,20 @@ namespace Roivas
 			void UpdateCamera(float dt);
 			void DrawDebugText(std::string path);
 
+			void ShadowPass(float dt);
+			void LightingPass(float dt);			
+
 			GLint CreateShaderProgram(std::string _vertSource, std::string _fragSource);			
 			void LoadFontmap(std::string path);
 			GLint LoadShader(std::string shader_filename, GLenum shader_type);
-			//void ProcessVertexData(float* vertices, GLuint& mesh, GLuint& buff, unsigned size);
-			void ProcessVertexData(
-				std::vector<glm::vec3>& in_vertices,
+			void ProcessVertexData(	std::vector<glm::vec3>& in_vertices,
 				std::vector<glm::vec2>& in_uvs,
 				std::vector<glm::vec3>& in_normals,	
 				std::vector<unsigned short>& out_indices,
 				std::vector<glm::vec3>& out_vertices,
 				std::vector<glm::vec2>& out_uvs,
 				std::vector<glm::vec3>& out_normals );
-			bool getSimilarVertexIndex_fast( 
-			Attrib & packed, 
-			std::map<Attrib,unsigned short> & VertexToOutIndex,
-			unsigned short & result
-			);
+			bool CompareVertex( Attrib & packed, std::map<Attrib,unsigned short> & VertexToOutIndex,unsigned short & result );
 
 			void SetupFonts();
 			void InitializeCamera();
@@ -102,19 +105,10 @@ namespace Roivas
 			GLuint buffCube, buffQuad;
 			SDL_Window*		window;
 
-			mat4 modelMat, viewMat, projMat, orthoMat;
-			GLuint uniColor, uniModel, uniView, uniProj, uniOrtho;
+			mat4 modelMat, viewMat, projMat, MVP;
+			mat4 depthViewMat, depthProjMat, depthMVP;
+
 			GLuint uniLightPos, uniLightCol, uniLightRad, uniEyePos;
-			GLuint wireColor, wireModel, wireView, wireProj;
-			GLuint TextureID, ShadowMapID, NormalMapID;
-			GLuint MatrixID;
-			GLuint ViewMatrixID;
-			GLuint ProjMatrixID;
-			GLuint ModelMatrixID;
-			GLuint DepthBiasID;
-			GLuint lightInvDirID;
-			GLuint depthMatrixID;
-			
 
 			SDL_Surface *HUD;			
 
@@ -124,19 +118,23 @@ namespace Roivas
 			GLuint shadow_fbo;
 			GLuint shadow_tex;
 
-			void BindForWriting();
-			void BindForReading(GLenum TextureUnit);
 
 			std::map<std::string,GLuint> TEXTURE_LIST;
 			std::map<std::string,MeshData> MESH_LIST;
 			std::vector<GLuint> DEBUG_TEXT;
 			std::vector<GLuint> FONTMAPS;
-			std::vector<GLuint> SHADER_PROGRAMS;
-			std::vector<GLuint> VERTEX_SHADERS;
-			std::vector<GLuint> FRAGMENT_SHADERS;
+			std::vector<Shader> SHADERS;			
 
 			std::vector<Model*> MODEL_LIST;
 			std::vector<Light*> LIGHT_LIST;
+
+			GLuint num_lights;
+
+			float light_positions[MAX_LIGHTS*3];
+			float light_colors[MAX_LIGHTS*3];
+			float light_directions[MAX_LIGHTS*3];
+			float light_radius[MAX_LIGHTS];
+			GLint light_types[MAX_LIGHTS];
 
 			float screen_width, screen_height;
 			GLint screen_width_i, screen_height_i;		
@@ -145,7 +143,6 @@ namespace Roivas
 			std::stringstream debug_string;
 
 			FTGLPixmapFont* font;
-			//FTGLPolygonFont* font;
 
 			const aiScene* scene;
 
