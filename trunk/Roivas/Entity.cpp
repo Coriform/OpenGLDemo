@@ -11,7 +11,7 @@ namespace Roivas
 
 	Entity::Entity(const Entity& e) : Components(), Static(true), Temp(true), ID(-1)
 	{
-		for( unsigned i = 0; i < CT_Total; ++i )
+		for( unsigned i = 0; i < CT_TOTAL; ++i )
 		{
 			if( e.Components[i] == nullptr )
 				continue;
@@ -28,7 +28,7 @@ namespace Roivas
 
 	void Entity::Initialize()
 	{
-		for( unsigned i = 0; i < CT_Total; ++i )
+		for( unsigned i = 0; i < CT_TOTAL; ++i )
 		{
 			if( Components[i] != nullptr )
 				Components[i]->Initialize();

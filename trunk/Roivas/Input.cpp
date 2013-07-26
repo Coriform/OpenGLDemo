@@ -48,6 +48,27 @@ namespace Roivas
 			}
 			break;
 
+			case SDLK_l:
+			{
+				if( pressed )
+				{
+					if( GetSystem(Graphics)->current_lighting == SH_LightingSSM )
+						GetSystem(Graphics)->current_lighting = SH_Lighting;
+					else if( GetSystem(Graphics)->current_lighting == SH_Lighting )
+						GetSystem(Graphics)->current_lighting = SH_LightingSSM;
+				}
+			}
+			break;
+
+			case SDLK_n:
+			{
+				if( pressed )
+				{
+					GetSystem(Graphics)->normal_mapping_enabled = !GetSystem(Graphics)->normal_mapping_enabled ;
+				}
+			}
+			break;
+
 			case SDLK_LEFT:
 				GetSystem(Graphics)->CameraYaw(-1.0f);
 			break;

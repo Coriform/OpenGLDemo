@@ -6,17 +6,29 @@ in vec3 Position;
 in vec3 Normal;
 in vec3 EyeDirection;
 in vec3 LightDirection;
-in vec4 ShadowCoord;
+
 
 // Ouput data
 layout(location = 0) out vec4 outColor;
 
 uniform sampler2D tex_sampler;
 uniform sampler2D norm_sampler;
-uniform sampler2DShadow shadow_sampler;
+
 
 uniform mat4 V;
 uniform mat4 M;
+
+const int max_lights = 50;
+
+uniform vec3 lightpos[max_lights];
+uniform vec3 lightcolor[max_lights];
+uniform vec3 lightdir[max_lights];
+uniform float lightradius[max_lights];
+uniform int lighttype[max_lights];
+
+uniform int num_lights = 0;
+
+uniform bool normal_mapping = true;
 
 
 const vec3 ambient_light = vec3(0.2,0.2,0.2);
@@ -65,26 +77,38 @@ void main()
 {
 	vec4 texColor = texture( tex_sampler, UV );
 
-	vec3 L  = normalize( LightDirection);
-	vec3 E  = normalize( EyeDirection );
-	vec3 N  = normalize( Normal );	
-	vec3 PN = perturb_normal(N, E, UV);	// Normal mapping
-	vec3 R  = reflect(-L,PN);
+	vec3 color = vec3(0,0,0);
 
-	vec3 Ambient	= clamp( texColor.xyz * ambient_light, 0.0, 1.0 );		
-	vec3 Diffuse	= clamp( max( dot( N, L ), 0.0 ), 0.0, 1.0 ) * vec3(1,1,1) * texColor.xyz;              
-	vec3 Specular	= clamp( pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * model_specular;
+	for( int i = 0; i < num_lights; ++i )
+	{
+		vec3 L  = normalize( LightDirection);
+		vec3 E  = normalize( EyeDirection );
+		vec3 N  = normalize( Normal );	
+		vec3 PN = perturb_normal(N, E, UV);	// Normal mapping
 
+		if( normal_mapping == false )
+			PN = N;
 
-	// Shadows
-	float visibility=1.0;
+		float dist = length( Position - lightpos[i] );				
+		float att = 1.0 - pow(dist/lightradius[i], 2); 
 
-	for (int i=0;i<4;i++)
-	{		
-		visibility -= 0.2*(1.0-texture( shadow_sampler, vec3(ShadowCoord.xy,  (ShadowCoord.z-bias)/ShadowCoord.w) ));
+		if( lighttype[i] == 2 )
+		{
+			L = normalize( (V* vec4(lightpos[i] - Position,0)).xyz );
+		}
+		else if( lighttype[i] == 0 )
+		{
+			att = 1.0f;
+		}
+
+		vec3 R  = reflect(-L,PN);
+
+		vec3 Ambient	= clamp( texColor.xyz * ambient_light, 0.0, 1.0 );		
+		vec3 Diffuse	= clamp( max( dot( N, L ), 0.0 ), 0.0, 1.0 ) * lightcolor[i] * texColor.xyz;              
+		vec3 Specular	= clamp( pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * model_specular;
+
+		color += ((Ambient + Diffuse + Specular) * att) / num_lights;
 	}
-
-	vec3 color = Ambient + visibility * Diffuse + visibility * Specular;
 
 	outColor = vec4(color,1);
 }
