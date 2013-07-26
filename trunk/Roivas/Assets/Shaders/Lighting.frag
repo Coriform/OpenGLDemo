@@ -89,8 +89,9 @@ void main()
 		if( normal_mapping == false )
 			PN = N;
 
-		float dist = length( Position - lightpos[i] );				
-		float att = 1.0 - pow(dist/lightradius[i], 2); 
+		float dist = length( Position - lightpos[i] );	
+		float d = max(dist - 4.0, 0) / 4.0 + 1.0;			
+		float att = max( (1.0 / (d*d) - bias) / (1 - bias), 0 );
 
 		if( lighttype[i] == 2 )
 		{
