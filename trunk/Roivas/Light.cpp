@@ -7,8 +7,10 @@ namespace Roivas
 		Color(vec3(1.0f,1.0f,1.0f)), 
 		Direction(vec3(0.0f,-1.0f,0.0f)), 
 		Radius(10.0f), 
-		LightType("Directional"),
-		Type(LT_Directional), 
+		Cone(0.1f),
+		ShadowMap(0),
+		LightType("DirectionLight"),
+		Type(LT_DirectionLight), 
 		Component(CT_Light)
 	{
 
@@ -18,6 +20,8 @@ namespace Roivas
 		Color(l.Color), 
 		Direction(l.Direction), 
 		Radius(l.Radius), 
+		Cone(l.Cone),
+		ShadowMap(0),
 		LightType(l.LightType),
 		Type(l.Type), 
 		Component(CT_Light)
@@ -44,7 +48,8 @@ namespace Roivas
 	{
 		fio.Read(root["Color"], Color);
 		fio.Read(root["Direction"], Direction);
-		fio.Read(root["Radius"], Radius);		
+		fio.Read(root["Radius"], Radius);	
+		fio.Read(root["Cone"], Cone);
 
 		Direction = glm::normalize(Direction);
 
@@ -57,6 +62,6 @@ namespace Roivas
 		else if( LightType == "CapsuleLight" )
 			Type = LT_CapsuleLight;
 		else
-			Type = LT_Directional;		
+			Type = LT_DirectionLight;		
 	}
 }

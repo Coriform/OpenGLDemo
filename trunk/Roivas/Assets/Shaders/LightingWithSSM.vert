@@ -10,7 +10,6 @@ out vec2 UV;
 out vec3 Position;
 out vec3 Normal;
 out vec3 EyeDirection;
-out vec3 LightDirection;
 out vec4 ShadowCoord;
 
 // Values that stay constant for the whole mesh.
@@ -35,7 +34,6 @@ void main()
 	ShadowCoord = DepthBiasMVP * vec4(position,1);
 
 	EyeDirection = vec3(0,0,0) - ( V * M * vec4(position,1)).xyz;
-	LightDirection = (V*vec4(LightInvDirection_worldspace,0)).xyz;
 
 	UV = uv;
 }

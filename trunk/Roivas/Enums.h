@@ -47,7 +47,7 @@ enum ShaderName
 // Types of lights
 enum LightingType
 {
-	LT_Directional,
+	LT_DirectionLight,
 	LT_SpotLight,
 	LT_PointLight,
 	LT_CapsuleLight,

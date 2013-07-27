@@ -5,7 +5,6 @@ in vec2 UV;
 in vec3 Position;
 in vec3 Normal;
 in vec3 EyeDirection;
-in vec3 LightDirection;
 
 
 // Ouput data
@@ -24,6 +23,7 @@ uniform vec3 lightpos[max_lights];
 uniform vec3 lightcolor[max_lights];
 uniform vec3 lightdir[max_lights];
 uniform float lightradius[max_lights];
+uniform float lightcone[max_lights];
 uniform int lighttype[max_lights];
 
 uniform int num_lights = 0;
@@ -31,7 +31,7 @@ uniform int num_lights = 0;
 uniform bool normal_mapping = true;
 
 
-const vec3 ambient_light = vec3(0.2,0.2,0.2);
+const vec3 ambient_light = vec3(0.1,0.1,0.1);
 const vec3 model_specular = vec3(1,1,1);
 const float shininess = 30.0;
 const float radius = 10.0;
@@ -73,14 +73,19 @@ vec3 perturb_normal( vec3 N, vec3 V, vec2 texcoord )
     return normalize(TBN * map);
 }
 
+
+
 void main()
 {
 	vec4 texColor = texture( tex_sampler, UV );
 
-	vec3 color = vec3(0,0,0);
+	vec3 Ambient = clamp( texColor.xyz * ambient_light, 0.0, 1.0 );	
+	vec3 color = Ambient;
 
 	for( int i = 0; i < num_lights; ++i )
 	{
+		vec3 LightDirection = (V*vec4(lightdir[i],0)).xyz;
+
 		vec3 L  = normalize( LightDirection);
 		vec3 E  = normalize( EyeDirection );
 		vec3 N  = normalize( Normal );	
@@ -90,26 +95,53 @@ void main()
 			PN = N;
 
 		float dist = length( Position - lightpos[i] );	
-		float d = max(dist - 4.0, 0) / 4.0 + 1.0;			
+		float d = max(dist - lightradius[i], 0) / lightradius[i] + 1.0;				
 		float att = max( (1.0 / (d*d) - bias) / (1 - bias), 0 );
 
-		if( lighttype[i] == 2 )
+		if( lighttype[i] != 0 )
 		{
 			L = normalize( (V* vec4(lightpos[i] - Position,0)).xyz );
 		}
-		else if( lighttype[i] == 0 )
+		else
 		{
 			att = 1.0f;
 		}
 
 		vec3 R  = reflect(-L,PN);
-
-		vec3 Ambient	= clamp( texColor.xyz * ambient_light, 0.0, 1.0 );		
+	
 		vec3 Diffuse	= clamp( max( dot( N, L ), 0.0 ), 0.0, 1.0 ) * lightcolor[i] * texColor.xyz;              
 		vec3 Specular	= clamp( pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * model_specular;
 
-		color += ((Ambient + Diffuse + Specular) * att) / num_lights;
+		if( lighttype[i] == 1 )
+		{
+			float cutoff = 0.99;
+			float falloff = cutoff - clamp( lightcone[i], 0.0, 1.0 );
+
+			float angle = dot(L, normalize(LightDirection));
+
+			float outer = falloff;
+			float inner = cutoff;
+
+			float angle_diff = inner - outer;	
+
+			float spot = clamp((angle - outer) /  angle_diff, 0.0, 1.0);
+
+			float lambertTerm = max( dot(PN,L), 0.0);
+			if( lambertTerm > 0.0 )
+			{
+				color += (Diffuse * lambertTerm * spot * att) / num_lights;
+				color += (Specular * spot * att) / num_lights;
+			}
+		}
+		else
+		{
+			color += ((Diffuse + Specular) * att) / num_lights;
+		}
 	}
+
+
+
+	
 
 	outColor = vec4(color,1);
 }

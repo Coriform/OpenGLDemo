@@ -13,6 +13,7 @@ namespace Roivas
 			void SetUniform1fArray( std::string name, int size, const float* val );
 			void SetUniform1i( std::string name, const int val );
 			void SetUniform1iArray( std::string name, int size, const GLint* val );
+			void SetUniform1uiArray( std::string name, int size, const GLuint* val );
 
 		// Data
 			GLuint ShaderProgram;
