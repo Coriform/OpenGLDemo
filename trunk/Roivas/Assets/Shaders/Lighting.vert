@@ -11,6 +11,7 @@ out vec3 Position;
 out vec3 Normal;
 out vec3 EyeDirection;
 out vec4 ShadowCoord;
+out float Depth;
 
 // Values that stay constant for the whole mesh.
 uniform mat4 MVP;
@@ -36,5 +37,7 @@ void main()
 	EyeDirection = vec3(0,0,0) - ( V * M * vec4(position,1)).xyz;
 
 	UV = uv;
+
+	Depth = -(V * M * vec4(position,1)).z;
 }
 

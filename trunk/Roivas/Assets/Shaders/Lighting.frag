@@ -1,32 +1,27 @@
 #version 330 core
 
+// Ouput data
+layout(location = 0) out vec4 outColor;
+
 // Interpolated values from the vertex shaders
 in vec2 UV;
 in vec3 Position;
 in vec3 Normal;
 in vec3 EyeDirection;
-
-
-// Ouput data
-layout(location = 0) out vec4 outColor;
-
-const int max_lights = 50;
+in float Depth;
 
 uniform sampler2D tex_sampler;
 uniform sampler2D norm_sampler;
 
-
 uniform mat4 V;
 uniform mat4 M;
 
-uniform int which_light = 0;
-
-uniform vec3 lightpos[max_lights];
-uniform vec3 lightcolor[max_lights];
-uniform vec3 lightdir[max_lights];
-uniform float lightradius[max_lights];
-uniform float lightcone[max_lights];
-uniform int lighttype[max_lights];
+uniform vec3 lightpos;
+uniform vec3 lightcolor;
+uniform vec3 lightdir;
+uniform float lightradius;
+uniform float lightcone;
+uniform int lighttype;
 
 uniform int num_lights = 0;
 
@@ -36,7 +31,6 @@ uniform bool normal_mapping = true;
 const vec3 ambient_light = vec3(0.1,0.1,0.1);
 const vec3 model_specular = vec3(1,1,1);
 const float shininess = 30.0;
-const float radius = 10.0;
 
 const float bias = 0.01;
 
@@ -75,74 +69,65 @@ vec3 perturb_normal( vec3 N, vec3 V, vec2 texcoord )
     return normalize(TBN * map);
 }
 
-
-
 void main()
 {
 	vec4 texColor = texture( tex_sampler, UV );
 
-	vec3 Ambient = clamp( texColor.xyz * ambient_light, 0.0, 1.0 );	
+	vec3 Ambient = clamp( texColor.xyz * ambient_light, 0.0, 1.0 ) / num_lights;	
 	vec3 color = Ambient;
 
-	int i = which_light;
-	//for( int i = 0; i < num_lights; ++i )
-	//{
-		vec3 LightDirection = (V*vec4(lightdir[i],0)).xyz;
+	vec3 LightDirection = (V*vec4(lightdir,0)).xyz;
 
-		vec3 L  = normalize( LightDirection);
-		vec3 E  = normalize( EyeDirection );
-		vec3 N  = normalize( Normal );	
-		vec3 PN = perturb_normal(N, E, UV);	// Normal mapping
+	vec3 L  = normalize( LightDirection);
+	vec3 E  = normalize( EyeDirection );
+	vec3 N  = normalize( Normal );	
+	vec3 PN = perturb_normal(N, E, UV);	// Normal mapping
 
-		if( normal_mapping == false )
-			PN = N;
+	if( normal_mapping == false )
+		PN = N;
 
-		if( lighttype[i] != 0 )
-			L = normalize( (V* vec4(lightpos[i] - Position,0)).xyz );
+	if( lighttype != 0 )
+		L = normalize( (V* vec4(lightpos - Position,0)).xyz );
 
-		float dist = length( Position - lightpos[i] );	
-		float d = max(dist - lightradius[i], 0) / lightradius[i] + 1.0;				
-		float att = max( (1.0 / (d*d*d) - bias) / (1 - bias), 0 );
+	float dist = length( Position - lightpos );	
+	float d = max(dist - lightradius, 0) / lightradius + 1.0;				
+	float att = max( (1.0 / (d*d*d) - bias) / (1 - bias), 0 );
 
-		vec3 R  = reflect(-L,PN);
+	vec3 R  = reflect(-L,PN);
 	
-		vec3 Diffuse	= clamp( max( dot( N, L ), 0.0 ), 0.0, 1.0 ) * lightcolor[i] * texColor.xyz;              
-		vec3 Specular	= clamp( pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * model_specular;
+	vec3 Diffuse	= clamp( max( dot( N, L ), 0.0 ), 0.0, 1.0 ) * lightcolor * texColor.xyz;              
+	vec3 Specular	= clamp( pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * model_specular;
 
-		if( lighttype[i] == 1 )
+	if( lighttype == 1 )
+	{
+		float cutoff = 0.99;
+		float falloff = cutoff - clamp( lightcone, 0.0, 1.0 );
+
+		float angle = dot(L, normalize(LightDirection));
+
+		float outer = falloff;
+		float inner = cutoff;
+
+		float angle_diff = inner - outer;	
+
+		float spot = clamp((angle - outer) /  angle_diff, 0.0, 1.0);
+
+		float lambertTerm = max( dot(PN,L), 0.0);
+		if( lambertTerm > 0.0 )
 		{
-			float cutoff = 0.99;
-			float falloff = cutoff - clamp( lightcone[i], 0.0, 1.0 );
-
-			float angle = dot(L, normalize(LightDirection));
-
-			float outer = falloff;
-			float inner = cutoff;
-
-			float angle_diff = inner - outer;	
-
-			float spot = clamp((angle - outer) /  angle_diff, 0.0, 1.0);
-
-			float lambertTerm = max( dot(PN,L), 0.0);
-			if( lambertTerm > 0.0 )
-			{
-				color += (Diffuse * lambertTerm * spot * att) / num_lights;
-				color += (Specular * spot * att) / num_lights;
-			}
+			color += (Diffuse * lambertTerm * spot * att);
+			color += (Specular * spot * att);
 		}
-		else if( lighttype[i] == 2 )
-		{
-			color += ((Diffuse + Specular) * att) / num_lights;
-		}
-		else
-		{
-			color += (Diffuse + Specular) / num_lights;
-		}
-	//}
+	}
+	else if( lighttype == 2 )
+	{
+		color += ((Diffuse + Specular) * att);
+	}
+	else
+	{
+		color += (Diffuse + Specular);
+	}
 
-
-
-	
-
-	outColor = vec4(color,1);
+	//outColor = vec4(color,1);
+	outColor = vec4(Depth)/100;
 }

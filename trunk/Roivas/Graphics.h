@@ -130,14 +130,6 @@ namespace Roivas
 
 			GLuint num_lights;
 
-			float light_positions[MAX_LIGHTS*3];
-			float light_colors[MAX_LIGHTS*3];
-			float light_directions[MAX_LIGHTS*3];
-			float light_radius[MAX_LIGHTS];
-			float light_cone[MAX_LIGHTS];
-			GLint light_types[MAX_LIGHTS];
-			GLuint shadow_maps[MAX_LIGHTS];
-
 			float screen_width, screen_height;
 			GLint screen_width_i, screen_height_i;		
 

@@ -22,6 +22,11 @@ namespace Roivas
 		glUniform3fv( glGetUniformLocation(ShaderProgram, name.c_str()), size, val );
 	}
 
+	void Shader::SetUniform1f( std::string name, const float val )
+	{
+		glUniform1f( glGetUniformLocation(ShaderProgram, name.c_str()), val );
+	}
+
 	void Shader::SetUniform1fArray( std::string name, int size, const float* val )
 	{
 		glUniform1fv( glGetUniformLocation(ShaderProgram, name.c_str()), size, val );
