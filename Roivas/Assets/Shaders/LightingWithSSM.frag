@@ -1,4 +1,4 @@
-#version 330 core
+﻿#version 330 core
 
 // Ouput data
 layout(location = 0) out vec4 outColor;
@@ -19,6 +19,8 @@ uniform sampler2DShadow shadow_sampler;
 
 uniform mat4 V;
 uniform mat4 M;
+
+uniform int which_light = 0;
 
 uniform vec3 lightpos[max_lights];
 uniform vec3 lightcolor[max_lights];
@@ -88,8 +90,9 @@ void main()
 	vec3 Ambient = clamp( texColor.xyz * ambient_light, 0.0, 1.0 );	
 	vec3 color = Ambient;
 
-	for( int i = 0; i < num_lights; ++i )
-	{
+	int i = which_light;
+	//for( int i = 0; i < num_lights; ++i )
+	//{
 		vec3 LightDirection = (V*vec4(lightdir[i],0)).xyz;
 
 		vec3 L  = normalize( LightDirection);
@@ -100,22 +103,15 @@ void main()
 		if( normal_mapping == false )
 			PN = N;
 
+		if( lighttype[i] != 0 )
+			L = normalize( (V* vec4(lightpos[i] - Position,0)).xyz );
+
 		float dist = length( Position - lightpos[i] );	
 		float d = max(dist - lightradius[i], 0) / lightradius[i] + 1.0;			
-		float att = max( (1.0 / (d*d) - bias) / (1 - bias), 0 );
-
-		if( lighttype[i] != 0 )
-		{
-			L = normalize( (V* vec4(lightpos[i] - Position,0)).xyz );
-		}
-		else
-		{
-			att = 1.0f;
-		}
+		float att = max( (1.0 / (d*d) - bias) / (1 - bias), 0 );		
 
 		vec3 R  = reflect(-L,PN);
 
-		vec3 Ambient	= clamp( texColor.xyz * ambient_light, 0.0, 1.0 );		
 		vec3 Diffuse	= clamp( max( dot( N, L ), 0.0 ), 0.0, 1.0 ) * lightcolor[i] * texColor.xyz;              
 		vec3 Specular	= clamp( pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * model_specular;
 
@@ -123,9 +119,10 @@ void main()
 		float visibility=1.0;
 
 		for( int j = 0; j < 4; ++j )
-		{	
-			float shadow_sam = texture( shadow_sampler, vec3(ShadowCoord.xy + poissonDisk[j]/1000.0,  (ShadowCoord.z-bias)/ShadowCoord.w) );
-			visibility -= 0.2*(1.0-shadow_sam);
+		{
+			//if ( texture( shadowMap, (ShadowCoord.xy/ShadowCoord.w) ).z  <  (ShadowCoord.z-bias)/ShadowCoord.w )
+			float shadow_sam = texture( shadow_sampler, vec3(ShadowCoord.xy/ShadowCoord.w + poissonDisk[j]/1000.0,  (ShadowCoord.z-bias)/ShadowCoord.w) );
+			visibility -= 0.3*(1.0-shadow_sam);
 		}
 
 		if( lighttype[i] == 1 )
@@ -149,14 +146,20 @@ void main()
 				color += (visibility * Specular * spot * att) / num_lights;
 			}
 		}
+		else if( lighttype[i] == 2 )
+		{
+			color += ((1 * Diffuse + visibility * Specular) * att) / num_lights;
+		}
 		else
 		{
-			color += ((visibility * Diffuse + visibility * Specular) * att) / num_lights;
+			color += (visibility * Diffuse + visibility * Specular) / num_lights;
 		}
 
 
 		
-	}
+	//}
+
+	color = max( color, Ambient);
 
 	outColor = vec4(color,1);
 }

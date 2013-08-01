@@ -69,6 +69,15 @@ namespace Roivas
 			}
 			break;
 
+			case SDLK_k:
+			{
+				if( pressed )
+				{
+					GetSystem(Graphics)->wireframe_enabled = !GetSystem(Graphics)->wireframe_enabled ;
+				}
+			}
+			break;
+
 			case SDLK_LEFT:
 				GetSystem(Graphics)->CameraYaw(-1.0f);
 			break;

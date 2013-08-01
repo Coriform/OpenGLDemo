@@ -71,6 +71,7 @@ namespace Roivas
 			GLuint current_lighting;
 			bool shadows_enabled;
 			bool normal_mapping_enabled;
+			bool wireframe_enabled;
 
 		private:
 			void Draw3D(float dt);
@@ -83,7 +84,8 @@ namespace Roivas
 			void DrawDebugText(std::string path);
 
 			void ShadowPass(float dt);
-			void LightingPass(float dt);			
+			void LightingPass(float dt);	
+			void ScreenPass(float dt);
 
 			GLint CreateShaderProgram(std::string _vertSource, std::string _fragSource);			
 			void LoadFontmap(std::string path);
@@ -106,15 +108,15 @@ namespace Roivas
 			SDL_Window*		window;
 
 			mat4 modelMat, viewMat, projMat, MVP;
-			mat4 depthViewMat, depthProjMat, depthMVP;
+			mat4 depthViewMat[MAX_LIGHTS], depthProjMat[MAX_LIGHTS], depthMVP;
 
 			SDL_Surface *HUD;			
 
 			GLuint screen_fbo;
 			GLuint screen_tex;
 
-			GLuint shadow_fbo;
-			GLuint shadow_tex;
+			GLuint shadow_fbo[MAX_LIGHTS];
+			GLuint shadow_tex[MAX_LIGHTS];
 
 
 			std::map<std::string,GLuint> TEXTURE_LIST;
