@@ -128,7 +128,7 @@ namespace Roivas
 			DrawWireframe(dt);
 
 		// HUD and other 2D drawing
-		Draw2D(dt);	
+		//Draw2D(dt);	
 
 		// Draw framerate
 		DrawDebugText(framerate);	
@@ -252,8 +252,6 @@ namespace Roivas
 
 		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
 		glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
-
-		//glEnable(GL_CULL_FACE);
 		glCullFace(GL_NONE);
 
 		// Use our shader
@@ -285,9 +283,7 @@ namespace Roivas
 		
 		glEnable( GL_DEPTH_TEST );
 		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK); // Cull back-facing triangles -> draw only front-facing triangles
-
-		
+		glCullFace(GL_BACK); // Cull back-facing triangles -> draw only front-facing triangles		
 		
 
 		glUseProgram( SHADERS.at(SH_ShadowTex).ShaderProgram );
@@ -306,7 +302,7 @@ namespace Roivas
 				depthProjMat[j] = glm::ortho<float>(-20,20,-20,20,-20,10);
 				depthViewMat[j] = glm::lookAt(LIGHT_LIST.at(j)->Direction, vec3(0,0,0), vec3(0,1,0));
 			}
-			else if( LIGHT_LIST.at(j)->Type = LT_SpotLight )
+			else if( LIGHT_LIST.at(j)->Type == LT_SpotLight )
 			{
 				depthProjMat[j] = glm::perspective<float>(45.0f, 1.0f, 0.95f, 50.0f);
 				depthViewMat[j] = glm::lookAt(pos, pos-LIGHT_LIST.at(j)->Direction, glm::vec3(0,1,0));
@@ -388,6 +384,8 @@ namespace Roivas
 
 		for( unsigned j = 0; j < LIGHT_LIST.size(); ++j )
 		{	
+			Light* light = LIGHT_LIST[j];
+
 			if( j > 0 )
 			{
 				glEnable(GL_BLEND);
@@ -425,13 +423,13 @@ namespace Roivas
 
 				MVP = projMat * viewMat * modelMat;
 			
-				SHADERS[current_lighting].SetUniform1i( "num_lights", num_lights );
-				SHADERS[current_lighting].SetUniform3fArray( "lightpos",	num_lights, light_positions );
-				SHADERS[current_lighting].SetUniform3fArray( "lightcolor",	num_lights, light_colors );
-				SHADERS[current_lighting].SetUniform3fArray( "lightdir",	num_lights, light_directions );
-				SHADERS[current_lighting].SetUniform1fArray( "lightradius", num_lights, light_radius );
-				SHADERS[current_lighting].SetUniform1fArray( "lightcone",  num_lights, light_cone );
-				SHADERS[current_lighting].SetUniform1iArray( "lighttype", num_lights, light_types );
+				SHADERS[current_lighting].SetUniform1i( "num_lights",	num_lights );
+				SHADERS[current_lighting].SetUniform3f( "lightpos",		light->GetTransform()->Position );
+				SHADERS[current_lighting].SetUniform3f( "lightcolor",	light->Color );
+				SHADERS[current_lighting].SetUniform3f( "lightdir",		light->Direction );
+				SHADERS[current_lighting].SetUniform1f( "lightradius",	light->Radius);
+				SHADERS[current_lighting].SetUniform1f( "lightcone",	light->Cone );
+				SHADERS[current_lighting].SetUniform1i( "lighttype",	light->Type );
 
 				SHADERS[current_lighting].SetUniform4fv( "MVP", &MVP[0][0] );
 				SHADERS[current_lighting].SetUniform4fv( "M", &modelMat[0][0]);
@@ -537,31 +535,6 @@ namespace Roivas
 
 		if( num_lights > MAX_LIGHTS )
 			num_lights = MAX_LIGHTS;
-
-		for( unsigned i = 0; i < num_lights; ++i )
-		{
-			vec3 pos = LIGHT_LIST[i]->GetTransform()->Position;
-			light_positions[i*3]	= pos.x;
-			light_positions[i*3+1]	= pos.y;
-			light_positions[i*3+2]	= pos.z;
-
-			vec3 color = LIGHT_LIST[i]->Color;
-			light_colors[i*3]		= color.x;
-			light_colors[i*3+1]		= color.y;
-			light_colors[i*3+2]		= color.z;
-
-			vec3 dir = LIGHT_LIST[i]->Direction;
-			light_directions[i*3]	= dir.x;
-			light_directions[i*3+1]	= dir.y;
-			light_directions[i*3+2]	= dir.z;
-
-			light_radius[i]	= LIGHT_LIST[i]->Radius;
-			light_cone[i] = LIGHT_LIST[i]->Cone;
-
-			light_types[i] = LIGHT_LIST[i]->Type;
-
-			shadow_maps[i] = LIGHT_LIST[i]->ShadowMap;
-		}
 	}
 
 	void Graphics::DrawPP(float dt)
@@ -814,7 +787,7 @@ namespace Roivas
 			return;
 		}
 
-		std::cout << "Import of scene succeeded: <" << path.c_str() << ">" << std::endl;
+		std::cout << "Import of mesh succeeded: <" << path.c_str() << ">" << std::endl;
 
 		// For each mesh
 		for( unsigned k = 0; k < scene->mNumMeshes; ++k )
