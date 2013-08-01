@@ -17,8 +17,9 @@ namespace Roivas
 		pitch(0.0f),
 		accum(0.0f),
 		varray_size(8),
-		current_lighting(SH_Lighting),
+		current_lighting(SH_LightingSSM),
 		shadows_enabled(true),
+		wireframe_enabled(false),
 		normal_mapping_enabled(true),
 		shadow_size(1),
 		SelectedEntity(nullptr)
@@ -122,13 +123,18 @@ namespace Roivas
 
 		// Debug drawing
 		DrawEditor(dt);
-		//DrawWireframe(dt);
+
+		if( wireframe_enabled == true )
+			DrawWireframe(dt);
 
 		// HUD and other 2D drawing
 		Draw2D(dt);	
 
 		// Draw framerate
 		DrawDebugText(framerate);	
+
+		// Draw screen texture to screen
+		ScreenPass(dt);
 
 		// Clears debug text from previous frame; might change this
 		DEBUG_TEXT.clear();
@@ -190,20 +196,24 @@ namespace Roivas
 
 
 		// Shadow map fbo
-		glGenFramebuffers(1, &shadow_fbo);    
-		glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo);
+		glGenFramebuffers(MAX_LIGHTS, shadow_fbo);    
+		glGenTextures(MAX_LIGHTS, shadow_tex);				
 
-		glGenTextures(1, &shadow_tex);
-		glBindTexture(GL_TEXTURE_2D, shadow_tex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, screen_width_i*shadow_size, screen_height_i*shadow_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+		for( unsigned i = 0; i < MAX_LIGHTS; ++i )
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo[i]);
+
+			glBindTexture(GL_TEXTURE_2D, shadow_tex[i]);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, screen_width_i*shadow_size, screen_height_i*shadow_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 	
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadow_tex, 0);
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadow_tex[i], 0);
+		}
 
 		glDrawBuffer(GL_NONE);
 		glReadBuffer(GL_NONE);
@@ -225,6 +235,8 @@ namespace Roivas
 	{
 		accum += dt;
 
+		glEnable( GL_DEPTH_TEST );
+
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
 		if( shadows_enabled == true )
@@ -234,18 +246,21 @@ namespace Roivas
 
 		LightingPass(dt);
 
+		
 
 
 
-
-		/*
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
 		glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
+
+		//glEnable(GL_CULL_FACE);
+		glCullFace(GL_NONE);
 
 		// Use our shader
 		glUseProgram( SHADERS.at(SH_Screen).ShaderProgram );
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, shadow_tex);
+		glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(0)->ShadowMap);
 
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
@@ -261,25 +276,18 @@ namespace Roivas
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
 		glDisableVertexAttribArray(0);
-		*/
-
-
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	}
 
 	void Graphics::ShadowPass(float dt)
-	{
-
-		//DELETE
-		vec3 lightInvDir = LIGHT_LIST.at(0)->Direction;//vec3(1,1,1);
-
-
-		glBindFramebuffer( GL_FRAMEBUFFER, shadow_fbo );
+	{		
 		glViewport(0, 0, screen_width_i*shadow_size, screen_height_i*shadow_size);
 		
+		glEnable( GL_DEPTH_TEST );
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK); // Cull back-facing triangles -> draw only front-facing triangles
 
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
 		
 
 		glUseProgram( SHADERS.at(SH_ShadowTex).ShaderProgram );
@@ -287,8 +295,22 @@ namespace Roivas
 
 		for( unsigned j = 0; j < LIGHT_LIST.size(); ++j )
 		{
-			depthProjMat = glm::ortho<float>(-20,20,-20,20,-20,10);
-			depthViewMat = glm::lookAt(LIGHT_LIST.at(0)->Direction, vec3(0,0,0), vec3(0,1,0));
+			glBindFramebuffer( GL_FRAMEBUFFER, shadow_fbo[j] );
+
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			vec3 pos = LIGHT_LIST.at(j)->GetTransform()->Position;
+
+			if( LIGHT_LIST.at(j)->Type == LT_DirectionLight )
+			{
+				depthProjMat[j] = glm::ortho<float>(-20,20,-20,20,-20,10);
+				depthViewMat[j] = glm::lookAt(LIGHT_LIST.at(j)->Direction, vec3(0,0,0), vec3(0,1,0));
+			}
+			else if( LIGHT_LIST.at(j)->Type = LT_SpotLight )
+			{
+				depthProjMat[j] = glm::perspective<float>(45.0f, 1.0f, 0.95f, 50.0f);
+				depthViewMat[j] = glm::lookAt(pos, pos-LIGHT_LIST.at(j)->Direction, glm::vec3(0,1,0));
+			}
 
 			for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
 			{
@@ -310,7 +332,7 @@ namespace Roivas
 
 				modelMat = glm::scale( modelMat, t->Scale );
 
-				depthMVP = depthProjMat * depthViewMat * modelMat;
+				depthMVP = depthProjMat[j] * depthViewMat[j] * modelMat;
 
 				SHADERS[SH_ShadowTex].SetUniform4fv( "depthMVP", &depthMVP[0][0] );
 
@@ -337,16 +359,17 @@ namespace Roivas
 				glDisableVertexAttribArray(0);
 			}
 
-			LIGHT_LIST.at(j)->ShadowMap = shadow_tex;
+			LIGHT_LIST.at(j)->ShadowMap = shadow_tex[j];
 		}
 	}
 
 	void Graphics::LightingPass(float dt)
 	{
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
 		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
 
+		glEnable( GL_DEPTH_TEST );
 		glEnable( GL_CULL_FACE );
 		glCullFace(GL_BACK);
 
@@ -361,112 +384,151 @@ namespace Roivas
 			0.5, 0.5, 0.5, 1.0
 		);
 
-
-		//glm::mat4 ModelViewMatrix = ViewMatrix * ModelMatrix;
-
 		mat4 depthBiasMVP = biasMatrix*depthMVP;
 
-		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
-		{
-			Transform* t = MODEL_LIST[i]->GetTransform();
-
-			if( t == nullptr )
-				continue;
-
-			modelMat = mat4();			
-
-			modelMat = glm::translate( modelMat, t->Position );
-
-			if( MODEL_LIST[i]->Owner->GetBehavior() != nullptr )
-				modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );	
-
-			modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
-			modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
-			modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
-
-			modelMat = glm::scale( modelMat, t->Scale );
-
-			depthMVP = depthProjMat * depthViewMat * modelMat;
-			depthBiasMVP = biasMatrix*depthMVP;
-
-			MVP = projMat * viewMat * modelMat;
-			
-			SHADERS[current_lighting].SetUniform1i( "num_lights", num_lights );
-			SHADERS[current_lighting].SetUniform3fArray( "lightpos",	num_lights, light_positions );
-			SHADERS[current_lighting].SetUniform3fArray( "lightcolor",	num_lights, light_colors );
-			SHADERS[current_lighting].SetUniform3fArray( "lightdir",	num_lights, light_directions );
-			SHADERS[current_lighting].SetUniform1fArray( "lightradius", num_lights, light_radius );
-			SHADERS[current_lighting].SetUniform1fArray( "lightcone",  num_lights, light_cone );
-			SHADERS[current_lighting].SetUniform1iArray( "lighttype", num_lights, light_types );
-
-			SHADERS[current_lighting].SetUniform4fv( "MVP", &MVP[0][0] );
-			SHADERS[current_lighting].SetUniform4fv( "M", &modelMat[0][0]);
-			SHADERS[current_lighting].SetUniform4fv( "V", &viewMat[0][0]);
-			SHADERS[current_lighting].SetUniform4fv( "P", &projMat[0][0] );
-			SHADERS[current_lighting].SetUniform4fv( "DepthBiasMVP", &depthBiasMVP[0][0] );
-			SHADERS[current_lighting].SetUniform1i( "normal_mapping", normal_mapping_enabled );
-
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->DiffuseID);
-			SHADERS[current_lighting].SetUniform1i( "tex_sampler", 0 );
-
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->NormalID);
-			SHADERS[current_lighting].SetUniform1i( "norm_sampler", 1 );
+		for( unsigned j = 0; j < LIGHT_LIST.size(); ++j )
+		{	
+			if( j > 0 )
+			{
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_ONE, GL_ONE);
+				glDepthFunc(GL_LEQUAL);
+			}
 
 			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, shadow_tex);
+			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->ShadowMap);
 			SHADERS[current_lighting].SetUniform1i( "shadow_sampler", 2 );
+			SHADERS[current_lighting].SetUniform1i( "which_light", j );
 
-			glEnableVertexAttribArray(0);
-			glEnableVertexAttribArray(1);
-			glEnableVertexAttribArray(2);
+			for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
+			{
+				Transform* t = MODEL_LIST[i]->GetTransform();
 
-			glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->VertexBuffer);
-				glVertexAttribPointer(
-					0,                  // attribute
-					3,                  // size
-					GL_FLOAT,           // type
-					GL_FALSE,           // normalized?
-					0,                  // stride
-					(void*)0            // array buffer offset
-				);
+				if( t == nullptr )
+					continue;
+
+				modelMat = mat4();			
+
+				modelMat = glm::translate( modelMat, t->Position );
+
+				if( MODEL_LIST[i]->Owner->GetBehavior() != nullptr )
+					modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );	
+
+				modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
+				modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
+				modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
+
+				modelMat = glm::scale( modelMat, t->Scale );
+
+				depthMVP = depthProjMat[j] * depthViewMat[j] * modelMat;
+				depthBiasMVP = biasMatrix*depthMVP;
+
+				MVP = projMat * viewMat * modelMat;
+			
+				SHADERS[current_lighting].SetUniform1i( "num_lights", num_lights );
+				SHADERS[current_lighting].SetUniform3fArray( "lightpos",	num_lights, light_positions );
+				SHADERS[current_lighting].SetUniform3fArray( "lightcolor",	num_lights, light_colors );
+				SHADERS[current_lighting].SetUniform3fArray( "lightdir",	num_lights, light_directions );
+				SHADERS[current_lighting].SetUniform1fArray( "lightradius", num_lights, light_radius );
+				SHADERS[current_lighting].SetUniform1fArray( "lightcone",  num_lights, light_cone );
+				SHADERS[current_lighting].SetUniform1iArray( "lighttype", num_lights, light_types );
+
+				SHADERS[current_lighting].SetUniform4fv( "MVP", &MVP[0][0] );
+				SHADERS[current_lighting].SetUniform4fv( "M", &modelMat[0][0]);
+				SHADERS[current_lighting].SetUniform4fv( "V", &viewMat[0][0]);
+				SHADERS[current_lighting].SetUniform4fv( "P", &projMat[0][0] );
+				SHADERS[current_lighting].SetUniform4fv( "DepthBiasMVP", &depthBiasMVP[0][0] );
+				SHADERS[current_lighting].SetUniform1i( "normal_mapping", normal_mapping_enabled );
+
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->DiffuseID);
+				SHADERS[current_lighting].SetUniform1i( "tex_sampler", 0 );
+
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->NormalID);
+				SHADERS[current_lighting].SetUniform1i( "norm_sampler", 1 );
+
+				glEnableVertexAttribArray(0);
+				glEnableVertexAttribArray(1);
+				glEnableVertexAttribArray(2);
+
+				glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->VertexBuffer);
+					glVertexAttribPointer(
+						0,                  // attribute
+						3,                  // size
+						GL_FLOAT,           // type
+						GL_FALSE,           // normalized?
+						0,                  // stride
+						(void*)0            // array buffer offset
+					);
 
 		
-			glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->UVBuffer);
-				glVertexAttribPointer(
-					1,                                // attribute
-					2,                                // size
-					GL_FLOAT,                         // type
-					GL_FALSE,                         // normalized?
-					0,                                // stride
-					(void*)0                          // array buffer offset
-				);
+				glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->UVBuffer);
+					glVertexAttribPointer(
+						1,                                // attribute
+						2,                                // size
+						GL_FLOAT,                         // type
+						GL_FALSE,                         // normalized?
+						0,                                // stride
+						(void*)0                          // array buffer offset
+					);
 
 		
-			glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->NormalBuffer);
-				glVertexAttribPointer(
-					2,                                // attribute
-					3,                                // size
-					GL_FLOAT,                         // type
-					GL_FALSE,                         // normalized?
-					0,                                // stride
-					(void*)0                          // array buffer offset
-				);
+				glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->NormalBuffer);
+					glVertexAttribPointer(
+						2,                                // attribute
+						3,                                // size
+						GL_FLOAT,                         // type
+						GL_FALSE,                         // normalized?
+						0,                                // stride
+						(void*)0                          // array buffer offset
+					);
 
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, MODEL_LIST.at(i)->ElementBuffer);
-				glDrawElements(
-					GL_TRIANGLES,      // mode
-					//indices.size(),    // count
-					MODEL_LIST.at(i)->Indices.size(),
-					GL_UNSIGNED_SHORT, // type
-					(void*)0           // element array buffer offset
-				);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, MODEL_LIST.at(i)->ElementBuffer);
+					glDrawElements(
+						GL_TRIANGLES,      // mode
+						//indices.size(),    // count
+						MODEL_LIST.at(i)->Indices.size(),
+						GL_UNSIGNED_SHORT, // type
+						(void*)0           // element array buffer offset
+					);
 
-			glDisableVertexAttribArray(0);
-			glDisableVertexAttribArray(1);
-			glDisableVertexAttribArray(2);
+				glDisableVertexAttribArray(0);
+				glDisableVertexAttribArray(1);
+				glDisableVertexAttribArray(2);
+			}			
 		}
+
+		glDisable(GL_BLEND);
+	}
+
+	void Graphics::ScreenPass(float dt)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+		glViewport(0,0,screen_width_i,screen_height_i); 
+
+		// Use our shader
+		glUseProgram( SHADERS.at(SH_Screen).ShaderProgram );
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, screen_tex);
+
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+		glDisableVertexAttribArray(0);
 	}
 
 	void Graphics::ProcessLights()
@@ -518,13 +580,16 @@ namespace Roivas
 
 	void Graphics::DrawWireframe(float dt)
 	{		
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+
 		glViewport(0,0,screen_width_i,screen_height_i);
 
 		// Draw wireframe geometry
+		glDisable( GL_DEPTH_TEST );
 		glPolygonMode(GL_FRONT, GL_LINE);
 		glPolygonMode(GL_BACK, GL_LINE);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		
 
 		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
 		{
@@ -592,6 +657,8 @@ namespace Roivas
 
 	void Graphics::DrawEditor(float dt)
 	{		
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+
 		glViewport(0,0,screen_width_i,screen_height_i);
 
 		// Draw wireframe geometry
@@ -660,6 +727,8 @@ namespace Roivas
 
 	void Graphics::DrawDebugText(std::string text)
 	{
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+
 		if( font->Error() )
 			return;
 
@@ -1172,6 +1241,6 @@ namespace Roivas
 		glDeleteVertexArrays( 1, &meshQuad );
 
 		glDeleteFramebuffers( 1, &screen_fbo );
-		glDeleteFramebuffers( 1, &shadow_fbo );
+		glDeleteFramebuffers( MAX_LIGHTS, shadow_fbo );
 	}
 }

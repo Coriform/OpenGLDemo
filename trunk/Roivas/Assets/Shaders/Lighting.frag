@@ -10,6 +10,8 @@ in vec3 EyeDirection;
 // Ouput data
 layout(location = 0) out vec4 outColor;
 
+const int max_lights = 50;
+
 uniform sampler2D tex_sampler;
 uniform sampler2D norm_sampler;
 
@@ -17,7 +19,7 @@ uniform sampler2D norm_sampler;
 uniform mat4 V;
 uniform mat4 M;
 
-const int max_lights = 50;
+uniform int which_light = 0;
 
 uniform vec3 lightpos[max_lights];
 uniform vec3 lightcolor[max_lights];
@@ -82,8 +84,9 @@ void main()
 	vec3 Ambient = clamp( texColor.xyz * ambient_light, 0.0, 1.0 );	
 	vec3 color = Ambient;
 
-	for( int i = 0; i < num_lights; ++i )
-	{
+	int i = which_light;
+	//for( int i = 0; i < num_lights; ++i )
+	//{
 		vec3 LightDirection = (V*vec4(lightdir[i],0)).xyz;
 
 		vec3 L  = normalize( LightDirection);
@@ -94,18 +97,12 @@ void main()
 		if( normal_mapping == false )
 			PN = N;
 
+		if( lighttype[i] != 0 )
+			L = normalize( (V* vec4(lightpos[i] - Position,0)).xyz );
+
 		float dist = length( Position - lightpos[i] );	
 		float d = max(dist - lightradius[i], 0) / lightradius[i] + 1.0;				
-		float att = max( (1.0 / (d*d) - bias) / (1 - bias), 0 );
-
-		if( lighttype[i] != 0 )
-		{
-			L = normalize( (V* vec4(lightpos[i] - Position,0)).xyz );
-		}
-		else
-		{
-			att = 1.0f;
-		}
+		float att = max( (1.0 / (d*d*d) - bias) / (1 - bias), 0 );
 
 		vec3 R  = reflect(-L,PN);
 	
@@ -133,11 +130,15 @@ void main()
 				color += (Specular * spot * att) / num_lights;
 			}
 		}
-		else
+		else if( lighttype[i] == 2 )
 		{
 			color += ((Diffuse + Specular) * att) / num_lights;
 		}
-	}
+		else
+		{
+			color += (Diffuse + Specular) / num_lights;
+		}
+	//}
 
 
 
