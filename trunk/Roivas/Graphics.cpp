@@ -1,4 +1,4 @@
-#include "CommonLibs.h"
+﻿#include "CommonLibs.h"
 #include "Graphics.h"
 
 
@@ -88,6 +88,8 @@ namespace Roivas
 		// Load light data into vectors
 		ProcessLights();
 
+		BuildShadows();
+
 		//Level* lvl2 = new Level("TestLevel2.json");
 		//lvl2->Load();
 	}
@@ -114,6 +116,9 @@ namespace Roivas
 
 		// Updates current camera
 		UpdateCamera(dt);
+
+		// Update lights
+		//ProcessLights();
 
 		// Primary drawing functions; draws the geometry and lighting calculations
 		Draw3D(dt);		
@@ -194,38 +199,6 @@ namespace Roivas
 		glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screen_width_i, screen_height_i );
 		glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboDepthStencil );
 
-
-		// Shadow map fbo
-		glGenFramebuffers(MAX_LIGHTS, shadow_fbo);    
-		glGenTextures(MAX_LIGHTS, shadow_tex);				
-
-		for( unsigned i = 0; i < MAX_LIGHTS; ++i )
-		{
-			glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo[i]);
-
-			glBindTexture(GL_TEXTURE_2D, shadow_tex[i]);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, screen_width_i*shadow_size, screen_height_i*shadow_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-	
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadow_tex[i], 0);
-		}
-
-		glDrawBuffer(GL_NONE);
-		glReadBuffer(GL_NONE);
-
-		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-
-		if( status != GL_FRAMEBUFFER_COMPLETE ) 
-		{
-			std::cout << "FB error, status: " << status << std::endl;
-			return;
-		} 
-
 		modelMat = mat4();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -242,7 +215,7 @@ namespace Roivas
 		if( shadows_enabled == true )
 			ShadowPass(dt);
 
-		ProcessLights();
+		
 
 		LightingPass(dt);
 
@@ -258,7 +231,7 @@ namespace Roivas
 		glUseProgram( SHADERS.at(SH_Screen).ShaderProgram );
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(0)->ShadowMap);
+		glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(0)->ShadowMap[0]);
 
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
@@ -287,11 +260,12 @@ namespace Roivas
 		
 
 		glUseProgram( SHADERS.at(SH_ShadowTex).ShaderProgram );
+		glBindFramebuffer( GL_FRAMEBUFFER, shadow_fbo );
 
 
-		for( unsigned j = 0; j < LIGHT_LIST.size(); ++j )
+		for( unsigned j = 0; j < num_lights; ++j )
 		{
-			glBindFramebuffer( GL_FRAMEBUFFER, shadow_fbo[j] );
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, LIGHT_LIST.at(j)->ShadowMap[0], 0);
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -305,6 +279,11 @@ namespace Roivas
 			else if( LIGHT_LIST.at(j)->Type == LT_SpotLight )
 			{
 				depthProjMat[j] = glm::perspective<float>(45.0f, 1.0f, 0.95f, 50.0f);
+				depthViewMat[j] = glm::lookAt(pos, pos-LIGHT_LIST.at(j)->Direction, glm::vec3(0,1,0));
+			}
+			else if( LIGHT_LIST.at(j)->Type == LT_PointLight )
+			{
+				depthProjMat[j] = glm::perspective<float>(90.0f, 1.0f, 0.95f, 50.0f);
 				depthViewMat[j] = glm::lookAt(pos, pos-LIGHT_LIST.at(j)->Direction, glm::vec3(0,1,0));
 			}
 
@@ -355,7 +334,7 @@ namespace Roivas
 				glDisableVertexAttribArray(0);
 			}
 
-			LIGHT_LIST.at(j)->ShadowMap = shadow_tex[j];
+			//LIGHT_LIST.at(j)->ShadowMap = shadow_tex[j];
 		}
 	}
 
@@ -382,7 +361,7 @@ namespace Roivas
 
 		mat4 depthBiasMVP = biasMatrix*depthMVP;
 
-		for( unsigned j = 0; j < LIGHT_LIST.size(); ++j )
+		for( unsigned j = 0; j < num_lights; ++j )
 		{	
 			Light* light = LIGHT_LIST[j];
 
@@ -394,7 +373,7 @@ namespace Roivas
 			}
 
 			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->ShadowMap);
+			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->ShadowMap[0]);
 			SHADERS[current_lighting].SetUniform1i( "shadow_sampler", 2 );
 			SHADERS[current_lighting].SetUniform1i( "which_light", j );
 
@@ -535,6 +514,42 @@ namespace Roivas
 
 		if( num_lights > MAX_LIGHTS )
 			num_lights = MAX_LIGHTS;
+	}
+
+	void Graphics::BuildShadows()
+	{
+		glGenFramebuffers(1, &shadow_fbo);    			
+
+		for( unsigned i = 0; i < LIGHT_LIST.size(); ++i )
+		{
+			if( LIGHT_LIST.at(i)->ShadowMap[0] > 0 )
+				continue;
+
+			glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo);
+			glGenTextures(6, LIGHT_LIST.at(i)->ShadowMap);
+			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(i)->ShadowMap[0]);
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, screen_width_i*shadow_size, screen_height_i*shadow_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+	
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, LIGHT_LIST.at(i)->ShadowMap[0], 0);
+		}
+
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
+
+		int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		if( status != GL_FRAMEBUFFER_COMPLETE ) 
+		{
+			std::cout << "FB error, status: " << status << std::endl;
+			return;
+		} 
 	}
 
 	void Graphics::DrawPP(float dt)
@@ -907,8 +922,6 @@ namespace Roivas
 		}
 	}
 
-
-
 	bool Graphics::CompareVertex( Attrib & packed, std::map<Attrib,unsigned short> & vert_out, unsigned short & result )
 	{
 		std::map<Attrib,unsigned short>::iterator it = vert_out.find(packed);
@@ -1214,6 +1227,6 @@ namespace Roivas
 		glDeleteVertexArrays( 1, &meshQuad );
 
 		glDeleteFramebuffers( 1, &screen_fbo );
-		glDeleteFramebuffers( MAX_LIGHTS, shadow_fbo );
+		glDeleteFramebuffers( 1, &shadow_fbo );
 	}
 }

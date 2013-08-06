@@ -128,6 +128,6 @@ void main()
 		color += (Diffuse + Specular);
 	}
 
-	//outColor = vec4(color,1);
-	outColor = vec4(Depth)/100;
+	outColor = vec4(color,1);
+	//outColor = vec4(Depth)/100;
 }

@@ -140,7 +140,7 @@ void main()
 	}
 	else if( lighttype == 2 )
 	{
-		color += ((1 * Diffuse + visibility * Specular) * att);
+		color += ((visibility * Diffuse + visibility * Specular) * att);
 	}
 	else
 	{

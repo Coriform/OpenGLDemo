@@ -67,6 +67,7 @@ namespace Roivas
 			void CameraRoll(float angle);	
 
 			void ProcessLights();
+			void BuildShadows();
 
 			GLuint current_lighting;
 			bool shadows_enabled;
@@ -115,9 +116,7 @@ namespace Roivas
 			GLuint screen_fbo;
 			GLuint screen_tex;
 
-			GLuint shadow_fbo[MAX_LIGHTS];
-			GLuint shadow_tex[MAX_LIGHTS];
-
+			GLuint shadow_fbo;
 
 			std::map<std::string,GLuint> TEXTURE_LIST;
 			std::map<std::string,MeshData> MESH_LIST;
