@@ -14,7 +14,7 @@
 			"Direction" : [ 0.1,1,1 ],
 			"LightType" : "SpotLight",
 			"Radius" : 20.0,
-			"Cone" : 0.01
+			"Cone" : 0.1
 		}
 	}
 }
