@@ -1,0 +1,14 @@
+{
+"Entity" : {
+		"Transform" : {
+			"Scale" : [ 1,2,1 ] 
+		},
+		"Model" : {
+			"Mesh" : "Box.obj",
+			"DiffuseTexture" : "_grey.png",
+			"Color" : [ 1.0,0.0,0.5,0.75 ]
+		},
+		"Behavior" : {
+		}
+	}
+}

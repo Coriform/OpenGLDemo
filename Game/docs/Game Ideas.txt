@@ -1,0 +1,162 @@
+
+Caldera - 2D Metroidvania Adventure Game
+-S&W 25 (.45ACP) [maybe change to .44 or .357]
+ > Maybe S&W 586 blued
+-accuracy based on usage
+ > already proficient with revolvers
+ > target in "safe area" - prob don't want to use to converse ammo
+-flashlight can be pointed at level, or at background
+-look at voxelized shadow volumes and light propagation with scattering
+-environments? figure this out to determine need for rendering techniques
+ >outside
+  o jungle
+  o desert mountain cave exposures and ledges 
+ >interior
+  o caverns
+    -water and lava
+  o ruins/temples
+  o both cramped, claustrophic areas and big, open spaces
+
+
+
+
+
+
+
+
+
+
+
+
+
+Fantasy Coop Puzzle Game
+o Title: "Eggy and the Basket"
+o Huge tower ascending into the heavens
+o Both inside and outside covered in vines and leaves
+o Eggy (smaller character) navigates the puzzles inside the tower
+  - Stealth mechanics to avoid enemies
+o Large, hulking sloth crawling along the outside, manipulating the
+  tower to help the smaller character
+  - Known as "The Sloth"
+  - Challenge is in control his arms and legs
+o Themes: Cooperation, friendship
+o Two-player co-op
+o Interior: fixed camera, pivots around center of tower
+o Small character: Egg with legs and sunglasses, carrying a basket
+  - Sunglasses to show off different facial expressions / emotions
+o Must collect leaves to feed to sloth to recover stamina
+o Significant actions by the sloth require stamina
+o Eggy has health; each hit creates cracks
+  - Can be repaired with bandaids, which persist on the character model
+  - If Eggy dies, he splatters like an unfertilized store-bough egg
+o The Sloth cannot be damaged, but birds can harass him
+  - If the Sloth has no grip, will fall and die
+o Tower is full of eggs for some reason
+  - You can crouch and blend in with the other eggs for cover
+o Slides to slide down quickly from platforms
+
+
+
+Cyberpunk Mech Game
+o Post-Industrial, Post-Apocalyptic Cyberpunk Dystopian Wasteland
+o Pervasive bionic culture with a human dependency on organic-technological interfaces
+  - Maybe some counterculture anti-cybernetic groups?
+o Cyber-primitivism
+  - Primitive peoples living simple lives but with an abundance of cybernetics and technology
+  - Cyber mysticism and sorcer: think Technomages from Babylon 5
+  - Mad max wasteland-esque setting, but cyberpunk
+o Split mechanics between mechs and person
+  - 
+o Cybernetic mutants
+  - Borge from star trek
+  - Survivors of the White Light (and their descendents) who were part of the singularity
+o Matrix-esque cybernetic beasts
+o Takes place ~80 years following the White Light incident
+o The Nexus is an unstable, sentient AI that evolved from the internet
+  - Jack in to get information, but at great risk to your mind
+o Approaching singularity also created a more unified collective unconcious
+o Interfacing with a mech is spiritual
+o World was ruined by the "White Light" incident
+o Events leading up to the White Light:
+  - Technological partial-singularity
+    > More than 90% of the world became interconnected over the course of several days
+    > Probably the cause of the White Light
+    > A single, interconnected cybernetic world intelligence was overwhelmed by the
+      diversity of personalities and intelligences, causing malfunctions in every
+      nation's weapon system
+  - Nanomachines; nanobot colonies
+    > Several rogue swarms following the White Light
+  - Widespread establishment of geothermal power plants
+  - Portable high-yield energy reactors (similar to arc reactor)
+    > Tachyon Reactor
+    > Used to power mechs
+    > Uses a quantum field to collect tachyon particles, creating a tachyonic expansion
+      to generate huge amounts of energy
+    > No one really knows how they work anymore; mechanics can do basic repairs
+  - Terrorist attack on moon colony; fractured moon in the night sky
+  - World-wide devestation caused by weapons of mass destruction
+o Internet as a historical location
+  > famous usernames
+  > actual unique, tied usernames to real identities, as well
+    
+
+
+
+
+
+
+
+
+Zombie Game
+o Single player, character-driven survival rpg
+o Sprawling epic across a post-apocalyptic land filled with zombies
+o When you die, your character becomes a zombie in the world
+  - Player respawns as new character
+  - No "main" character is safe
+o Other players can join in for co-op; if they leave game, AI takes over
+  - They can drop in and out at leisure
+o Personality-based dialogue generation and voice synthesis
+o Context-generated plot events, filtered into timeline of game plot
+
+
+
+
+
+
+
+
+
+Co-op Puzzle Survival Game
+o Four (or more?) players are placed in a survival situation
+  similar to Cube or Zero Escape
+o In-game comm system allows players to be cut off from each
+  other
+  ex: Two players are separated; they can no longer speak to
+  each other, or hear each other
+
+
+
+
+
+
+
+
+
+
+Cinema-themed 2D RPG
+o Similar to Chrono Trigger
+o Each of the characters are film students, referencing famous directors
+o Characters travel to different "world" found in their student film projects
+
+
+
+
+
+
+
+
+
+
+
+
+

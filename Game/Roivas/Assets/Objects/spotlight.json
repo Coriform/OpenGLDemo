@@ -1,0 +1,20 @@
+{
+"Entity" : {
+		"Transform" : {
+			"Scale" : [ 0.1,0.1,0.1 ] 
+		},
+		"Model" : {
+			"Mesh" : "Light.dae",
+			"DiffuseTexture" : "_white.png",
+			"Color" : [ 1.0,0.0,0.5,0.75 ],
+			"WireColor" : [ 1.0,1.0,0.0 ]
+		},
+		"Light" : {
+			"Color" : [ 1.0,1.0,1.0 ],
+			"Direction" : [ 0.1,1,1 ],
+			"LightType" : "SpotLight",
+			"Radius" : 20.0,
+			"Cone" : 0.1
+		}
+	}
+}

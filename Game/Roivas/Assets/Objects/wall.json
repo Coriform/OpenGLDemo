@@ -1,0 +1,12 @@
+{
+"Entity" : {
+		"Transform" : {
+			"Scale" : [ 16,16,0.75 ] 
+		},
+		"Model" : {
+			"Mesh" : "Box.obj",
+			"DiffuseTexture" : "crack_ice.png",
+			"NormalTexture" : "crack_NRM.png"
+		}
+	}
+}

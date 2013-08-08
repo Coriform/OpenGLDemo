@@ -1,0 +1,112 @@
+{
+"Level" : {
+		"test2.json" : 
+		{
+			"Entities" : 
+			[ 
+				{
+					"Id" : 11,
+					"Transform" : {
+						"Position" : [ -2.25,0.0,0.0 ]
+					}
+				}
+			]
+		},
+		"test3.json" : 
+		{
+			"Entities" : 
+			[ 
+				{
+					"Id" : 12,
+					"Transform" : {
+						"Position" : [ 2.25,-1.0,0.0 ]
+					}
+				} 
+			]
+		},
+		"test4.json" : 
+		{
+			"Entities" : 
+			[ 
+				{
+					"Id" : 13,
+					"Transform" : {
+						"Position" : [ 0.0,0.0,-4.0 ]
+					}
+				} 
+			]
+		},
+		"test5.json" :
+		{
+			"Entities" : 
+			[ 
+				{
+					"Id" : 14,
+					"Transform" : {
+						"Position" : [ 5.0,1.0,-3.5 ]
+					}
+				} 
+			]
+		},
+		"wall.json" :
+		{
+			"Entities" : 
+			[ 
+				{
+					"Id" : 19,
+					"Transform" : {
+						"Position" : [ 0.0,6.0,-5 ]
+					}
+				},
+				{
+					"Id" : 23,
+					"Transform" : {
+						"Position" : [ 8.0,6.0,3 ],
+						"Rotation" : [ 0,90,0 ]
+					}
+				},
+				{
+					"Id" : 26,
+					"Transform" : {
+						"Position" : [ -8.0,6.0,3 ],
+						"Rotation" : [ 0,90,0 ]
+					}
+				},
+				{
+					"Id" : 34,
+					"Transform" : {
+						"Position" : [ 0.0,-2,3 ],
+						"Scale" : [ 36,36,0.75 ],
+						"Rotation" : [ 90,0,0 ]
+					}
+				} 
+			]
+		},
+		"pointlight.json" : 
+		{			
+			"Entities" : 
+			[ 
+				{
+					"Id" : 15,
+					"Transform" : {
+						"Position" : [ 1.5,2.5,2.0 ]
+					},
+					"Light" : {
+						"Direction" : [ 1,1,1 ],
+						"Color" : [ 1.0,1.0,1.0 ]
+					}
+				},
+				{
+					"Id" : 16,
+					"Transform" : {
+						"Position" : [ -1.5,2.5,2.0 ]
+					},
+					"Light" : {
+						"Direction" : [ -1,1,1 ],
+						"Color" : [ 1.0,1.0,1.0 ]
+					}
+				}
+			]
+		}
+	}
+}
