@@ -10,6 +10,7 @@
 #include <assimp/types.h>
 #include <assimp/scene.h> 
 #include <assimp/postprocess.h> 
+#include "FBORenderTexture.h"
 #include "SOIL.h"
 #include "System.h"
 #include "Model.h"
@@ -64,7 +65,10 @@ namespace Roivas
 
 			void CameraPitch(float angle);
 			void CameraYaw(float angle);
-			void CameraRoll(float angle);	
+			void CameraRoll(float angle);
+
+			void NextRT();
+			void PrevRT();
 
 			void ProcessLights();
 			void BuildShadows();
@@ -84,6 +88,7 @@ namespace Roivas
 			void UpdateCamera(float dt);
 			void DrawDebugText(std::string path);
 
+			void GeometryPass(float dt);
 			void ShadowPass(float dt);
 			void LightingPass(float dt);	
 			void ScreenPass(float dt);
@@ -103,6 +108,8 @@ namespace Roivas
 			void SetupFonts();
 			void InitializeCamera();
 
+			FBORenderTexture*	m_multipleRenderTarget;
+
 			GLuint rboDepthStencil;
 			GLuint meshCube, meshQuad;
 			GLuint buffCube, buffQuad;
@@ -111,12 +118,29 @@ namespace Roivas
 			mat4 modelMat, viewMat, projMat, MVP;
 			mat4 depthViewMat[MAX_LIGHTS], depthProjMat[MAX_LIGHTS], depthMVP;
 
-			SDL_Surface *HUD;			
+			SDL_Surface *HUD;		
 
+			GLuint deferred_fbo;
 			GLuint screen_fbo;
-			GLuint screen_tex;
-
+			GLuint lighting_fbo;
 			GLuint shadow_fbo;
+
+			GLuint diffuse_rt;
+			GLuint positions_rt;
+			GLuint normals_rt;
+			GLuint depth_buffer;		
+
+			// Render target textures
+			GLuint screen_tex;
+			int current_rt;
+
+			GLuint rt_textures[RT_TOTAL];
+			//GLuint light_tex;
+			//GLuint depth_tex;
+			//GLuint diffuse_tex;
+			//GLuint positions_tex;
+			//GLuint normals_tex;
+
 
 			std::map<std::string,GLuint> TEXTURE_LIST;
 			std::map<std::string,MeshData> MESH_LIST;

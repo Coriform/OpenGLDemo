@@ -106,6 +106,7 @@
     <ClCompile Include="Core.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Factory.cpp" />
+    <ClCompile Include="FBORenderTexture.cpp" />
     <ClCompile Include="FileIO.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -129,6 +130,7 @@
     <ClInclude Include="Core.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Enums.h" />
+    <ClInclude Include="FBORenderTexture.h" />
     <ClInclude Include="FileIO.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Input.h" />
@@ -145,6 +147,8 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Shaders\Deferred.frag" />
+    <None Include="Assets\Shaders\Deferred.vert" />
     <None Include="Assets\Shaders\Hud.frag" />
     <None Include="Assets\Shaders\Hud.vert" />
     <None Include="Assets\Shaders\Lighting.frag" />

@@ -17,7 +17,8 @@ namespace Roivas
 		pitch(0.0f),
 		accum(0.0f),
 		varray_size(8),
-		current_lighting(SH_LightingSSM),
+		current_rt(0),
+		current_lighting(SH_Lighting),
 		shadows_enabled(true),
 		wireframe_enabled(false),
 		normal_mapping_enabled(true),
@@ -67,6 +68,7 @@ namespace Roivas
 		// Build Shaders - automate this somehow
 		// Make sure this is in same order as enum list
 		CreateShaderProgram("Assets/Shaders/Default.vert",			"Assets/Shaders/Default.frag");			// SH_Default
+		CreateShaderProgram("Assets/Shaders/Deferred.vert",			"Assets/Shaders/Deferred.frag");		// SH_Deferred
 		CreateShaderProgram("Assets/Shaders/Screen.vert",			"Assets/Shaders/Screen.frag");			// SH_Screen
 		CreateShaderProgram("Assets/Shaders/Hud.vert",				"Assets/Shaders/Hud.frag");				// SH_Hud
 		CreateShaderProgram("Assets/Shaders/Wireframe.vert",		"Assets/Shaders/Wireframe.frag");		// SH_Wireframe
@@ -112,7 +114,7 @@ namespace Roivas
 		++fps;
 
 		// Depth sorting
-		SortModels(dt);
+		//SortModels(dt);		// This is screwing up normals for some reason
 
 		// Updates current camera
 		UpdateCamera(dt);
@@ -162,6 +164,8 @@ namespace Roivas
 			 1.0f,  1.0f, 0.0f,
 		};
 
+		m_multipleRenderTarget = new FBORenderTexture(screen_width_i, screen_height_i);
+
 		glGenVertexArrays(1, &meshQuad);
 		glBindVertexArray(meshQuad);
 
@@ -194,6 +198,119 @@ namespace Roivas
 			return;
 		} 
 
+
+
+		glGenTextures( 1, &rt_textures[RT_Lighting] );
+		glBindTexture( GL_TEXTURE_2D, rt_textures[RT_Lighting] );
+
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, screen_width_i, screen_height_i, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
+
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_Lighting], 0 );
+
+		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		if( status != GL_FRAMEBUFFER_COMPLETE ) 
+		{
+			std::cout << "FB error, status: " << status << std::endl;
+			return;
+		} 
+
+
+
+		glGenFramebuffers(1, &deferred_fbo);
+		glGenRenderbuffers(1, &diffuse_rt);
+		glGenRenderbuffers(1, &positions_rt);
+		glGenRenderbuffers(1, &normals_rt);
+		glGenRenderbuffers(1, &depth_buffer);
+
+		// Bind the FBO so that the next operations will be bound to it
+		glBindFramebuffer(GL_FRAMEBUFFER, deferred_fbo);
+
+		// Bind the diffuse render target
+		glBindRenderbuffer(GL_RENDERBUFFER, diffuse_rt);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, screen_width_i, screen_height_i);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, diffuse_rt);
+
+		// Bind the position render target
+		glBindRenderbuffer(GL_RENDERBUFFER, positions_rt);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, screen_width_i, screen_height_i);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_RENDERBUFFER, positions_rt);
+
+		// Bind the normal render target
+		glBindRenderbuffer(GL_RENDERBUFFER, normals_rt);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA16F, screen_width_i, screen_height_i);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_RENDERBUFFER, normals_rt);
+
+		// Bind the depth buffer
+		glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, screen_width_i, screen_height_i);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+
+
+		// Generate and bind the OGL texture for diffuse
+		glGenTextures(1, &rt_textures[RT_Diffuse]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Diffuse]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width_i, screen_height_i, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_Diffuse], 0);
+
+		// Generate and bind the OGL texture for positions
+		glGenTextures(1, &rt_textures[RT_Positions]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Positions]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, rt_textures[RT_Positions], 0);
+
+		// Generate and bind the OGL texture for normals
+		glGenTextures(1, &rt_textures[RT_Normals]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Normals]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, rt_textures[RT_Normals], 0);
+
+		// Generate and bind the OGL texture for depth
+		glGenTextures(1, &rt_textures[RT_Depth]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Depth]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, rt_textures[RT_Depth], 0);
+
+
+		// Check if all worked fine and unbind the FBO
+		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		if( status != GL_FRAMEBUFFER_COMPLETE)
+		{
+			std::cout << "FB error for deferred, status: " << status << std::endl;
+		}
+
+
+
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+
 		glGenRenderbuffers( 1, &rboDepthStencil );
 		glBindRenderbuffer( GL_RENDERBUFFER, rboDepthStencil );
 		glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screen_width_i, screen_height_i );
@@ -201,6 +318,7 @@ namespace Roivas
 
 		modelMat = mat4();
 
+		screen_tex = rt_textures[RT_Lighting];
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
@@ -212,26 +330,27 @@ namespace Roivas
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
-		if( shadows_enabled == true )
-			ShadowPass(dt);
+		GeometryPass(dt);
 
-		
+		if( shadows_enabled == true )
+			ShadowPass(dt);		
 
 		LightingPass(dt);
 
+
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);		
+		glCullFace(GL_NONE);
+		glUseProgram( SHADERS.at(SH_Screen).ShaderProgram );
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_Lighting], 0 );
 		
 
-
-
-		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
-		glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
-		glCullFace(GL_NONE);
-
-		// Use our shader
-		glUseProgram( SHADERS.at(SH_Screen).ShaderProgram );
+		//glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(0)->ShadowMap[0]);
+
+		//
+		glViewport(0,screen_height_i/2,screen_width_i/2,screen_height_i/2);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Diffuse]);
 
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
@@ -244,10 +363,117 @@ namespace Roivas
 			(void*)0            // array buffer offset
 		);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
 		glDisableVertexAttribArray(0);
+		//glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screen_tex, 0 );
+
+
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	}
+
+	void Graphics::GeometryPass(float dt)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, deferred_fbo);
+		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+
+		glEnable( GL_DEPTH_TEST );
+		glEnable( GL_CULL_FACE );
+		glDisable( GL_BLEND );
+		glCullFace(GL_BACK);
+
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+		glDrawBuffers(4, buffers);
+		
+		glUseProgram( SHADERS.at(SH_Deferred).ShaderProgram );
+
+
+		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
+		{
+			Transform* t = MODEL_LIST[i]->GetTransform();
+
+			if( t == nullptr )
+				continue;
+
+			modelMat = mat4();			
+
+			modelMat = glm::translate( modelMat, t->Position );
+
+			if( MODEL_LIST[i]->Owner->GetBehavior() != nullptr )
+				modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );	
+
+			modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
+
+			modelMat = glm::scale( modelMat, t->Scale );
+			
+			SHADERS[SH_Deferred].SetUniform4fv( "M", &modelMat[0][0]);
+			SHADERS[SH_Deferred].SetUniform4fv( "V", &viewMat[0][0]);
+			SHADERS[SH_Deferred].SetUniform4fv( "P", &projMat[0][0] );
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->DiffuseID);
+			SHADERS[SH_Deferred].SetUniform1i( "tex_sampler", 0 );
+
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->NormalID);
+			SHADERS[SH_Deferred].SetUniform1i( "norm_sampler", 1 );
+
+			glEnableVertexAttribArray(0);
+			glEnableVertexAttribArray(1);
+			glEnableVertexAttribArray(2);
+
+			glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->VertexBuffer);
+				glVertexAttribPointer(
+					0,                  // attribute
+					3,                  // size
+					GL_FLOAT,           // type
+					GL_FALSE,           // normalized?
+					0,                  // stride
+					(void*)0            // array buffer offset
+				);
+
+		
+			glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->UVBuffer);
+				glVertexAttribPointer(
+					1,                                // attribute
+					2,                                // size
+					GL_FLOAT,                         // type
+					GL_FALSE,                         // normalized?
+					0,                                // stride
+					(void*)0                          // array buffer offset
+				);
+
+		
+			glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->NormalBuffer);
+				glVertexAttribPointer(
+					2,                                // attribute
+					3,                                // size
+					GL_FLOAT,                         // type
+					GL_FALSE,                         // normalized?
+					0,                                // stride
+					(void*)0                          // array buffer offset
+				);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, MODEL_LIST.at(i)->ElementBuffer);
+				glDrawElements(
+					GL_TRIANGLES,      // mode
+					//indices.size(),    // count
+					MODEL_LIST.at(i)->Indices.size(),
+					GL_UNSIGNED_SHORT, // type
+					(void*)0           // element array buffer offset
+				);
+
+			glDisableVertexAttribArray(0);
+			glDisableVertexAttribArray(1);
+			glDisableVertexAttribArray(2);
+		}			
+
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+		
 	}
 
 	void Graphics::ShadowPass(float dt)
@@ -333,15 +559,14 @@ namespace Roivas
 
 				glDisableVertexAttribArray(0);
 			}
-
-			//LIGHT_LIST.at(j)->ShadowMap = shadow_tex[j];
 		}
 	}
 
 	void Graphics::LightingPass(float dt)
 	{
-
 		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_Lighting], 0 );
+
 		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
 
 		glEnable( GL_DEPTH_TEST );
@@ -370,113 +595,62 @@ namespace Roivas
 				glEnable(GL_BLEND);
 				glBlendFunc(GL_ONE, GL_ONE);
 				glDepthFunc(GL_LEQUAL);
-			}
+			}			
+			
+			SHADERS[current_lighting].SetUniform1i( "num_lights",	num_lights );
+			SHADERS[current_lighting].SetUniform3f( "lightpos",		light->GetTransform()->Position );
+			SHADERS[current_lighting].SetUniform3f( "lightcolor",	light->Color );
+			SHADERS[current_lighting].SetUniform3f( "lightdir",		light->Direction );
+			SHADERS[current_lighting].SetUniform1f( "lightradius",	light->Radius);
+			SHADERS[current_lighting].SetUniform1f( "lightcone",	light->Cone );
+			SHADERS[current_lighting].SetUniform1i( "lighttype",	light->Type );
+
+			SHADERS[current_lighting].SetUniform4fv( "Bias", &biasMatrix[0][0]);
+			SHADERS[current_lighting].SetUniform4fv( "DepthProj", &depthProjMat[j][0][0]);
+			SHADERS[current_lighting].SetUniform4fv( "DepthView", &depthViewMat[j][0][0]);
+			SHADERS[current_lighting].SetUniform4fv( "M", &modelMat[0][0]);
+			SHADERS[current_lighting].SetUniform4fv( "V", &viewMat[0][0]);
+			SHADERS[current_lighting].SetUniform4fv( "P", &projMat[0][0] );
+
+
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Diffuse]);
+			SHADERS[current_lighting].SetUniform1i( "tDiffuse", 0 );
+
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Positions]);
+			SHADERS[current_lighting].SetUniform1i( "tPosition", 1 );
 
 			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Normals]);
+			SHADERS[current_lighting].SetUniform1i( "tNormals", 2 );
+
+			glActiveTexture(GL_TEXTURE3);
 			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->ShadowMap[0]);
-			SHADERS[current_lighting].SetUniform1i( "shadow_sampler", 2 );
-			SHADERS[current_lighting].SetUniform1i( "which_light", j );
+			SHADERS[current_lighting].SetUniform1i( "shadow_sampler", 3 );	
 
-			for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
-			{
-				Transform* t = MODEL_LIST[i]->GetTransform();
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+			glVertexAttribPointer(
+				0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+				3,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			);
 
-				if( t == nullptr )
-					continue;
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+			glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+			glDisableVertexAttribArray(0);
 
-				modelMat = mat4();			
-
-				modelMat = glm::translate( modelMat, t->Position );
-
-				if( MODEL_LIST[i]->Owner->GetBehavior() != nullptr )
-					modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );	
-
-				modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
-				modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
-				modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
-
-				modelMat = glm::scale( modelMat, t->Scale );
-
-				depthMVP = depthProjMat[j] * depthViewMat[j] * modelMat;
-				depthBiasMVP = biasMatrix*depthMVP;
-
-				MVP = projMat * viewMat * modelMat;
-			
-				SHADERS[current_lighting].SetUniform1i( "num_lights",	num_lights );
-				SHADERS[current_lighting].SetUniform3f( "lightpos",		light->GetTransform()->Position );
-				SHADERS[current_lighting].SetUniform3f( "lightcolor",	light->Color );
-				SHADERS[current_lighting].SetUniform3f( "lightdir",		light->Direction );
-				SHADERS[current_lighting].SetUniform1f( "lightradius",	light->Radius);
-				SHADERS[current_lighting].SetUniform1f( "lightcone",	light->Cone );
-				SHADERS[current_lighting].SetUniform1i( "lighttype",	light->Type );
-
-				SHADERS[current_lighting].SetUniform4fv( "MVP", &MVP[0][0] );
-				SHADERS[current_lighting].SetUniform4fv( "M", &modelMat[0][0]);
-				SHADERS[current_lighting].SetUniform4fv( "V", &viewMat[0][0]);
-				SHADERS[current_lighting].SetUniform4fv( "P", &projMat[0][0] );
-				SHADERS[current_lighting].SetUniform4fv( "DepthBiasMVP", &depthBiasMVP[0][0] );
-				SHADERS[current_lighting].SetUniform1i( "normal_mapping", normal_mapping_enabled );
-
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->DiffuseID);
-				SHADERS[current_lighting].SetUniform1i( "tex_sampler", 0 );
-
-				glActiveTexture(GL_TEXTURE1);
-				glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->NormalID);
-				SHADERS[current_lighting].SetUniform1i( "norm_sampler", 1 );
-
-				glEnableVertexAttribArray(0);
-				glEnableVertexAttribArray(1);
-				glEnableVertexAttribArray(2);
-
-				glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->VertexBuffer);
-					glVertexAttribPointer(
-						0,                  // attribute
-						3,                  // size
-						GL_FLOAT,           // type
-						GL_FALSE,           // normalized?
-						0,                  // stride
-						(void*)0            // array buffer offset
-					);
-
-		
-				glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->UVBuffer);
-					glVertexAttribPointer(
-						1,                                // attribute
-						2,                                // size
-						GL_FLOAT,                         // type
-						GL_FALSE,                         // normalized?
-						0,                                // stride
-						(void*)0                          // array buffer offset
-					);
-
-		
-				glBindBuffer(GL_ARRAY_BUFFER, MODEL_LIST.at(i)->NormalBuffer);
-					glVertexAttribPointer(
-						2,                                // attribute
-						3,                                // size
-						GL_FLOAT,                         // type
-						GL_FALSE,                         // normalized?
-						0,                                // stride
-						(void*)0                          // array buffer offset
-					);
-
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, MODEL_LIST.at(i)->ElementBuffer);
-					glDrawElements(
-						GL_TRIANGLES,      // mode
-						//indices.size(),    // count
-						MODEL_LIST.at(i)->Indices.size(),
-						GL_UNSIGNED_SHORT, // type
-						(void*)0           // element array buffer offset
-					);
-
-				glDisableVertexAttribArray(0);
-				glDisableVertexAttribArray(1);
-				glDisableVertexAttribArray(2);
-			}			
 		}
 
 		glDisable(GL_BLEND);
+
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screen_tex, 0 );
+
 	}
 
 	void Graphics::ScreenPass(float dt)
@@ -643,6 +817,8 @@ namespace Roivas
 		glPolygonMode(GL_BACK, GL_FILL);	
 	}
 
+
+	// TODO: Create a second deferred list for "widgets"
 	void Graphics::DrawEditor(float dt)
 	{		
 		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
@@ -650,6 +826,7 @@ namespace Roivas
 		glViewport(0,0,screen_width_i,screen_height_i);
 
 		// Draw wireframe geometry
+		glDisable( GL_DEPTH_TEST );			// WE DON'T WANT THIS
 		glPolygonMode(GL_FRONT, GL_LINE);
 		glPolygonMode(GL_BACK, GL_LINE);
 
@@ -1142,6 +1319,26 @@ namespace Roivas
 		cam_rot = glm::normalize( glm::rotate(cam_rot, angle, cam_look) );
 	}
 
+	void Graphics::NextRT()
+	{
+		++current_rt;
+
+		if( current_rt >= RT_TOTAL )
+			current_rt = 0;
+
+		screen_tex = rt_textures[current_rt];
+	}
+
+	void Graphics::PrevRT()
+	{
+		--current_rt;
+
+		if( current_rt < 0 )
+			current_rt = RT_TOTAL-1;
+
+		screen_tex = rt_textures[current_rt];
+	}
+
 	void Graphics::MouseSelectEntity(float x, float y, bool pressed)
 	{
 		if( pressed == false )
@@ -1228,5 +1425,13 @@ namespace Roivas
 
 		glDeleteFramebuffers( 1, &screen_fbo );
 		glDeleteFramebuffers( 1, &shadow_fbo );
+
+		glDeleteTextures(RT_TOTAL, rt_textures);
+
+		glDeleteFramebuffers(1, &deferred_fbo);
+		glDeleteRenderbuffers(1, &diffuse_rt);
+		glDeleteRenderbuffers(1, &positions_rt);
+		glDeleteRenderbuffers(1, &normals_rt);
+		glDeleteRenderbuffers(1, &depth_buffer);
 	}
 }
