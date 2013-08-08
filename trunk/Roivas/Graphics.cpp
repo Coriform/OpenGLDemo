@@ -195,8 +195,8 @@ namespace Roivas
 
 
 
-		glGenTextures( 1, &rt_textures[RT_Lighting] );
-		glBindTexture( GL_TEXTURE_2D, rt_textures[RT_Lighting] );
+		glGenTextures( 1, &rt_textures[RT_SceneLighting] );
+		glBindTexture( GL_TEXTURE_2D, rt_textures[RT_SceneLighting] );
 
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, screen_width_i, screen_height_i, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
 
@@ -207,7 +207,7 @@ namespace Roivas
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 
-		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_Lighting], 0 );
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneLighting], 0 );
 
 		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -250,48 +250,48 @@ namespace Roivas
 
 
 		// Generate and bind the OGL texture for diffuse
-		glGenTextures(1, &rt_textures[RT_Diffuse]);
-		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Diffuse]);
+		glGenTextures(1, &rt_textures[RT_SceneDiffuse]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneDiffuse]);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width_i, screen_height_i, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		// Attach the texture to the FBO
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_Diffuse], 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneDiffuse], 0);
 
 		// Generate and bind the OGL texture for positions
-		glGenTextures(1, &rt_textures[RT_Positions]);
-		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Positions]);
+		glGenTextures(1, &rt_textures[RT_ScenePositions]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_ScenePositions]);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		// Attach the texture to the FBO
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, rt_textures[RT_Positions], 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, rt_textures[RT_ScenePositions], 0);
 
 		// Generate and bind the OGL texture for normals
-		glGenTextures(1, &rt_textures[RT_Normals]);
-		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Normals]);
+		glGenTextures(1, &rt_textures[RT_SceneNormals]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneNormals]);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		// Attach the texture to the FBO
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, rt_textures[RT_Normals], 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, rt_textures[RT_SceneNormals], 0);
 
 		// Generate and bind the OGL texture for depth
-		glGenTextures(1, &rt_textures[RT_Depth]);
-		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Depth]);
+		glGenTextures(1, &rt_textures[RT_SceneDepth]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneDepth]);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		// Attach the texture to the FBO
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, rt_textures[RT_Depth], 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, rt_textures[RT_SceneDepth], 0);
 
 
 		// Check if all worked fine and unbind the FBO
@@ -313,7 +313,8 @@ namespace Roivas
 
 		modelMat = mat4();
 
-		screen_tex = rt_textures[RT_Lighting];
+		current_rt = RT_SceneLighting;
+		screen_tex = rt_textures[RT_SceneLighting];
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
@@ -458,7 +459,7 @@ namespace Roivas
 
 		for( unsigned j = 0; j < num_lights; ++j )
 		{
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, LIGHT_LIST.at(j)->ShadowMap[0], 0);
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, LIGHT_LIST.at(j)->RT_Textures[RT_LightDepth], 0);
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -532,7 +533,7 @@ namespace Roivas
 	void Graphics::LightingPass(float dt)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
-		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_Lighting], 0 );
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneLighting], 0 );
 
 		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
 
@@ -580,19 +581,19 @@ namespace Roivas
 
 
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Diffuse]);
+			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneDiffuse]);
 			SHADERS[current_lighting].SetUniform1i( "tDiffuse", 0 );
 
 			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Positions]);
+			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_ScenePositions]);
 			SHADERS[current_lighting].SetUniform1i( "tPosition", 1 );
 
 			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Normals]);
+			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneNormals]);
 			SHADERS[current_lighting].SetUniform1i( "tNormals", 2 );
 
 			glActiveTexture(GL_TEXTURE3);
-			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->ShadowMap[0]);
+			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->RT_Textures[RT_LightDepth]);
 			SHADERS[current_lighting].SetUniform1i( "tShadow", 3 );	
 
 			glEnableVertexAttribArray(0);
@@ -662,7 +663,7 @@ namespace Roivas
 		glUseProgram( SHADERS.at(SH_Screen).ShaderProgram );
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(0)->ShadowMap[0]);
+		glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(0)->RT_Textures[RT_LightDepth]);
 
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
@@ -691,16 +692,44 @@ namespace Roivas
 
 	void Graphics::BuildShadows()
 	{
+
+
+		/*
+		glGenFramebuffers(1, &deferred_fbo);
+		glGenRenderbuffers(1, &diffuse_rt);
+
+		// Bind the FBO so that the next operations will be bound to it
+		glBindFramebuffer(GL_FRAMEBUFFER, deferred_fbo);
+
+		// Bind the diffuse render target
+		glBindRenderbuffer(GL_RENDERBUFFER, diffuse_rt);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, screen_width_i, screen_height_i);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, diffuse_rt);
+
+		// Generate and bind the OGL texture for diffuse
+		glGenTextures(1, &rt_textures[RT_LightDiffuse]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_LightDiffuse]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width_i, screen_height_i, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_LightDiffuse], 0);
+		*/
+
+
+
 		glGenFramebuffers(1, &shadow_fbo);    			
 
 		for( unsigned i = 0; i < LIGHT_LIST.size(); ++i )
 		{
-			if( LIGHT_LIST.at(i)->ShadowMap[0] > 0 )
+			if( LIGHT_LIST.at(i)->RT_Textures[RT_LightDepth] > 0 )
 				continue;
 
 			glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo);
-			glGenTextures(6, LIGHT_LIST.at(i)->ShadowMap);
-			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(i)->ShadowMap[0]);
+			glGenTextures(1, &LIGHT_LIST.at(i)->RT_Textures[RT_LightDepth]);
+			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(i)->RT_Textures[RT_LightDepth]);
 
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, screen_width_i*shadow_size, screen_width_i*shadow_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -710,7 +739,7 @@ namespace Roivas
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 	
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, LIGHT_LIST.at(i)->ShadowMap[0], 0);
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, LIGHT_LIST.at(i)->RT_Textures[RT_LightDepth], 0);
 		}
 
 		glDrawBuffer(GL_NONE);
@@ -723,6 +752,8 @@ namespace Roivas
 			std::cout << "FB error, status: " << status << std::endl;
 			return;
 		} 
+
+		rt_textures[RT_LightDepth] = LIGHT_LIST.at(0)->RT_Textures[RT_LightDepth];
 	}
 
 	void Graphics::DrawPP(float dt)

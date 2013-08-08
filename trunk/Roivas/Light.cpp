@@ -8,7 +8,7 @@ namespace Roivas
 		Direction(vec3(0.0f,-1.0f,0.0f)), 
 		Radius(10.0f), 
 		Cone(0.1f),
-		ShadowMap(),
+		RT_Textures(),
 		LightType("DirectionLight"),
 		Type(LT_DirectionLight), 
 		Component(CT_Light)
@@ -21,7 +21,7 @@ namespace Roivas
 		Direction(l.Direction), 
 		Radius(l.Radius), 
 		Cone(l.Cone),
-		ShadowMap(),
+		RT_Textures(),
 		LightType(l.LightType),
 		Type(l.Type), 
 		Component(CT_Light)

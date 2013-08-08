@@ -48,12 +48,18 @@ enum ShaderName
 // RenderTargets
 enum RenderTarget
 {
-	RT_Lighting = 0,
+	RT_LightDepth = 0,
+	RT_LightDiffuse,
+	RT_LightPositions,
+	RT_LightNormals,
 
-	RT_Depth,
-	RT_Diffuse,
-	RT_Positions,
-	RT_Normals,
+	RT_SceneLighting,
+
+	RT_SceneDepth,
+	RT_SceneDiffuse,
+	RT_ScenePositions,
+	RT_SceneNormals,
+	
 
 	RT_TOTAL
 };

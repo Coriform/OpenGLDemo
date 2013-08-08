@@ -19,7 +19,10 @@ namespace Roivas
 			vec3 Direction;
 			float Radius;
 			float Cone;		// For Spot lights
-			GLuint ShadowMap[6];
+
+			GLuint RT_Textures[4];
+			int CurrentRT;	
+
 			std::string LightType;
 			LightingType Type;
 	};
