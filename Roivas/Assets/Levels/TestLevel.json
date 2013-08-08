@@ -82,7 +82,7 @@
 				} 
 			]
 		},
-		"pointlight.json" : 
+		"spotlight.json" : 
 		{			
 			"Entities" : 
 			[ 
@@ -102,7 +102,7 @@
 						"Position" : [ -1.5,2.5,2.0 ]
 					},
 					"Light" : {
-						"Direction" : [ -1,1,1 ],
+						"Direction" : [ -1,0,1 ],
 						"Color" : [ 1.0,1.0,1.0 ]
 					}
 				}

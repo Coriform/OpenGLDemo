@@ -93,11 +93,11 @@ namespace Roivas
 			break;
 
 			case SDLK_UP:
-				GetSystem(Graphics)->CameraPitch(1.0f);
+				//GetSystem(Graphics)->CameraPitch(1.0f);
 			break;
 
 			case SDLK_DOWN:
-				GetSystem(Graphics)->CameraPitch(-1.0f);
+				//GetSystem(Graphics)->CameraPitch(-1.0f);
 			break;
 
 			default:
