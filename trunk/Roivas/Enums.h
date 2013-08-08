@@ -33,6 +33,7 @@ enum ComponentType
 enum ShaderName
 {
 	SH_Default = 0,
+	SH_Deferred,
 	SH_Screen,
 	SH_Hud,
 	SH_Wireframe,
@@ -40,7 +41,21 @@ enum ShaderName
 	SH_Lighting,
 	SH_LightingSSM,
 
-	SD_TOTAL
+	SH_TOTAL
+};
+
+
+// RenderTargets
+enum RenderTarget
+{
+	RT_Lighting = 0,
+
+	RT_Depth,
+	RT_Diffuse,
+	RT_Positions,
+	RT_Normals,
+
+	RT_TOTAL
 };
 
 

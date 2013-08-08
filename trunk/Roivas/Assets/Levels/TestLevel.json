@@ -82,7 +82,7 @@
 				} 
 			]
 		},
-		"spotlight.json" : 
+		"directionlight.json" : 
 		{			
 			"Entities" : 
 			[ 
@@ -93,16 +93,6 @@
 					},
 					"Light" : {
 						"Direction" : [ 1,1,1 ],
-						"Color" : [ 1.0,1.0,1.0 ]
-					}
-				},
-				{ 
-					"Id" : 16,
-					"Transform" : {
-						"Position" : [ 0.0,0.0,0.0 ]
-					},
-					"Light" : {
-						"Direction" : [ -1,1,1 ],
 						"Color" : [ 1.0,1.0,1.0 ]
 					}
 				}

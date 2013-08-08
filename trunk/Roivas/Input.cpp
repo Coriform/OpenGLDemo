@@ -79,11 +79,17 @@ namespace Roivas
 			break;
 
 			case SDLK_LEFT:
-				GetSystem(Graphics)->CameraYaw(-1.0f);
+				if( pressed )
+				{
+					GetSystem(Graphics)->PrevRT();
+				}
 			break;
 
 			case SDLK_RIGHT:
-				GetSystem(Graphics)->CameraYaw(1.0f);
+				if( pressed )
+				{
+					GetSystem(Graphics)->NextRT();
+				}
 			break;
 
 			case SDLK_UP:
