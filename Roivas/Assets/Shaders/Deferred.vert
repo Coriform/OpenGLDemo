@@ -19,7 +19,7 @@ out float Depth;
 void main( void )
 {
 	Position = (M * vec4(position,1)).xyz;	
-	Normal = ( V * M* vec4(normal,0)).xyz;
+	Normal = ( V * M * vec4(normal,0)).xyz;
 	EyeDirection = vec3(0,0,0) - ( V * M * vec4(position,1)).xyz;
 	UV = uv;
 	Depth = -(V * M * vec4(position,1)).z;

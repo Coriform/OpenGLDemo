@@ -65,8 +65,8 @@ void main( void )
 		PN = N;
 
 	outDiffuse		= texture( tex_sampler, UV );
-	outPositions	= vec4( Position, 0 );
-	outNormals		= vec4( PN, 0 );
+	outPositions	= vec4( Position, 1 );
+	outNormals		= vec4( PN, Depth );
 	outDepth		= vec4(Depth)/100;
 }
 

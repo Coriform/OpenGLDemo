@@ -9,7 +9,6 @@ uniform sampler2D tNormals;
 
 // Interpolated values from the vertex shaders
 in vec2 UV;
-in vec3 EyeDirection;
 
 uniform mat4 V;
 
@@ -26,10 +25,7 @@ const vec3 ambient_light = vec3(0.1,0.1,0.1);
 const vec3 model_specular = vec3(1,1,1);
 const float shininess = 30.0;
 
-const float bias = 0.01;
-
-
-
+const float bias = 0.001;
 
 
 void main()
@@ -38,21 +34,22 @@ void main()
 	vec4 position	= texture( tPosition, UV );
 	vec4 normal		= texture( tNormals, UV );
 
-	vec3 Ambient = clamp( diffuse.xyz * ambient_light, 0.0, 1.0 );	
+	vec3 Ambient = clamp( diffuse.xyz * ambient_light, 0.0, 1.0 ) / num_lights;	
 	vec3 color = Ambient;
 
-	vec3 LightDirection = (V*vec4(lightdir,0)).xyz;
+	vec3 LightDirection = ( V * vec4(lightdir,0) ).xyz;
+	vec3 EyeDirection = vec3(0,0,0) - (V * position).xyz;
 
 	vec3 L  = normalize( LightDirection);
 	vec3 E  = normalize( EyeDirection );
 	vec3 N  = normalize( normal.xyz );	
 
 	if( lighttype != 0 )
-		L = normalize( (V* vec4(lightpos - position.xyz,0)).xyz );
+		L = normalize( (V * vec4(lightpos - position.xyz,0)).xyz );
 
 	float dist = length( position.xyz - lightpos );	
 	float d = max(dist - lightradius, 0) / lightradius + 1.0;				
-	float att = max( (1.0 / (d*d*d) - bias) / (1 - bias), 0 );
+	float att = max( (1.0 / (d*d) - bias) / (1 - bias), 0 );
 
 	vec3 R  = reflect(-L,N);
 	
@@ -90,7 +87,7 @@ void main()
 		color += (Diffuse + Specular);
 	}
 
-	outColor = vec4(color,1);
+	color = max( color, Ambient );
 
-	return;
+	outColor = vec4(color,1);
 }

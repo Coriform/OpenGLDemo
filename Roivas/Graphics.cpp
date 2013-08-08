@@ -18,11 +18,11 @@ namespace Roivas
 		accum(0.0f),
 		varray_size(8),
 		current_rt(0),
-		current_lighting(SH_Lighting),
+		current_lighting(SH_LightingSSM),
 		shadows_enabled(true),
 		wireframe_enabled(false),
 		normal_mapping_enabled(true),
-		shadow_size(1),
+		shadow_size(4),
 		SelectedEntity(nullptr)
 	{
 		// Initialize ticks counted for framerate
@@ -335,39 +335,7 @@ namespace Roivas
 		if( shadows_enabled == true )
 			ShadowPass(dt);		
 
-		LightingPass(dt);
-
-
-		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);		
-		glCullFace(GL_NONE);
-		glUseProgram( SHADERS.at(SH_Screen).ShaderProgram );
-		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_Lighting], 0 );
-		
-
-		//glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
-
-		glActiveTexture(GL_TEXTURE0);
-
-		//
-		glViewport(0,screen_height_i/2,screen_width_i/2,screen_height_i/2);
-		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_Diffuse]);
-
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
-		glVertexAttribPointer(
-			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-		);
-
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
-		glDisableVertexAttribArray(0);
-		//glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screen_tex, 0 );
-
+		LightingPass(dt);		
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	}
@@ -410,6 +378,7 @@ namespace Roivas
 
 			modelMat = glm::scale( modelMat, t->Scale );
 			
+			SHADERS[SH_Deferred].SetUniform1i( "normal_mapping", normal_mapping_enabled );
 			SHADERS[SH_Deferred].SetUniform4fv( "M", &modelMat[0][0]);
 			SHADERS[SH_Deferred].SetUniform4fv( "V", &viewMat[0][0]);
 			SHADERS[SH_Deferred].SetUniform4fv( "P", &projMat[0][0] );
@@ -478,11 +447,11 @@ namespace Roivas
 
 	void Graphics::ShadowPass(float dt)
 	{		
-		glViewport(0, 0, screen_width_i*shadow_size, screen_height_i*shadow_size);
+		glViewport(0, 0, screen_width_i*shadow_size, screen_width_i*shadow_size);
 		
 		glEnable( GL_DEPTH_TEST );
 		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK); // Cull back-facing triangles -> draw only front-facing triangles		
+		glCullFace(GL_FRONT); // Cull back-facing triangles -> draw only front-facing triangles		
 		
 
 		glUseProgram( SHADERS.at(SH_ShadowTex).ShaderProgram );
@@ -584,8 +553,6 @@ namespace Roivas
 			0.5, 0.5, 0.5, 1.0
 		);
 
-		mat4 depthBiasMVP = biasMatrix*depthMVP;
-
 		for( unsigned j = 0; j < num_lights; ++j )
 		{	
 			Light* light = LIGHT_LIST[j];
@@ -628,7 +595,7 @@ namespace Roivas
 
 			glActiveTexture(GL_TEXTURE3);
 			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->ShadowMap[0]);
-			SHADERS[current_lighting].SetUniform1i( "shadow_sampler", 3 );	
+			SHADERS[current_lighting].SetUniform1i( "tShadow", 3 );	
 
 			glEnableVertexAttribArray(0);
 			glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
@@ -680,6 +647,39 @@ namespace Roivas
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
 		glDisableVertexAttribArray(0);
+
+
+
+
+
+
+
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_Lighting], 0 );
+		glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
+		glCullFace(GL_NONE);
+
+		// Use our shader
+		glUseProgram( SHADERS.at(SH_Screen).ShaderProgram );
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(0)->ShadowMap[0]);
+
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+		glDisableVertexAttribArray(0);
 	}
 
 	void Graphics::ProcessLights()
@@ -703,7 +703,7 @@ namespace Roivas
 			glGenTextures(6, LIGHT_LIST.at(i)->ShadowMap);
 			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(i)->ShadowMap[0]);
 
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, screen_width_i*shadow_size, screen_height_i*shadow_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, screen_width_i*shadow_size, screen_width_i*shadow_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

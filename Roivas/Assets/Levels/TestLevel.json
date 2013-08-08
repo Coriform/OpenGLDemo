@@ -76,13 +76,13 @@
 					"Id" : 34,
 					"Transform" : {
 						"Position" : [ 0.0,-2,3 ],
-						"Scale" : [ 36,36,0.25 ],
+						"Scale" : [ 36,36,0.75 ],
 						"Rotation" : [ 90,0,0 ]
 					}
 				} 
 			]
 		},
-		"directionlight.json" : 
+		"pointlight.json" : 
 		{			
 			"Entities" : 
 			[ 
@@ -95,8 +95,17 @@
 						"Direction" : [ 1,1,1 ],
 						"Color" : [ 1.0,1.0,1.0 ]
 					}
+				},
+				{
+					"Id" : 16,
+					"Transform" : {
+						"Position" : [ -1.5,2.5,2.0 ]
+					},
+					"Light" : {
+						"Direction" : [ -1,1,1 ],
+						"Color" : [ 1.0,1.0,1.0 ]
+					}
 				}
-
 			]
 		}
 	}
