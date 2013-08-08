@@ -114,13 +114,10 @@ namespace Roivas
 		++fps;
 
 		// Depth sorting
-		//SortModels(dt);		// This is screwing up normals for some reason
+		SortModels(dt);	
 
 		// Updates current camera
 		UpdateCamera(dt);
-
-		// Update lights
-		//ProcessLights();
 
 		// Primary drawing functions; draws the geometry and lighting calculations
 		Draw3D(dt);		
@@ -163,8 +160,6 @@ namespace Roivas
 			 1.0f, -1.0f, 0.0f,
 			 1.0f,  1.0f, 0.0f,
 		};
-
-		m_multipleRenderTarget = new FBORenderTexture(screen_width_i, screen_height_i);
 
 		glGenVertexArrays(1, &meshQuad);
 		glBindVertexArray(meshQuad);
@@ -325,6 +320,9 @@ namespace Roivas
 	void Graphics::Draw3D(float dt)
 	{
 		accum += dt;
+
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		glEnable( GL_DEPTH_TEST );
 
@@ -680,6 +678,7 @@ namespace Roivas
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
 		glDisableVertexAttribArray(0);
+
 	}
 
 	void Graphics::ProcessLights()

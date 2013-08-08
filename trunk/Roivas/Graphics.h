@@ -10,7 +10,6 @@
 #include <assimp/types.h>
 #include <assimp/scene.h> 
 #include <assimp/postprocess.h> 
-#include "FBORenderTexture.h"
 #include "SOIL.h"
 #include "System.h"
 #include "Model.h"
@@ -108,8 +107,6 @@ namespace Roivas
 			void SetupFonts();
 			void InitializeCamera();
 
-			FBORenderTexture*	m_multipleRenderTarget;
-
 			GLuint rboDepthStencil;
 			GLuint meshCube, meshQuad;
 			GLuint buffCube, buffQuad;
@@ -132,15 +129,8 @@ namespace Roivas
 
 			// Render target textures
 			GLuint screen_tex;
-			int current_rt;
-
 			GLuint rt_textures[RT_TOTAL];
-			//GLuint light_tex;
-			//GLuint depth_tex;
-			//GLuint diffuse_tex;
-			//GLuint positions_tex;
-			//GLuint normals_tex;
-
+			int current_rt;			
 
 			std::map<std::string,GLuint> TEXTURE_LIST;
 			std::map<std::string,MeshData> MESH_LIST;
