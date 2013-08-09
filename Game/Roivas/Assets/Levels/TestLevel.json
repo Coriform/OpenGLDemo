@@ -48,6 +48,18 @@
 				} 
 			]
 		},
+		"duck.json" :
+		{
+			"Entities" : 
+			[ 
+				{
+					"Id" : 14,
+					"Transform" : {
+						"Position" : [ -4.0,1.0,6.0 ]
+					}
+				} 
+			]
+		},
 		"wall.json" :
 		{
 			"Entities" : 
@@ -82,7 +94,7 @@
 				} 
 			]
 		},
-		"pointlight.json" : 
+		"directionlight.json" : 
 		{			
 			"Entities" : 
 			[ 
@@ -93,16 +105,6 @@
 					},
 					"Light" : {
 						"Direction" : [ 1,1,1 ],
-						"Color" : [ 1.0,1.0,1.0 ]
-					}
-				},
-				{
-					"Id" : 16,
-					"Transform" : {
-						"Position" : [ -1.5,2.5,2.0 ]
-					},
-					"Light" : {
-						"Direction" : [ -1,1,1 ],
 						"Color" : [ 1.0,1.0,1.0 ]
 					}
 				}

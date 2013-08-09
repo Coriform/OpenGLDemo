@@ -22,7 +22,8 @@ namespace Roivas
 		shadows_enabled(true),
 		wireframe_enabled(false),
 		normal_mapping_enabled(true),
-		shadow_size(4),
+		shadow_size(4.0f),
+		shadow_smooth(16.0f),
 		SelectedEntity(nullptr)
 	{
 		// Initialize ticks counted for framerate
@@ -445,7 +446,7 @@ namespace Roivas
 
 	void Graphics::ShadowPass(float dt)
 	{		
-		glViewport(0, 0, screen_width_i*shadow_size, screen_width_i*shadow_size);
+		glViewport(0, 0, (int)(screen_width*shadow_size), (int)(screen_width*shadow_size));
 		
 		glEnable( GL_DEPTH_TEST );
 		glEnable(GL_CULL_FACE);
@@ -563,6 +564,7 @@ namespace Roivas
 			}			
 			
 			SHADERS[current_lighting].SetUniform1i( "num_lights",	num_lights );
+			SHADERS[current_lighting].SetUniform1f( "shadowsmooth", shadow_smooth );
 			SHADERS[current_lighting].SetUniform3f( "lightpos",		light->GetTransform()->Position );
 			SHADERS[current_lighting].SetUniform3f( "lightcolor",	light->Color );
 			SHADERS[current_lighting].SetUniform3f( "lightdir",		light->Direction );
@@ -702,7 +704,7 @@ namespace Roivas
 			glGenTextures(6, LIGHT_LIST.at(i)->ShadowMap);
 			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(i)->ShadowMap[0]);
 
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, screen_width_i*shadow_size, screen_width_i*shadow_size, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, (int)(screen_width*shadow_size), (int)(screen_width*shadow_size), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1247,7 +1249,7 @@ namespace Roivas
 
 	void Graphics::InitializeCamera()
 	{
-		cam_pos		= vec3(0.0f,0.0f,4.0f);
+		cam_pos		= vec3(0.0f,2.0f,28.0f);
 		cam_look	= vec3(0.0f, 0.0f, -1.0f);
 		cam_up		= vec3(0.0f, 1.0f, 0.0f);
 		cam_rot		= quat();
