@@ -1280,7 +1280,7 @@ namespace Roivas
 
 	void Graphics::InitializeCamera()
 	{
-		cam_pos		= vec3(0.0f,0.0f,4.0f);
+		cam_pos		= vec3(0.0f, 2.0f, 28.0f);
 		cam_look	= vec3(0.0f, 0.0f, -1.0f);
 		cam_up		= vec3(0.0f, 1.0f, 0.0f);
 		cam_rot		= quat();
