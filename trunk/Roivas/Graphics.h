@@ -172,7 +172,8 @@ namespace Roivas
 
 			float pitch;
 
-			int shadow_size;
+			float shadow_size;
+			float shadow_smooth;
 
 			Entity* SelectedEntity;
 
