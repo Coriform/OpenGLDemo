@@ -111,6 +111,10 @@ namespace Roivas
 			ticks = SDL_GetTicks();
 		}
 
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneLighting], 0 );
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
 		// Actual framerate value
 		++fps;
 
