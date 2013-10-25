@@ -53,6 +53,8 @@ namespace Roivas
 				if( pressed )
 				{
 					if( GetSystem(Graphics)->current_lighting == SH_LightingSSM )
+						GetSystem(Graphics)->current_lighting = SH_LightingESM;
+					else if( GetSystem(Graphics)->current_lighting == SH_LightingESM )
 						GetSystem(Graphics)->current_lighting = SH_Lighting;
 					else if( GetSystem(Graphics)->current_lighting == SH_Lighting )
 						GetSystem(Graphics)->current_lighting = SH_LightingSSM;

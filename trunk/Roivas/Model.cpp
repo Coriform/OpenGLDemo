@@ -4,9 +4,10 @@
 namespace Roivas
 {
 	Model::Model() : 
-		MeshName(""), 
-		DiffuseName(""), 
+		MeshName("Box.obj"), 
+		DiffuseName("_white.png"), 
 		NormalName(""),
+		SpecName("_white.png"),
 		VertexBuffer(0),
 		UVBuffer(0),
 		NormalBuffer(0),
@@ -14,6 +15,7 @@ namespace Roivas
 		Indices(0),
 		DiffuseID(0), 
 		NormalID(0),
+		SpecID(0),
 		Color(vec4()), 
 		WireColor(vec3(1,1,1)), 
 		Component(CT_Model)
@@ -25,6 +27,7 @@ namespace Roivas
 		MeshName(m.MeshName), 
 		DiffuseName(m.DiffuseName), 
 		NormalName(m.NormalName),
+		SpecName(m.SpecName),
 		VertexBuffer(m.VertexBuffer),
 		UVBuffer(m.UVBuffer),
 		NormalBuffer(m.NormalBuffer),
@@ -32,6 +35,7 @@ namespace Roivas
 		Indices(m.Indices),
 		DiffuseID(m.DiffuseID), 
 		NormalID(m.NormalID),
+		SpecID(m.SpecID),
 		Color(m.Color), 
 		WireColor(m.WireColor),
 		Component(CT_Model)
@@ -59,6 +63,7 @@ namespace Roivas
 		fio.Read(root["Mesh"], MeshName);
 		fio.Read(root["DiffuseTexture"], DiffuseName);
 		fio.Read(root["NormalTexture"], NormalName);
+		fio.Read(root["SpecularTexture"], SpecName);
 		fio.Read(root["Color"], Color);
 		fio.Read(root["WireColor"], WireColor);
 
@@ -66,5 +71,10 @@ namespace Roivas
 		GetSystem(Graphics)->LoadMesh(MeshName, VertexBuffer, UVBuffer, NormalBuffer, ElementBuffer, Indices);
 		DiffuseID	= GetSystem(Graphics)->LoadTexture(DiffuseName); 
 		NormalID	= GetSystem(Graphics)->LoadTexture(NormalName); 
+		SpecID		= GetSystem(Graphics)->LoadTexture(SpecName); 
+
+		//if( DiffuseID == 0 )	GetSystem(Graphics)->LoadTexture("_white.png");
+		//if( NormalID == 0 )		GetSystem(Graphics)->LoadTexture("_white.png");
+		//if( SpecID == 0 )		GetSystem(Graphics)->LoadTexture("_white.png");
 	}
 }

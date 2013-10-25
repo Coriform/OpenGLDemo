@@ -18,12 +18,12 @@ namespace Roivas
 		accum(0.0f),
 		varray_size(8),
 		current_rt(0),
-		current_lighting(SH_LightingSSM),
+		current_lighting(SH_Lighting),
 		shadows_enabled(true),
 		wireframe_enabled(false),
 		normal_mapping_enabled(true),
-		shadow_size(4.0f),
-		shadow_smooth(16.0f),
+		shadow_size(2.0f),
+		shadow_smooth(3.0f),
 		SelectedEntity(nullptr)
 	{
 		// Initialize ticks counted for framerate
@@ -40,7 +40,7 @@ namespace Roivas
 		glLoadIdentity();
 
 		// Clear color
-		glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 		// Shader model - Use this
 		glShadeModel(GL_SMOOTH);
@@ -76,6 +76,7 @@ namespace Roivas
 		CreateShaderProgram("Assets/Shaders/ShadowTex.vert",		"Assets/Shaders/ShadowTex.frag");		// SH_ShadowTex
 		CreateShaderProgram("Assets/Shaders/Lighting.vert",			"Assets/Shaders/Lighting.frag");		// SH_Lighting
 		CreateShaderProgram("Assets/Shaders/LightingWithSSM.vert",	"Assets/Shaders/LightingWithSSM.frag");	// SH_LightingSSM
+		CreateShaderProgram("Assets/Shaders/LightingWithESM.vert",	"Assets/Shaders/LightingWithESM.frag");	// SH_LightingSSM
 
 		//shadow_size = 1;
 
@@ -227,7 +228,8 @@ namespace Roivas
 		glGenFramebuffers(1, &deferred_fbo);
 		glGenRenderbuffers(1, &diffuse_rt);
 		glGenRenderbuffers(1, &positions_rt);
-		glGenRenderbuffers(1, &normals_rt);
+		glGenRenderbuffers(1, &normals_rt);				
+		glGenRenderbuffers(1, &specular_rt);
 		glGenRenderbuffers(1, &depth_buffer);
 
 		// Bind the FBO so that the next operations will be bound to it
@@ -248,10 +250,16 @@ namespace Roivas
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA16F, screen_width_i, screen_height_i);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_RENDERBUFFER, normals_rt);
 
+		// Bind the spec render target
+		glBindRenderbuffer(GL_RENDERBUFFER, specular_rt);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA16F, screen_width_i, screen_height_i);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_RENDERBUFFER, specular_rt);
+
 		// Bind the depth buffer
 		glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, screen_width_i, screen_height_i);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
+		
 
 
 		// Generate and bind the OGL texture for diffuse
@@ -287,6 +295,17 @@ namespace Roivas
 		// Attach the texture to the FBO
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, rt_textures[RT_SceneNormals], 0);
 
+		// Generate and bind the OGL texture for specular mapping
+		glGenTextures(1, &rt_textures[RT_SceneSpecular]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneSpecular]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, rt_textures[RT_SceneSpecular], 0);
+
 		// Generate and bind the OGL texture for depth
 		glGenTextures(1, &rt_textures[RT_SceneDepth]);
 		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneDepth]);
@@ -296,7 +315,7 @@ namespace Roivas
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		// Attach the texture to the FBO
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, rt_textures[RT_SceneDepth], 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, rt_textures[RT_SceneDepth], 0);		
 
 
 		// Check if all worked fine and unbind the FBO
@@ -356,8 +375,8 @@ namespace Roivas
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-		glDrawBuffers(4, buffers);
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+		glDrawBuffers(5, buffers);
 		
 		glUseProgram( SHADERS.at(SH_Deferred).ShaderProgram );
 
@@ -394,6 +413,10 @@ namespace Roivas
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->NormalID);
 			SHADERS[SH_Deferred].SetUniform1i( "norm_sampler", 1 );
+
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->SpecID);
+			SHADERS[SH_Deferred].SetUniform1i( "spec_sampler", 2 );
 
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
@@ -568,7 +591,7 @@ namespace Roivas
 				glDepthFunc(GL_LEQUAL);
 			}			
 			
-			SHADERS[current_lighting].SetUniform1i( "num_lights",	num_lights );
+
 			SHADERS[current_lighting].SetUniform1f( "shadowsmooth", shadow_smooth );
 			SHADERS[current_lighting].SetUniform3f( "lightpos",		light->GetTransform()->Position );
 			SHADERS[current_lighting].SetUniform3f( "lightcolor",	light->Color );
@@ -599,8 +622,12 @@ namespace Roivas
 			SHADERS[current_lighting].SetUniform1i( "tNormals", 2 );
 
 			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneSpecular]);
+			SHADERS[current_lighting].SetUniform1i( "tSpecular", 3 );
+
+			glActiveTexture(GL_TEXTURE4);
 			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->RT_Textures[RT_LightDepth]);
-			SHADERS[current_lighting].SetUniform1i( "tShadow", 3 );	
+			SHADERS[current_lighting].SetUniform1i( "tShadow", 4 );	
 
 			glEnableVertexAttribArray(0);
 			glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
@@ -698,34 +725,6 @@ namespace Roivas
 
 	void Graphics::BuildShadows()
 	{
-
-
-		/*
-		glGenFramebuffers(1, &deferred_fbo);
-		glGenRenderbuffers(1, &diffuse_rt);
-
-		// Bind the FBO so that the next operations will be bound to it
-		glBindFramebuffer(GL_FRAMEBUFFER, deferred_fbo);
-
-		// Bind the diffuse render target
-		glBindRenderbuffer(GL_RENDERBUFFER, diffuse_rt);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, screen_width_i, screen_height_i);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, diffuse_rt);
-
-		// Generate and bind the OGL texture for diffuse
-		glGenTextures(1, &rt_textures[RT_LightDiffuse]);
-		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_LightDiffuse]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width_i, screen_height_i, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		// Attach the texture to the FBO
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_LightDiffuse], 0);
-		*/
-
-
-
 		glGenFramebuffers(1, &shadow_fbo);    			
 
 		for( unsigned i = 0; i < LIGHT_LIST.size(); ++i )
@@ -1468,6 +1467,7 @@ namespace Roivas
 		glDeleteRenderbuffers(1, &diffuse_rt);
 		glDeleteRenderbuffers(1, &positions_rt);
 		glDeleteRenderbuffers(1, &normals_rt);
+		glDeleteRenderbuffers(1, &specular_rt);
 		glDeleteRenderbuffers(1, &depth_buffer);
 	}
 }

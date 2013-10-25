@@ -99,24 +99,24 @@ void main()
 
 	if( lighttype == 1 )
 	{
-		float cutoff = 0.99;
-		float falloff = cutoff - clamp( lightcone, 0.0, 1.0 );
-
-		float angle = dot(L, normalize(LightDirection));
-
-		float outer = falloff;
-		float inner = cutoff;
-
-		float angle_diff = inner - outer;	
-
-		float spot = clamp((angle - outer) /  angle_diff, 0.0, 1.0);
-
 		float lambertTerm = max( dot(N,L), 0.0);
-		if( lambertTerm > 0.0 )
-		{
-			color += (visibility * Diffuse * lambertTerm * spot * att);
-			color += (visibility * Specular * spot * att);
-		}
+
+        if( lambertTerm > 0.0 )
+        {
+            float cutoff = 0.99;
+			float falloff = cutoff - clamp( lightcone, 0.0, 1.0 );
+
+			float angle = dot(L, normalize(LightDirection));
+
+			float outer = falloff;
+			float inner = cutoff;
+
+			float angle_diff = inner - outer;    
+
+			float spot = clamp((angle - outer) /  angle_diff, 0.0, 1.0);
+            color += (visibility * Diffuse * lambertTerm * spot * att);
+            color += (visibility * Specular * spot * att);
+        }
 	}
 	else if( lighttype == 2 )
 	{
