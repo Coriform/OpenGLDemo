@@ -5,8 +5,9 @@
 		},
 		"Model" : {
 			"Mesh" : "sphere.dae",
-			"DiffuseTexture" : "crack_ice.png",
-			"NormalTexture" : "crack_NRM.png",
+			"DiffuseTexture" : "slate_diffuse.png",
+			"NormalTexture" : "slate_norm.png",
+			"SpecularTexture" : "slate_spec.png",
 			"Color" : [ 1.0,0.0,0.5,0.75 ]
 		},
 		"Behavior" : {

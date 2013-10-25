@@ -5,7 +5,8 @@
 layout(location = 0) out vec4 outDiffuse;
 layout(location = 1) out vec4 outPositions;
 layout(location = 2) out vec4 outNormals;
-layout(location = 3) out vec4 outDepth;
+layout(location = 3) out vec4 outSpec; 
+layout(location = 4) out vec4 outDepth;
 
 in vec2 UV;
 in vec3 Position;
@@ -15,6 +16,7 @@ in float Depth;
 
 uniform sampler2D tex_sampler;
 uniform sampler2D norm_sampler;
+uniform sampler2D spec_sampler;
 
 uniform bool normal_mapping = true;
 
@@ -68,6 +70,7 @@ void main( void )
 	outPositions	= vec4( Position, 1 );
 	outNormals		= vec4( PN, Depth );
 	outDepth		= vec4(Depth)/100;
+	outSpec			= texture( spec_sampler, UV );
 }
 
 

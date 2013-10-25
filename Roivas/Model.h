@@ -18,8 +18,10 @@ namespace Roivas
 			std::string MeshName;
 			std::string DiffuseName;	
 			std::string NormalName;
+			std::string SpecName;
 			GLuint DiffuseID;
 			GLuint NormalID;
+			GLuint SpecID;
 			vec4 Color;
 			vec3 WireColor;
 

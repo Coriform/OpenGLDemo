@@ -125,6 +125,7 @@ namespace Roivas
 			GLuint diffuse_rt;
 			GLuint positions_rt;
 			GLuint normals_rt;
+			GLuint specular_rt;
 			GLuint depth_buffer;		
 
 			// Render target textures

@@ -40,6 +40,7 @@ enum ShaderName
 	SH_ShadowTex,
 	SH_Lighting,
 	SH_LightingSSM,
+	SH_LightingESM,
 
 	SH_TOTAL
 };
@@ -55,10 +56,11 @@ enum RenderTarget
 
 	RT_SceneLighting,
 
-	RT_SceneDepth,
 	RT_SceneDiffuse,
 	RT_ScenePositions,
-	RT_SceneNormals,
+	RT_SceneNormals,	
+	RT_SceneSpecular,
+	RT_SceneDepth,
 	
 
 	RT_TOTAL

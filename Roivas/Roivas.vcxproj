@@ -235,6 +235,8 @@
     <None Include="Assets\Shaders\Hud.vert" />
     <None Include="Assets\Shaders\Lighting.frag" />
     <None Include="Assets\Shaders\Lighting.vert" />
+    <None Include="Assets\Shaders\LightingWithESM.frag" />
+    <None Include="Assets\Shaders\LightingWithESM.vert" />
     <None Include="Assets\Shaders\LightingWithSSM.frag" />
     <None Include="Assets\Shaders\LightingWithSSM.vert" />
     <None Include="Assets\Shaders\Screen.frag" />
