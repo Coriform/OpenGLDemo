@@ -135,7 +135,10 @@ namespace Roivas
 		DrawEditor(dt);
 
 		if( wireframe_enabled == true )
+		{
 			DrawWireframe(dt);
+			DrawLightShape(dt);
+		}
 
 		// HUD and other 2D drawing
 		//Draw2D(dt);	
@@ -565,9 +568,10 @@ namespace Roivas
 
 		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
 
-		glEnable( GL_DEPTH_TEST );
-		glEnable( GL_CULL_FACE );
-		glCullFace(GL_BACK);
+		glDisable( GL_DEPTH_TEST );
+		glDisable( GL_CULL_FACE );
+		glEnable( GL_BLEND );
+		glBlendFunc( GL_ONE, GL_ONE );
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 		
@@ -578,19 +582,18 @@ namespace Roivas
 			0.0, 0.5, 0.0, 0.0,
 			0.0, 0.0, 0.5, 0.0,
 			0.5, 0.5, 0.5, 1.0
-		);
+		);		
 
 		for( unsigned j = 0; j < num_lights; ++j )
 		{	
-			Light* light = LIGHT_LIST[j];
-
-			if( j > 0 )
-			{
-				glEnable(GL_BLEND);
-				glBlendFunc(GL_ONE, GL_ONE);
-				glDepthFunc(GL_LEQUAL);
-			}			
+			Light* light = LIGHT_LIST[j];			
 			
+			Transform* t = light->GetTransform();
+
+			if( t == nullptr )
+				continue;
+
+			modelMat = mat4();						
 
 			SHADERS[current_lighting].SetUniform1f( "shadowsmooth", shadow_smooth );
 			SHADERS[current_lighting].SetUniform3f( "lightpos",		light->GetTransform()->Position );
@@ -599,14 +602,11 @@ namespace Roivas
 			SHADERS[current_lighting].SetUniform1f( "lightradius",	light->Radius);
 			SHADERS[current_lighting].SetUniform1f( "lightcone",	light->Cone );
 			SHADERS[current_lighting].SetUniform1i( "lighttype",	light->Type );
+			SHADERS[current_lighting].SetUniform2f( "screensize",	vec2(screen_width,screen_height) );
 
 			SHADERS[current_lighting].SetUniform4fv( "Bias", &biasMatrix[0][0]);
 			SHADERS[current_lighting].SetUniform4fv( "DepthProj", &depthProjMat[j][0][0]);
 			SHADERS[current_lighting].SetUniform4fv( "DepthView", &depthViewMat[j][0][0]);
-			SHADERS[current_lighting].SetUniform4fv( "M", &modelMat[0][0]);
-			SHADERS[current_lighting].SetUniform4fv( "V", &viewMat[0][0]);
-			SHADERS[current_lighting].SetUniform4fv( "P", &projMat[0][0] );
-
 
 
 			glActiveTexture(GL_TEXTURE0);
@@ -629,20 +629,69 @@ namespace Roivas
 			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->RT_Textures[RT_LightDepth]);
 			SHADERS[current_lighting].SetUniform1i( "tShadow", 4 );	
 
-			glEnableVertexAttribArray(0);
-			glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
-			glVertexAttribPointer(
-				0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-				3,                  // size
-				GL_FLOAT,           // type
-				GL_FALSE,           // normalized?
-				0,                  // stride
-				(void*)0            // array buffer offset
-			);
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-			glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
-			glDisableVertexAttribArray(0);
+			if( light->Type == LT_PointLight )
+			{
+				modelMat = glm::translate( modelMat, t->Position );
+
+				modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
+				modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
+				modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
+
+				modelMat = glm::scale( modelMat, t->Scale*t->GetLight()->Radius*10.0f );
+
+				SHADERS[current_lighting].SetUniform4fv( "M", &modelMat[0][0]);
+				SHADERS[current_lighting].SetUniform4fv( "V", &viewMat[0][0]);
+				SHADERS[current_lighting].SetUniform4fv( "P", &projMat[0][0] );
+
+				glEnableVertexAttribArray(0);
+
+					glBindBuffer(GL_ARRAY_BUFFER, light->GetModel()->VertexBuffer);
+						glVertexAttribPointer(
+							0,  // The attribute we want to configure
+							3,                  // size
+							GL_FLOAT,           // type
+							GL_FALSE,           // normalized?
+							0,                  // stride
+							(void*)0            // array buffer offset
+						);
+
+					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, light->GetModel()->ElementBuffer);
+						glDrawElements(
+							GL_TRIANGLES,      // mode
+							light->GetModel()->Indices.size(),
+							GL_UNSIGNED_SHORT, // type
+							(void*)0           // element array buffer offset
+						);
+
+				glDisableVertexAttribArray(0);
+
+			}
+			else
+			{
+				modelMat = mat4();
+
+				SHADERS[current_lighting].SetUniform4fv( "M", &modelMat[0][0] );
+				SHADERS[current_lighting].SetUniform4fv( "V", &modelMat[0][0] );
+				SHADERS[current_lighting].SetUniform4fv( "P", &modelMat[0][0] );
+
+				glEnableVertexAttribArray(0);
+
+					glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+					glVertexAttribPointer(
+						0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+						3,                  // size
+						GL_FLOAT,           // type
+						GL_FALSE,           // normalized?
+						0,                  // stride
+						(void*)0            // array buffer offset
+					);
+
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+					glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+
+				glDisableVertexAttribArray(0);
+			}
 
 		}
 
@@ -841,6 +890,80 @@ namespace Roivas
 					GL_TRIANGLES,      // mode
 					//indices.size(),    // count
 					MODEL_LIST.at(i)->Indices.size(),
+					GL_UNSIGNED_SHORT, // type
+					(void*)0           // element array buffer offset
+				);
+
+			glDisableVertexAttribArray(0);
+		}
+
+		glPolygonMode(GL_FRONT, GL_FILL);
+		glPolygonMode(GL_BACK, GL_FILL);	
+	}
+
+	void Graphics::DrawLightShape(float dt)
+	{		
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+
+		glViewport(0,0,screen_width_i,screen_height_i);
+
+		// Draw wireframe geometry
+		glDisable( GL_DEPTH_TEST );
+		glPolygonMode(GL_FRONT, GL_LINE);
+		glPolygonMode(GL_BACK, GL_LINE);
+
+		
+
+		for( unsigned i = 0; i < LIGHT_LIST.size(); ++i )
+		{
+			//glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
+		
+			glUseProgram( SHADERS.at(SH_Wireframe).ShaderProgram );		// Activate phong shader
+
+			SHADERS[SH_Wireframe].SetUniform4fv( "view", &viewMat[0][0] );
+			SHADERS[SH_Wireframe].SetUniform4fv( "proj", &projMat[0][0] );
+
+			Transform* t = LIGHT_LIST[i]->GetTransform();
+
+			if( t == nullptr )
+				continue;
+
+			//vec3 color = MODEL_LIST[i]->WireColor;
+
+			modelMat = mat4();		
+
+			modelMat = glm::translate( modelMat, t->Position );		
+
+			modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
+			modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
+
+			modelMat = glm::scale( modelMat, t->Scale*LIGHT_LIST[i]->Radius*10.0f );						
+
+			//glUniform3f( wireColor, color.x, color.y, color.z );
+			//glUniformMatrix4fv( wireModel, 1, GL_FALSE, &modelMat[0][0] );		// Pass the locally transformed model matrix to the scene shader	
+
+			SHADERS[SH_Wireframe].SetUniform3f( "wirecolor", vec3(1.0f,1.0f,0.0f) );
+			SHADERS[SH_Wireframe].SetUniform4fv( "model", &modelMat[0][0] );
+			//glDrawArrays( GL_TRIANGLES, 0, MESH_VERTICES.at(MODEL_LIST[i]->MeshID) );	// Draw first cube
+
+			glEnableVertexAttribArray(0);
+
+			glBindBuffer(GL_ARRAY_BUFFER, LIGHT_LIST.at(i)->GetModel()->VertexBuffer);
+				glVertexAttribPointer(
+					0,                  // attribute
+					3,                  // size
+					GL_FLOAT,           // type
+					GL_FALSE,           // normalized?
+					0,                  // stride
+					(void*)0            // array buffer offset
+				);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, LIGHT_LIST.at(i)->GetModel()->ElementBuffer);
+				glDrawElements(
+					GL_TRIANGLES,      // mode
+					//indices.size(),    // count
+					LIGHT_LIST.at(i)->GetModel()->Indices.size(),
 					GL_UNSIGNED_SHORT, // type
 					(void*)0           // element array buffer offset
 				);
