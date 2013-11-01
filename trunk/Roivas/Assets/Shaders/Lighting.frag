@@ -8,11 +8,9 @@ uniform sampler2D tPosition;
 uniform sampler2D tNormals;
 uniform sampler2D tSpecular;
 
-// Interpolated values from the vertex shaders
-in vec2 UV;
-
 uniform mat4 V;
 
+uniform vec2 screensize;
 uniform vec3 lightpos;
 uniform vec3 lightcolor;
 uniform vec3 lightdir;
@@ -27,13 +25,21 @@ const float shininess = 30.0;
 const float bias = 0.001;
 
 
+float attenuation(float r, float d)
+{
+    return max(0.0, 1.0 - (d / r));
+}
+
+
 void main()
 {
+	vec2 UV = gl_FragCoord.xy/ screensize;
+
 	vec4 diffuse	= texture( tDiffuse, UV );
 	vec4 position	= texture( tPosition, UV );
 	vec4 normal		= texture( tNormals, UV );
 
-	vec3 Ambient = clamp( diffuse.xyz * ambient_light, 0.0, 1.0 );	
+	vec3 Ambient = vec3(0,0,0);//clamp( diffuse.xyz * ambient_light, 0.0, 1.0 );	
 	vec3 color = Ambient;
 
 	vec3 LightDirection = ( V * vec4(lightdir,0) ).xyz;
@@ -46,9 +52,10 @@ void main()
 	if( lighttype != 0 )
 		L = normalize( (V * vec4(lightpos - position.xyz,0)).xyz );
 
-	float dist = length( position.xyz - lightpos );	
-	float d = max(dist - lightradius, 0) / lightradius + 1.0;				
-	float att = max( (1.0 / (d*d) - bias) / (1 - bias), 0 );
+
+
+	float d = length( position.xyz - lightpos );				
+	float att = attenuation(lightradius, d);
 
 	vec3 R  = reflect(-L,N);
 	

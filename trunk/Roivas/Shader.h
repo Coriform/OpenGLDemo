@@ -9,6 +9,7 @@ namespace Roivas
 			Shader(GLuint shaderprogram);
 			void SetUniform4fv( std::string name, const float* val );
 			void SetUniform3f( std::string name, const vec3& val );
+			void SetUniform2f( std::string name, const vec2& val );
 			void SetUniform3fArray( std::string name, int size, const float* val );
 			void SetUniform1f( std::string name, const float val );
 			void SetUniform1fArray( std::string name, int size, const float* val );
