@@ -9,8 +9,6 @@ uniform sampler2D tNormals;
 uniform sampler2D tShadow;
 uniform sampler2D tSpecular;
 
-uniform mat4 V;
-
 uniform mat4 DepthProj;
 uniform mat4 DepthView;
 uniform mat4 Bias;
@@ -64,8 +62,8 @@ void main()
 
 	vec3 color = vec3(0,0,0);
 
-	vec3 LightDirection = ( V * vec4(lightdir,0) ).xyz;
-	vec3 EyeDirection = vec3(0,0,0) - (V * position).xyz;
+	vec3 LightDirection = ( vec4(lightdir,0) ).xyz;
+	vec3 EyeDirection = vec3(0,0,0) - (position).xyz;
 	vec4 ShadowCoord = Bias * ( DepthProj * DepthView * position );
 
 	vec3 L  = normalize( LightDirection);
@@ -73,7 +71,7 @@ void main()
 	vec3 N  = normalize( normal.xyz );		
 
 	if( lighttype != 0 )
-		L = normalize( (V * vec4(lightpos - position.xyz,0)).xyz );
+		L = normalize( (vec4(lightpos - position.xyz,0)).xyz );
 
 	float d = length( position.xyz - lightpos );				
 	float att = attenuation(lightradius, d);	
@@ -98,6 +96,7 @@ void main()
 	}
 
 
+	// Spot Light
 	if( lighttype == 1 )
 	{
 		float cutoff = 0.99;
@@ -119,10 +118,13 @@ void main()
 			color += (visibility * Specular * spot * att);
 		}
 	}
+	// Point Light
 	else if( lighttype == 2 )
 	{
+		visibility = 1.0;
 		color += ((visibility * Diffuse + visibility * Specular) * att);
 	}
+	// Directional Light
 	else
 	{
 		color += (visibility * Diffuse + visibility * Specular);
