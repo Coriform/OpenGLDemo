@@ -9,15 +9,13 @@ uniform sampler2D tNormals;
 uniform sampler2D tShadow;
 uniform sampler2D tSpecular;
 
-// Interpolated values from the vertex shaders
-in vec2 UV;
-
 uniform mat4 V;
 
 uniform mat4 DepthProj;
 uniform mat4 DepthView;
 uniform mat4 Bias;
 
+uniform vec2 screensize;
 uniform vec3 lightpos;
 uniform vec3 lightcolor;
 uniform vec3 lightdir;
@@ -27,11 +25,14 @@ uniform int lighttype;
 
 uniform float shadowsmooth = 16.0f;
 
-const vec3 ambient_light = vec3(0.1,0.1,0.1);
-const vec3 model_specular = vec3(1,1,1);
 const float shininess = 30.0;
 
 const float bias = 0.001;
+
+float attenuation(float r, float d)
+{
+    return max(0.0, 1.0 - (d / r));
+}
 
 vec2 poissonDisk[16] = vec2[]( 
    vec2( -0.94201624, -0.39906216 ), 
@@ -55,12 +56,13 @@ vec2 poissonDisk[16] = vec2[](
 
 void main()
 {
+	vec2 UV = gl_FragCoord.xy/ screensize;
+
 	vec4 diffuse	= texture( tDiffuse, UV );
 	vec4 position	= texture( tPosition, UV );
 	vec4 normal		= texture( tNormals, UV );
 
-	vec3 Ambient = clamp( diffuse.xyz * ambient_light, 0.0, 1.0 );	
-	vec3 color = Ambient;
+	vec3 color = vec3(0,0,0);
 
 	vec3 LightDirection = ( V * vec4(lightdir,0) ).xyz;
 	vec3 EyeDirection = vec3(0,0,0) - (V * position).xyz;
@@ -73,14 +75,13 @@ void main()
 	if( lighttype != 0 )
 		L = normalize( (V * vec4(lightpos - position.xyz,0)).xyz );
 
-	float dist = length( position.xyz - lightpos );	
-	float d = max(dist - lightradius, 0) / lightradius + 1.0;			
-	float att = max( (1.0 / (d*d) - bias) / (1 - bias), 0 );		
+	float d = length( position.xyz - lightpos );				
+	float att = attenuation(lightradius, d);		
 
 	vec3 R  = reflect(-L,N);
 
 	vec3 Diffuse	= clamp( max( dot( N, L ), 0.0 ), 0.0, 1.0 ) * lightcolor * diffuse.xyz;            
-	vec3 Specular	= clamp( texture( tSpecular, UV ).xyz * pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * model_specular;
+	vec3 Specular	= clamp( texture( tSpecular, UV ).xyz * pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * lightcolor;
 
 
 	// Shadows
@@ -126,8 +127,6 @@ void main()
 	{
 		color += (visibility * Diffuse + visibility * Specular);
 	}
-
-	color = max( color, Ambient );
 
 	outColor = vec4(color,1);
 }

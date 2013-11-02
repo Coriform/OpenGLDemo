@@ -3,13 +3,12 @@
 // Input vertex data, different for all executions of this shader.
 layout(location = 0) in vec3 position;
 
-
-uniform mat4 M;
-uniform mat4 V;
-uniform mat4 P;
+// Output data ; will be interpolated for each fragment.
+out vec2 UV;
 
 void main()
 {
-	gl_Position = P * V * M * vec4(position,1);
+	UV = (position.xy + vec2(1,1)) / 2.0;
+	gl_Position = vec4(position, 1);
 }
 

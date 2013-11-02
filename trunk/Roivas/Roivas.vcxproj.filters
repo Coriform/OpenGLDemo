@@ -210,5 +210,11 @@
     <None Include="Assets\Shaders\LightingWithESM.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
+    <None Include="Assets\Shaders\Ambient.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\Ambient.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
