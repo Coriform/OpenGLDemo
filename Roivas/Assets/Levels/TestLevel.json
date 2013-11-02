@@ -104,18 +104,24 @@
 						"Position" : [ 1.5,2.5,2.0 ]
 					},
 					"Light" : {
-						"Direction" : [ 1,1,1 ],
-						"Color" : [ 0.0,0.0,1.0 ]
+						"Direction" : [ 0,1,1 ],
+						"Color" : [ 1.0,1.0,1.0 ]
 					}
-				},
+				}
+			]
+		},
+		"spotlight.json" : 
+		{			
+			"Entities" : 
+			[ 
 				{
 					"Id" : 17,
 					"Transform" : {
-						"Position" : [ 2.5,2.5,2.0 ]
+						"Position" : [ 1.5,2.5,2.0 ]
 					},
 					"Light" : {
 						"Direction" : [ 1,1,1 ],
-						"Color" : [ 1.0,0.0,0.0 ]
+						"Color" : [ 1.0,1.0,1.0 ]
 					}
 				}
 			]

@@ -18,12 +18,12 @@ namespace Roivas
 		accum(0.0f),
 		varray_size(8),
 		current_rt(0),
-		current_lighting(SH_Lighting),
+		current_lighting(SH_LightingSSM),
 		shadows_enabled(true),
 		wireframe_enabled(false),
 		normal_mapping_enabled(true),
-		shadow_size(2.0f),
-		shadow_smooth(3.0f),
+		shadow_size(1.0f),
+		shadow_smooth(1.0f),
 		SelectedEntity(nullptr)
 	{
 		// Initialize ticks counted for framerate
@@ -482,7 +482,7 @@ namespace Roivas
 		
 		glEnable( GL_DEPTH_TEST );
 		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT); // Cull back-facing triangles -> draw only front-facing triangles		
+		glCullFace(GL_FRONT); 	
 		
 
 		glUseProgram( SHADERS.at(SH_ShadowTex).ShaderProgram );
@@ -509,8 +509,12 @@ namespace Roivas
 			}
 			else if( LIGHT_LIST.at(j)->Type == LT_PointLight )
 			{
+				//depthProjMat[j] = glm::perspective<float>(90.0f, 1.0f, 0.95f, 50.0f);
+				//depthViewMat[j] = glm::lookAt(pos, pos-LIGHT_LIST.at(j)->Direction, glm::vec3(0,1,0));
 				depthProjMat[j] = glm::perspective<float>(90.0f, 1.0f, 0.95f, 50.0f);
 				depthViewMat[j] = glm::lookAt(pos, pos-LIGHT_LIST.at(j)->Direction, glm::vec3(0,1,0));
+
+
 			}
 
 			for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
@@ -666,7 +670,7 @@ namespace Roivas
 			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->RT_Textures[RT_LightDepth]);
 			SHADERS[current_lighting].SetUniform1i( "tShadow", 4 );	
 
-
+			
 			if( light->Type == LT_PointLight )
 			{
 				glCullFace( GL_FRONT );
@@ -708,6 +712,7 @@ namespace Roivas
 			}
 			else
 			{
+				
 				glCullFace(GL_BACK);
 
 				modelMat = mat4();
