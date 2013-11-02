@@ -18,18 +18,14 @@ uniform float lightradius;
 uniform float lightcone;
 uniform int lighttype;
 
-const vec3 ambient_light = vec3(0.1,0.1,0.1);
-const vec3 model_specular = vec3(1,1,1);
 const float shininess = 30.0;
 
 const float bias = 0.001;
-
 
 float attenuation(float r, float d)
 {
     return max(0.0, 1.0 - (d / r));
 }
-
 
 void main()
 {
@@ -39,8 +35,7 @@ void main()
 	vec4 position	= texture( tPosition, UV );
 	vec4 normal		= texture( tNormals, UV );
 
-	vec3 Ambient = vec3(0,0,0);//clamp( diffuse.xyz * ambient_light, 0.0, 1.0 );	
-	vec3 color = Ambient;
+	vec3 color = vec3(0,0,0);
 
 	vec3 LightDirection = ( V * vec4(lightdir,0) ).xyz;
 	vec3 EyeDirection = vec3(0,0,0) - (V * position).xyz;
@@ -52,15 +47,13 @@ void main()
 	if( lighttype != 0 )
 		L = normalize( (V * vec4(lightpos - position.xyz,0)).xyz );
 
-
-
 	float d = length( position.xyz - lightpos );				
 	float att = attenuation(lightradius, d);
 
 	vec3 R  = reflect(-L,N);
 	
 	vec3 Diffuse	= clamp( max( dot( N, L ), 0.0 ), 0.0, 1.0 ) * lightcolor * diffuse.xyz;              
-	vec3 Specular	= clamp( texture( tSpecular, UV ).xyz * pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * model_specular;
+	vec3 Specular	= clamp( texture( tSpecular, UV ).xyz * pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * lightcolor;
 
 	if( lighttype == 1 )
 	{
@@ -91,8 +84,6 @@ void main()
 	{
 		color += (Diffuse + Specular);
 	}
-
-	color = max( color, Ambient );
 
 	outColor = vec4(color,1);
 }

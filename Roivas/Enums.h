@@ -33,6 +33,7 @@ enum ComponentType
 enum ShaderName
 {
 	SH_Default = 0,
+	SH_Ambient,
 	SH_Deferred,
 	SH_Screen,
 	SH_Hud,

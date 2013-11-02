@@ -69,6 +69,7 @@ namespace Roivas
 		// Build Shaders - automate this somehow
 		// Make sure this is in same order as enum list
 		CreateShaderProgram("Assets/Shaders/Default.vert",			"Assets/Shaders/Default.frag");			// SH_Default
+		CreateShaderProgram("Assets/Shaders/Ambient.vert",			"Assets/Shaders/Ambient.frag");		// SH_Ambient
 		CreateShaderProgram("Assets/Shaders/Deferred.vert",			"Assets/Shaders/Deferred.frag");		// SH_Deferred
 		CreateShaderProgram("Assets/Shaders/Screen.vert",			"Assets/Shaders/Screen.frag");			// SH_Screen
 		CreateShaderProgram("Assets/Shaders/Hud.vert",				"Assets/Shaders/Hud.frag");				// SH_Hud
@@ -568,12 +569,48 @@ namespace Roivas
 
 		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
 
+
 		glDisable( GL_DEPTH_TEST );
-		glDisable( GL_CULL_FACE );
+		glEnable( GL_CULL_FACE );
+		glCullFace(GL_BACK);
+
+
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+
+
+		glUseProgram( SHADERS.at(SH_Ambient).ShaderProgram );
+
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneDiffuse]);
+		SHADERS[current_lighting].SetUniform1i( "tDiffuse", 0 );
+
+
+		glEnableVertexAttribArray(0);
+
+			glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+			glVertexAttribPointer(
+				0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+				3,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+			glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+
+		glDisableVertexAttribArray(0);
+	
+
+
+		glCullFace( GL_FRONT );
 		glEnable( GL_BLEND );
 		glBlendFunc( GL_ONE, GL_ONE );
 
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
 		
 		glUseProgram( SHADERS.at(current_lighting).ShaderProgram );
 
@@ -632,6 +669,8 @@ namespace Roivas
 
 			if( light->Type == LT_PointLight )
 			{
+				glCullFace( GL_FRONT );
+
 				modelMat = glm::translate( modelMat, t->Position );
 
 				modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
@@ -669,6 +708,8 @@ namespace Roivas
 			}
 			else
 			{
+				glCullFace(GL_BACK);
+
 				modelMat = mat4();
 
 				SHADERS[current_lighting].SetUniform4fv( "M", &modelMat[0][0] );
@@ -694,10 +735,16 @@ namespace Roivas
 			}
 
 		}
+		
 
 		glDisable(GL_BLEND);
 
+		glEnable( GL_DEPTH_TEST );
+		glEnable( GL_CULL_FACE );
+		glCullFace( GL_BACK );
+
 		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screen_tex, 0 );
+		
 
 	}
 

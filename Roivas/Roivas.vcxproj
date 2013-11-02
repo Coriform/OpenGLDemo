@@ -229,6 +229,8 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Shaders\Ambient.frag" />
+    <None Include="Assets\Shaders\Ambient.vert" />
     <None Include="Assets\Shaders\Deferred.frag" />
     <None Include="Assets\Shaders\Deferred.vert" />
     <None Include="Assets\Shaders\Hud.frag" />
