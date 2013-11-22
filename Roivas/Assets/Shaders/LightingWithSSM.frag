@@ -9,6 +9,8 @@ uniform sampler2D tNormals;
 uniform sampler2D tShadow;
 uniform sampler2D tSpecular;
 
+uniform mat4 V;
+
 uniform mat4 DepthProj;
 uniform mat4 DepthView;
 uniform mat4 Bias;
@@ -62,8 +64,8 @@ void main()
 
 	vec3 color = vec3(0,0,0);
 
-	vec3 LightDirection = ( vec4(lightdir,0) ).xyz;
-	vec3 EyeDirection = vec3(0,0,0) - (position).xyz;
+	vec3 LightDirection = ( V * vec4(lightdir,0) ).xyz;
+	vec3 EyeDirection = vec3(0,0,0) - (V * position).xyz;
 	vec4 ShadowCoord = Bias * ( DepthProj * DepthView * position );
 
 	vec3 L  = normalize( LightDirection);
@@ -91,7 +93,7 @@ void main()
 	for( int i = 0; i < shadowsmooth; ++i )
 	{
 		float shadow_sam = texture2D( tShadow, ShadowH.xy + poissonDisk[i]/1000.0 ).z;
-		if( ShadowH.z > shadow_sam-bias )
+		if( ShadowH.z > shadow_sam+bias )
 			visibility -= 1.0f/shadowsmooth;
 	}
 

@@ -73,7 +73,6 @@ namespace Roivas
 			void BuildShadows();
 
 			GLuint current_lighting;
-			bool shadows_enabled;
 			bool normal_mapping_enabled;
 			bool wireframe_enabled;
 
