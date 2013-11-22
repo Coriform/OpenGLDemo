@@ -18,8 +18,7 @@ namespace Roivas
 		accum(0.0f),
 		varray_size(8),
 		current_rt(0),
-		current_lighting(SH_LightingSSM),
-		shadows_enabled(true),
+		current_lighting(SH_Lighting),
 		wireframe_enabled(false),
 		normal_mapping_enabled(true),
 		shadow_size(1.0f),
@@ -69,7 +68,7 @@ namespace Roivas
 		// Build Shaders - automate this somehow
 		// Make sure this is in same order as enum list
 		CreateShaderProgram("Assets/Shaders/Default.vert",			"Assets/Shaders/Default.frag");			// SH_Default
-		CreateShaderProgram("Assets/Shaders/Ambient.vert",			"Assets/Shaders/Ambient.frag");		// SH_Ambient
+		CreateShaderProgram("Assets/Shaders/Ambient.vert",			"Assets/Shaders/Ambient.frag");			// SH_Ambient
 		CreateShaderProgram("Assets/Shaders/Deferred.vert",			"Assets/Shaders/Deferred.frag");		// SH_Deferred
 		CreateShaderProgram("Assets/Shaders/Screen.vert",			"Assets/Shaders/Screen.frag");			// SH_Screen
 		CreateShaderProgram("Assets/Shaders/Hud.vert",				"Assets/Shaders/Hud.frag");				// SH_Hud
@@ -78,6 +77,7 @@ namespace Roivas
 		CreateShaderProgram("Assets/Shaders/Lighting.vert",			"Assets/Shaders/Lighting.frag");		// SH_Lighting
 		CreateShaderProgram("Assets/Shaders/LightingWithSSM.vert",	"Assets/Shaders/LightingWithSSM.frag");	// SH_LightingSSM
 		CreateShaderProgram("Assets/Shaders/LightingWithESM.vert",	"Assets/Shaders/LightingWithESM.frag");	// SH_LightingSSM
+		CreateShaderProgram("Assets/Shaders/LogBlur.vert",			"Assets/Shaders/LogBlur.frag");			// SH_LogBlur
 
 		//shadow_size = 1;
 
@@ -261,7 +261,7 @@ namespace Roivas
 
 		// Bind the depth buffer
 		glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, screen_width_i, screen_height_i);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, screen_width_i, screen_height_i);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
 		
 
@@ -359,7 +359,7 @@ namespace Roivas
 
 		GeometryPass(dt);
 
-		if( shadows_enabled == true )
+		if( current_lighting > SH_Lighting )
 			ShadowPass(dt);		
 
 		LightingPass(dt);		
@@ -482,7 +482,11 @@ namespace Roivas
 		
 		glEnable( GL_DEPTH_TEST );
 		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT); 	
+
+		if( current_lighting == SH_LightingSSM )
+			glCullFace(GL_FRONT); 	
+		else
+			glCullFace(GL_BACK);
 		
 
 		glUseProgram( SHADERS.at(SH_ShadowTex).ShaderProgram );
@@ -563,7 +567,39 @@ namespace Roivas
 
 				glDisableVertexAttribArray(0);
 			}
+
+
+
+			////
+
+
+			// Use our shader
+			glUseProgram( SHADERS.at(SH_LogBlur).ShaderProgram );
+		
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->RT_Textures[RT_LightDepth]);
+
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+			glVertexAttribPointer(
+				0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+				3,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+			glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+			glDisableVertexAttribArray(0);
+
+
+
+
 		}
+
+		
 	}
 
 	void Graphics::LightingPass(float dt)
@@ -718,8 +754,8 @@ namespace Roivas
 				modelMat = mat4();
 
 				SHADERS[current_lighting].SetUniform4fv( "M", &modelMat[0][0] );
-				SHADERS[current_lighting].SetUniform4fv( "V", &modelMat[0][0] );
-				SHADERS[current_lighting].SetUniform4fv( "P", &modelMat[0][0] );
+				SHADERS[current_lighting].SetUniform4fv( "V", &viewMat[0][0]);
+				SHADERS[current_lighting].SetUniform4fv( "P", &projMat[0][0] );
 
 				glEnableVertexAttribArray(0);
 

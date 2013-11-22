@@ -233,6 +233,9 @@
     <None Include="Assets\Shaders\Ambient.vert" />
     <None Include="Assets\Shaders\Deferred.frag" />
     <None Include="Assets\Shaders\Deferred.vert" />
+    <None Include="Assets\Shaders\GaussBlur.vert" />
+    <None Include="Assets\Shaders\GaussBlurH.frag" />
+    <None Include="Assets\Shaders\GaussBlurV.frag" />
     <None Include="Assets\Shaders\Hud.frag" />
     <None Include="Assets\Shaders\Hud.vert" />
     <None Include="Assets\Shaders\Lighting.frag" />
@@ -241,6 +244,8 @@
     <None Include="Assets\Shaders\LightingWithESM.vert" />
     <None Include="Assets\Shaders\LightingWithSSM.frag" />
     <None Include="Assets\Shaders\LightingWithSSM.vert" />
+    <None Include="Assets\Shaders\LogBlur.frag" />
+    <None Include="Assets\Shaders\LogBlur.vert" />
     <None Include="Assets\Shaders\Screen.frag" />
     <None Include="Assets\Shaders\Screen.vert" />
     <None Include="Assets\Shaders\ShadowTex.frag" />

@@ -42,6 +42,7 @@ enum ShaderName
 	SH_Lighting,
 	SH_LightingSSM,
 	SH_LightingESM,
+	SH_LogBlur,
 
 	SH_TOTAL
 };
@@ -72,10 +73,12 @@ enum RenderTarget
 enum LightingType
 {
 	LT_DirectionLight,
+
 	LT_SpotLight,
 	LT_PointLight,
 	LT_CapsuleLight,
 
 	LT_TOTAL
 };
+
 

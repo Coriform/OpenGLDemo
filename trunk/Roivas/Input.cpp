@@ -53,11 +53,20 @@ namespace Roivas
 				if( pressed )
 				{
 					if( GetSystem(Graphics)->current_lighting == SH_LightingSSM )
+					{
 						GetSystem(Graphics)->current_lighting = SH_LightingESM;
+						std::cout << " >< Exponential Shadow Maps" << std::endl;
+					}
 					else if( GetSystem(Graphics)->current_lighting == SH_LightingESM )
+					{
 						GetSystem(Graphics)->current_lighting = SH_Lighting;
+						std::cout << " >< No Shadow Maps" << std::endl;
+					}
 					else if( GetSystem(Graphics)->current_lighting == SH_Lighting )
+					{
 						GetSystem(Graphics)->current_lighting = SH_LightingSSM;
+						std::cout << " >< Simple Shadow Maps" << std::endl;
+					}
 				}
 			}
 			break;

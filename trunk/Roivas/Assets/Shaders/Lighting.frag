@@ -45,7 +45,7 @@ void main()
 	vec3 N  = normalize( normal.xyz );	
 
 	if( lighttype != 0 )
-		L = normalize( (V * vec4(lightpos - position.xyz,0)).xyz );
+		L = normalize( (vec4(lightpos - position.xyz,0)).xyz );
 
 	float d = length( position.xyz - lightpos );				
 	float att = attenuation(lightradius, d);
