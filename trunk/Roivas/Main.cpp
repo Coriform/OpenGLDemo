@@ -28,8 +28,8 @@ int main(int argc, char** argv)
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER,	1	);
 
 	CoreParams engine_parameters;
-	engine_parameters.window_width	= 1280;
-	engine_parameters.window_height = 720;
+	engine_parameters.window_width	= 896;
+	engine_parameters.window_height = 504;
 	engine_parameters.full_screen	= false;
 	engine_parameters.audio			= false;
 	engine_parameters.borderless	= false;;

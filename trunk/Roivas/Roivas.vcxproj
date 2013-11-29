@@ -83,7 +83,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\Users\Cory\Desktop\RoivasEngine\assimp\include;C:\Users\Cory\Desktop\RoivasEngine\jsoncpp\include;C:\Users\Cory\Desktop\RoivasEngine\freetype-2.3.5\include;C:\Users\Cory\Desktop\RoivasEngine\ftgl\src;C:\Users\Cory\Desktop\RoivasEngine\glm;C:\Users\Cory\Desktop\RoivasEngine\soil\src;C:\Users\Cory\Desktop\RoivasEngine\glew\include;C:\Users\Cory\Desktop\RoivasEngine\SDL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\assimp\include;$(SolutionDir)\jsoncpp\include;$(SolutionDir)\freetype-2.3.5\include;$(SolutionDir)\ftgl\src;$(SolutionDir)\glm;$(SolutionDir)\soil\src;$(SolutionDir)\glew\include;$(SolutionDir)\SDL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>CommonLibs.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -96,7 +96,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL.lib;SDLmain.lib;opengl32.lib;glew32.lib;SOIL.lib;ftgl.lib;..\assimp\lib\assimp_debug-dll_win32\assimp.lib</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
-      <AdditionalLibraryDirectories>C:\Users\Cory\Desktop\RoivasEngine\assimp\lib;C:\Users\Cory\Desktop\RoivasEngine\freetype-2.3.5\objs;C:\Users\Cory\Desktop\RoivasEngine\ftgl\lib;C:\Users\Cory\Desktop\RoivasEngine\glm;C:\Users\Cory\Desktop\RoivasEngine\soil\lib;C:\Users\Cory\Desktop\RoivasEngine\glew;C:\Users\Cory\Desktop\RoivasEngine\SDL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\assimp\lib;$(SolutionDir)\freetype-2.3.5\objs;$(SolutionDir)\ftgl\lib;$(SolutionDir)\glm;$(SolutionDir)\soil\lib;$(SolutionDir)\glew;$(SolutionDir)\SDL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDatabaseFile>
       <AdditionalOptions>/NODEFAULTLIB:"LIBCMT" /LTCG %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -129,7 +129,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>C:\Users\Cory\Desktop\RoivasEngine\assimp\include;C:\Users\Cory\Desktop\RoivasEngine\jsoncpp\include;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\freetype-2.3.5\include;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\ftgl\src;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\glm;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\soil\src;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\glew\include;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\SDL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\assimp\include;$(SolutionDir)\jsoncpp\include;$(SolutionDir)\freetype-2.3.5\include;$(SolutionDir)\ftgl\src;$(SolutionDir)\glm;$(SolutionDir)\soil\src;$(SolutionDir)\glew\include;$(SolutionDir)\SDL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>CommonLibs.h</PrecompiledHeaderFile>
       <ProgramDataBaseFileName>$(TargetDir)$(TargetName).pdb</ProgramDataBaseFileName>
@@ -143,7 +143,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>SDL.lib;SDLmain.lib;opengl32.lib;glew32.lib;SOIL.lib;ftgl.lib;..\assimp\lib\assimp_release-dll_win32\assimp.lib</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>C:\Users\Cory\Desktop\RoivasEngine\assimp\lib;C:\Users\Cory\Desktop\RoivasEngine\jsoncpp\lib;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\freetype-2.3.5\objs;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\ftgl\lib;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\glm;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\soil\lib;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\glew;C:\Users\Cory\Dropbox\svn\Projects\RoivasEngine\SDL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\assimp\lib;$(SolutionDir)\jsoncpp\lib;$(SolutionDir)\freetype-2.3.5\objs;$(SolutionDir)\ftgl\lib;$(SolutionDir)\glm;$(SolutionDir)\soil\lib;$(SolutionDir)\glew;$(SolutionDir)\SDL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalOptions>/NODEFAULTLIB:"LIBCMT" /LTCG %(AdditionalOptions)</AdditionalOptions>
     </Link>
