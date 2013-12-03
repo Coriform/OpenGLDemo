@@ -23,7 +23,7 @@ uniform float lightradius;
 uniform float lightcone;
 uniform int lighttype;
 
-uniform float shadowsmooth = 16.0f;
+uniform float shadowsmooth = 2.0f;
 
 const float shininess = 30.0;
 

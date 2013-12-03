@@ -230,34 +230,11 @@ namespace Roivas
 
 
 		glGenFramebuffers(1, &deferred_fbo);
-		glGenRenderbuffers(1, &diffuse_rt);
-		glGenRenderbuffers(1, &positions_rt);
-		glGenRenderbuffers(1, &normals_rt);				
-		glGenRenderbuffers(1, &specular_rt);
+
 		glGenRenderbuffers(1, &depth_buffer);
 
 		// Bind the FBO so that the next operations will be bound to it
 		glBindFramebuffer(GL_FRAMEBUFFER, deferred_fbo);
-
-		// Bind the diffuse render target
-		glBindRenderbuffer(GL_RENDERBUFFER, diffuse_rt);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, screen_width_i, screen_height_i);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, diffuse_rt);
-
-		// Bind the position render target
-		glBindRenderbuffer(GL_RENDERBUFFER, positions_rt);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, screen_width_i, screen_height_i);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_RENDERBUFFER, positions_rt);
-
-		// Bind the normal render target
-		glBindRenderbuffer(GL_RENDERBUFFER, normals_rt);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA16F, screen_width_i, screen_height_i);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_RENDERBUFFER, normals_rt);
-
-		// Bind the spec render target
-		glBindRenderbuffer(GL_RENDERBUFFER, specular_rt);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA16F, screen_width_i, screen_height_i);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_RENDERBUFFER, specular_rt);
 
 		// Bind the depth buffer
 		glBindRenderbuffer(GL_RENDERBUFFER, depth_buffer);
