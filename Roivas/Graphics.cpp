@@ -18,7 +18,7 @@ namespace Roivas
 		accum(0.0f),
 		varray_size(8),
 		current_rt(0),
-		current_lighting(SH_LightingSSM),
+		current_lighting(SH_Lighting),
 		wireframe_enabled(false),
 		normal_mapping_enabled(true),
 		shadow_size(1.0f),
@@ -130,7 +130,7 @@ namespace Roivas
 		Draw3D(dt);		
 
 		// Post-processing effects
-		//DrawPP(dt);
+		DrawPP(dt);
 
 		// Debug drawing
 		DrawEditor(dt);
