@@ -41,7 +41,7 @@ enum ShaderName
 	SH_ShadowTex,
 	SH_Lighting,
 	SH_LightingSSM,
-	SH_LightingESM,
+	SH_LightingDSM,
 	SH_LogBlur,
 	SH_GaussBlur,
 	SH_Fog,
