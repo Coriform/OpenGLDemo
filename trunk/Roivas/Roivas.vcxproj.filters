@@ -186,12 +186,6 @@
     <None Include="Assets\Shaders\ShadowTex.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="Assets\Shaders\LightingWithSSM.vert">
-      <Filter>Graphics\Shaders</Filter>
-    </None>
-    <None Include="Assets\Shaders\LightingWithSSM.frag">
-      <Filter>Graphics\Shaders</Filter>
-    </None>
     <None Include="Assets\Shaders\Lighting.frag">
       <Filter>Graphics\Shaders</Filter>
     </None>
@@ -202,12 +196,6 @@
       <Filter>Graphics\Shaders</Filter>
     </None>
     <None Include="Assets\Shaders\Deferred.vert">
-      <Filter>Graphics\Shaders</Filter>
-    </None>
-    <None Include="Assets\Shaders\LightingWithESM.frag">
-      <Filter>Graphics\Shaders</Filter>
-    </None>
-    <None Include="Assets\Shaders\LightingWithESM.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
     <None Include="Assets\Shaders\Ambient.frag">
@@ -238,6 +226,18 @@
       <Filter>Graphics\Shaders</Filter>
     </None>
     <None Include="Assets\Shaders\Blend.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\LightingWithDSM.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\LightingWithDSM.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\LightingWithSSM.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\LightingWithSSM.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
   </ItemGroup>

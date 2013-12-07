@@ -76,7 +76,7 @@ namespace Roivas
 		CreateShaderProgram("Assets/Shaders/ShadowTex.vert",		"Assets/Shaders/ShadowTex.frag");		// SH_ShadowTex
 		CreateShaderProgram("Assets/Shaders/Lighting.vert",			"Assets/Shaders/Lighting.frag");		// SH_Lighting
 		CreateShaderProgram("Assets/Shaders/LightingWithSSM.vert",	"Assets/Shaders/LightingWithSSM.frag");	// SH_LightingSSM
-		CreateShaderProgram("Assets/Shaders/LightingWithESM.vert",	"Assets/Shaders/LightingWithESM.frag");	// SH_LightingSSM
+		CreateShaderProgram("Assets/Shaders/LightingWithDSM.vert",	"Assets/Shaders/LightingWithDSM.frag");	// SH_LightingDSM
 		CreateShaderProgram("Assets/Shaders/LogBlur.vert",			"Assets/Shaders/LogBlur.frag");			// SH_LogBlur
 		CreateShaderProgram("Assets/Shaders/GaussBlur.vert",		"Assets/Shaders/GaussBlur.frag");		// SH_GaussBlur
 		CreateShaderProgram("Assets/Shaders/Fog.vert",				"Assets/Shaders/Fog.frag");				// SH_Fog
@@ -367,7 +367,7 @@ namespace Roivas
 
 		LightingPass(dt);		
 
-		if( current_lighting == SH_LightingSSM )
+		if( current_lighting == SH_LightingDSM )
 		{
 			Blur(rt_textures[RT_SceneShadows],2,0);
 			Blur(rt_textures[RT_SceneShadows],0,2);

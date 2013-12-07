@@ -1,7 +1,8 @@
 #version 330 core
 
 // Ouput data
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out vec4 outLight;
+layout(location = 1) out vec4 outShadow;
 
 uniform sampler2D tDiffuse; 
 uniform sampler2D tPosition;
@@ -27,7 +28,7 @@ uniform float shadowsmooth = 2.0f;
 
 const float shininess = 30.0;
 
-const float bias = 0.001;
+const float bias = 0.0005;
 
 float attenuation(float r, float d)
 {
@@ -76,7 +77,7 @@ void main()
 		L = normalize( (vec4(lightpos - position.xyz,0)).xyz );
 
 	float d = length( position.xyz - lightpos );				
-	float att = attenuation(lightradius, d);		
+	float att = attenuation(lightradius, d);	
 
 	vec3 R  = reflect(-L,N);
 
@@ -90,43 +91,57 @@ void main()
 	//float shadow_sam = texture2D( tShadow, ShadowH.xy ).z;	
 
 	
-	for( int i = 0; i < shadowsmooth; ++i )
-	{
-		float shadow_sam = texture2D( tShadow, ShadowH.xy + poissonDisk[i]/1000.0 ).z;
-		if( ShadowH.z > shadow_sam-bias )
-			visibility -= 1.0f/shadowsmooth;
-	}
+	//for( int i = 0; i < shadowsmooth; ++i )
+	//{
+		//float shadow_sam = texture2D( tShadow, ShadowH.xy + poissonDisk[i]/1000.0 ).z;
+		float shadow_sam = texture2D( tShadow, ShadowH.xy ).z;
+		if( ShadowH.z > shadow_sam+bias )
+			visibility -= 0.8f/shadowsmooth;
+	//}
 
+	vec3 shadowed_color = vec3(0,0,0);
 
+	// Spot Light
 	if( lighttype == 1 )
 	{
+		float cutoff = 0.99;
+		float falloff = cutoff - clamp( lightcone, 0.0, 1.0 );
+
+		float angle = dot(L, normalize(LightDirection));
+
+		float outer = falloff;
+		float inner = cutoff;
+
+		float angle_diff = inner - outer;	
+
+		float spot = clamp((angle - outer) /  angle_diff, 0.0, 1.0);
+
 		float lambertTerm = max( dot(N,L), 0.0);
-
-        if( lambertTerm > 0.0 )
-        {
-            float cutoff = 0.99;
-			float falloff = cutoff - clamp( lightcone, 0.0, 1.0 );
-
-			float angle = dot(L, normalize(LightDirection));
-
-			float outer = falloff;
-			float inner = cutoff;
-
-			float angle_diff = inner - outer;    
-
-			float spot = clamp((angle - outer) /  angle_diff, 0.0, 1.0);
-            color += (visibility * Diffuse * lambertTerm * spot * att);
-            color += (visibility * Specular * spot * att);
-        }
+		if( lambertTerm > 0.0 )
+		{
+			color += Diffuse * lambertTerm * spot * att + Specular * spot * att;
+			shadowed_color += (visibility * Diffuse * lambertTerm * spot * att);
+			shadowed_color += (visibility * Specular * spot * att);
+		}
 	}
+	// Point Light
 	else if( lighttype == 2 )
 	{
+		visibility = 1.0;
 		color += ((visibility * Diffuse + visibility * Specular) * att);
+		shadowed_color = color;
 	}
+	// Directional Light
 	else
 	{
-		color += (visibility * Diffuse + visibility * Specular);
+		color += Diffuse + Specular;
+		shadowed_color += (visibility * Diffuse + visibility * Specular);
 	}
 
-	outColor = vec4(color,1);
+	outLight = vec4(color,1);
+
+	if( visibility < 1.0 )
+		outShadow = vec4(shadowed_color,1);
+	else
+		outShadow = vec4(1,1,1,0);
 }
