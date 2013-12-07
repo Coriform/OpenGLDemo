@@ -234,5 +234,11 @@
     <None Include="Assets\Shaders\GaussBlur.frag">
       <Filter>Graphics\Shaders</Filter>
     </None>
+    <None Include="Assets\Shaders\Blend.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\Blend.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

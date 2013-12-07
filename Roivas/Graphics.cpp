@@ -21,7 +21,7 @@ namespace Roivas
 		current_lighting(SH_Lighting),
 		wireframe_enabled(false),
 		normal_mapping_enabled(true),
-		shadow_size(2.0f),
+		shadow_size(1.0f),
 		shadow_smooth(1.0f),
 		SelectedEntity(nullptr)
 	{
@@ -80,6 +80,7 @@ namespace Roivas
 		CreateShaderProgram("Assets/Shaders/LogBlur.vert",			"Assets/Shaders/LogBlur.frag");			// SH_LogBlur
 		CreateShaderProgram("Assets/Shaders/GaussBlur.vert",		"Assets/Shaders/GaussBlur.frag");		// SH_GaussBlur
 		CreateShaderProgram("Assets/Shaders/Fog.vert",				"Assets/Shaders/Fog.frag");				// SH_Fog
+		CreateShaderProgram("Assets/Shaders/Blend.vert",			"Assets/Shaders/Blend.frag");			// SH_Blend
 
 		//shadow_size = 1;
 
@@ -145,11 +146,11 @@ namespace Roivas
 		// HUD and other 2D drawing
 		//Draw2D(dt);	
 
-		// Draw framerate
-		DrawDebugText(framerate);	
-
 		// Draw screen texture to screen
 		ScreenPass(dt);
+
+		// Draw framerate
+		DrawDebugText(framerate);	
 
 		// Clears debug text from previous frame; might change this
 		DEBUG_TEXT.clear();
@@ -203,31 +204,6 @@ namespace Roivas
 			std::cout << "FB error, status: " << status << std::endl;
 			return;
 		} 
-
-
-
-		glGenTextures( 1, &rt_textures[RT_SceneLighting] );
-		glBindTexture( GL_TEXTURE_2D, rt_textures[RT_SceneLighting] );
-
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, screen_width_i, screen_height_i, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
-
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-
-		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneLighting], 0 );
-
-		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-
-		if( status != GL_FRAMEBUFFER_COMPLETE ) 
-		{
-			std::cout << "FB error, status: " << status << std::endl;
-			return;
-		} 
-
 
 
 		glGenFramebuffers(1, &deferred_fbo);
@@ -310,12 +286,51 @@ namespace Roivas
 
 
 
+		// Lighting and shadowing fbo
+		glGenFramebuffers(1, &lighting_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, lighting_fbo);
+
+		// Generate and bind the OGL texture for diffuse
+		glGenTextures(1, &rt_textures[RT_SceneLighting]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneLighting]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneLighting], 0);
+
+		// Generate and bind the OGL texture for positions
+		glGenTextures(1, &rt_textures[RT_SceneShadows]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneShadows]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, rt_textures[RT_SceneShadows], 0);
+
+		// Check if all worked fine and unbind the FBO
+		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		if( status != GL_FRAMEBUFFER_COMPLETE)
+		{
+			std::cout << "FB error for deferred, status: " << status << std::endl;
+		}
+
+
+
 		glGenFramebuffers( 1, &blur_fbo );
 		glBindFramebuffer( GL_FRAMEBUFFER, blur_fbo );
 
 
 		glGenFramebuffers( 1, &fog_fbo );
 		glBindFramebuffer( GL_FRAMEBUFFER, fog_fbo );
+
+		glGenFramebuffers( 1, &blend_fbo );
+		glBindFramebuffer( GL_FRAMEBUFFER, blend_fbo );
 
 
 
@@ -351,6 +366,13 @@ namespace Roivas
 			ShadowPass(dt);		
 
 		LightingPass(dt);		
+
+		if( current_lighting == SH_LightingSSM )
+		{
+			Blur(rt_textures[RT_SceneShadows],2,0);
+			Blur(rt_textures[RT_SceneShadows],0,2);
+			Blend(rt_textures[RT_SceneLighting], rt_textures[RT_SceneShadows], rt_textures[RT_SceneLighting], 0.5f);
+		}
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	}
@@ -585,7 +607,7 @@ namespace Roivas
 
 	void Graphics::LightingPass(float dt)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, lighting_fbo);
 
 		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
 
@@ -596,7 +618,6 @@ namespace Roivas
 
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
 
 
 		glUseProgram( SHADERS.at(SH_Ambient).ShaderProgram );
@@ -631,6 +652,9 @@ namespace Roivas
 		glBlendFunc( GL_ONE, GL_ONE );
 
 
+
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, buffers);
 		
 		glUseProgram( SHADERS.at(current_lighting).ShaderProgram );
 
@@ -832,6 +856,45 @@ namespace Roivas
 
 	}
 
+	void Graphics::Blend(GLint in1, GLint in2, GLint out, float ratio = 0.5f)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, blend_fbo);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, out, 0);
+
+		glViewport(0,0,screen_width_i,screen_height_i); 
+
+		// Use our shader
+		glUseProgram( SHADERS.at(SH_Blend).ShaderProgram );
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, in1);
+		SHADERS[SH_Blend].SetUniform1i( "tSampleA", 0 );
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, in2);
+		SHADERS[SH_Blend].SetUniform1i( "tSampleB", 1 );
+
+		SHADERS[SH_Blend].SetUniform1f( "ratio", ratio);
+
+
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+		glDisableVertexAttribArray(0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
 	void Graphics::Blur(GLint tex, int w, int h)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, blur_fbo);
@@ -888,8 +951,8 @@ namespace Roivas
 		SHADERS[SH_Fog].SetUniform1i( "tDepth", 1 );
 
 		SHADERS[SH_Fog].SetUniform2f( "blurSize", vec2(1.0f/screen_width, 0));
-		SHADERS[SH_Fog].SetUniform1f( "blurAmount", 6.0f);
-		SHADERS[SH_Fog].SetUniform1f( "blurPixels", 6.0f);
+		SHADERS[SH_Fog].SetUniform1f( "blurAmount", 4.0f);
+		SHADERS[SH_Fog].SetUniform1f( "blurPixels", 4.0f);
 
 
 		glEnableVertexAttribArray(0);
@@ -977,7 +1040,7 @@ namespace Roivas
 		// Post processing
 
 		//Blur(rt_textures[RT_SceneLighting],1,1);
-		Fog(rt_textures[RT_SceneLighting], rt_textures[RT_SceneDepth]);
+		//Fog(rt_textures[RT_SceneLighting], rt_textures[RT_SceneDepth]);
 	}
 
 	void Graphics::Draw2D(float dt)
@@ -1144,6 +1207,7 @@ namespace Roivas
 	void Graphics::DrawEditor(float dt)
 	{		
 		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneLighting], 0);
 
 		glViewport(0,0,screen_width_i,screen_height_i);
 
@@ -1214,7 +1278,7 @@ namespace Roivas
 
 	void Graphics::DrawDebugText(std::string text)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		if( font->Error() )
 			return;

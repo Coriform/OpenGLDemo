@@ -92,6 +92,7 @@ namespace Roivas
 			void LightingPass(float dt);	
 			void ScreenPass(float dt);
 
+			void Blend(GLint in1, GLint in2, GLint out, float ratio);
 			void Blur(GLint tex, int w, int h);
 			void Fog(GLint tex, GLint depth);
 
@@ -126,6 +127,7 @@ namespace Roivas
 			GLuint shadow_fbo;
 			GLuint blur_fbo;
 			GLuint fog_fbo;
+			GLuint blend_fbo;
 
 			GLuint depth_buffer;		
 

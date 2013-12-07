@@ -12,9 +12,13 @@ uniform int lighttype;
 
 void main()
 {
+	/*
 	if( lighttype == 0 )
 		gl_Position = vec4(position,1);
 	else
 		gl_Position = P * V * M * vec4(position,1);
+	*/
+
+	gl_Position = vec4(position,1);
 }
 
