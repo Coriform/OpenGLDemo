@@ -6,5 +6,5 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	outColor = gl_FragCoord;
+	outColor = vec4(gl_FragCoord.z);
 }

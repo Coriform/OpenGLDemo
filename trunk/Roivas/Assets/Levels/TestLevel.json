@@ -60,6 +60,30 @@
 				} 
 			]
 		},
+		"fan.json" :
+		{
+			"Entities" : 
+			[ 
+				{
+					"Id" : 22,
+					"Transform" : {
+						"Position" : [ 7.0,6.0,12.0 ]
+					}
+				} 
+			]
+		},
+		"watertower.json" :
+		{
+			"Entities" : 
+			[ 
+				{
+					"Id" : 24,
+					"Transform" : {
+						"Position" : [ -10.0,-2.0,20.0 ]
+					}
+				} 
+			]
+		},
 		"wall.json" :
 		{
 			"Entities" : 
@@ -88,7 +112,7 @@
 					"Id" : 34,
 					"Transform" : {
 						"Position" : [ 0.0,-2,3 ],
-						"Scale" : [ 36,36,0.75 ],
+						"Scale" : [ 56,56,0.75 ],
 						"Rotation" : [ 90,0,0 ]
 					}
 				} 
