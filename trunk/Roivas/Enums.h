@@ -45,6 +45,7 @@ enum ShaderName
 	SH_LogBlur,
 	SH_GaussBlur,
 	SH_Fog,
+	SH_Blend,
 
 	SH_TOTAL
 };
@@ -59,6 +60,7 @@ enum RenderTarget
 	RT_LightNormals,
 
 	RT_SceneLighting,
+	RT_SceneShadows,
 
 	RT_SceneDiffuse,
 	RT_ScenePositions,

@@ -1,7 +1,8 @@
 #version 330 core
 
 // Ouput data
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out vec4 outLight;
+layout(location = 1) out vec4 outShadow;
 
 uniform sampler2D tDiffuse; 
 uniform sampler2D tPosition;
@@ -90,13 +91,15 @@ void main()
 	//float shadow_sam = texture2D( tShadow, ShadowH.xy ).z;	
 
 	
-	for( int i = 0; i < shadowsmooth; ++i )
-	{
-		float shadow_sam = texture2D( tShadow, ShadowH.xy + poissonDisk[i]/1000.0 ).z;
+	//for( int i = 0; i < shadowsmooth; ++i )
+	//{
+		//float shadow_sam = texture2D( tShadow, ShadowH.xy + poissonDisk[i]/1000.0 ).z;
+		float shadow_sam = texture2D( tShadow, ShadowH.xy ).z;
 		if( ShadowH.z > shadow_sam+bias )
-			visibility -= 1.0f/shadowsmooth;
-	}
+			visibility -= 0.8f/shadowsmooth;
+	//}
 
+	vec3 shadowed_color = vec3(0,0,0);
 
 	// Spot Light
 	if( lighttype == 1 )
@@ -116,8 +119,9 @@ void main()
 		float lambertTerm = max( dot(N,L), 0.0);
 		if( lambertTerm > 0.0 )
 		{
-			color += (visibility * Diffuse * lambertTerm * spot * att);
-			color += (visibility * Specular * spot * att);
+			color += Diffuse * lambertTerm * spot * att + Specular * spot * att;
+			shadowed_color += (visibility * Diffuse * lambertTerm * spot * att);
+			shadowed_color += (visibility * Specular * spot * att);
 		}
 	}
 	// Point Light
@@ -125,12 +129,19 @@ void main()
 	{
 		visibility = 1.0;
 		color += ((visibility * Diffuse + visibility * Specular) * att);
+		shadowed_color = color;
 	}
 	// Directional Light
 	else
 	{
-		color += (visibility * Diffuse + visibility * Specular);
+		color += Diffuse + Specular;
+		shadowed_color += (visibility * Diffuse + visibility * Specular);
 	}
 
-	outColor = vec4(color,1);
+	outLight = vec4(color,1);
+
+	if( visibility < 1.0 )
+		outShadow = vec4(shadowed_color,1);
+	else
+		outShadow = vec4(1,1,1,0);
 }
