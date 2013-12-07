@@ -92,6 +92,9 @@ namespace Roivas
 			void LightingPass(float dt);	
 			void ScreenPass(float dt);
 
+			void Blur(GLint tex, int w, int h);
+			void Fog(GLint tex, GLint depth);
+
 			GLint CreateShaderProgram(std::string _vertSource, std::string _fragSource);			
 			void LoadFontmap(std::string path);
 			GLint LoadShader(std::string shader_filename, GLenum shader_type);
@@ -121,11 +124,9 @@ namespace Roivas
 			GLuint screen_fbo;
 			GLuint lighting_fbo;
 			GLuint shadow_fbo;
+			GLuint blur_fbo;
+			GLuint fog_fbo;
 
-			GLuint diffuse_rt;
-			GLuint positions_rt;
-			GLuint normals_rt;
-			GLuint specular_rt;
 			GLuint depth_buffer;		
 
 			// Render target textures

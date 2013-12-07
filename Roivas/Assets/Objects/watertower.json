@@ -1,0 +1,11 @@
+{
+"Entity" : {
+		"Transform" : {
+			"Scale" : [ 0.035,0.035,0.035 ]
+		},
+		"Model" : {
+			"Mesh" : "watertower.obj",
+			"DiffuseTexture" : "_white.png"
+		}
+	}
+}

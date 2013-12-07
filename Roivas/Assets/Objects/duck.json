@@ -5,7 +5,7 @@
 		},
 		"Model" : {
 			"Mesh" : "duck.dae",
-			"DiffuseTexture" : "_white.png"
+			"DiffuseTexture" : "duck.png"
 		},
 		"Behavior" : {
 		}

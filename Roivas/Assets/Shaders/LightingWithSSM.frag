@@ -27,7 +27,7 @@ uniform float shadowsmooth = 2.0f;
 
 const float shininess = 30.0;
 
-const float bias = 0.001;
+const float bias = 0.0005;
 
 float attenuation(float r, float d)
 {
