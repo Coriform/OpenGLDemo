@@ -43,6 +43,7 @@ enum ShaderName
 	SH_LightingSSM,
 	SH_LightingESM,
 	SH_LogBlur,
+	SH_Fog,
 
 	SH_TOTAL
 };
