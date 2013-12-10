@@ -44,8 +44,10 @@ enum ShaderName
 	SH_LightingDSM,
 	SH_LogBlur,
 	SH_GaussBlur,
-	SH_Fog,
+	SH_FogRadiance,
+	SH_FogBlur,
 	SH_Blend,
+	SH_Skybox,
 
 	SH_TOTAL
 };
@@ -55,18 +57,20 @@ enum ShaderName
 enum RenderTarget
 {
 	RT_LightDepth = 0,
-	RT_LightDiffuse,
-	RT_LightPositions,
-	RT_LightNormals,
 
 	RT_SceneLighting,
 	RT_SceneShadows,
+	RT_SceneBloom,
 
 	RT_SceneDiffuse,
 	RT_ScenePositions,
 	RT_SceneNormals,	
 	RT_SceneSpecular,
 	RT_SceneDepth,
+	RT_SceneGlow,
+
+	RT_SceneAttRadiance,
+	RT_SceneSctRadiance,
 	
 
 	RT_TOTAL

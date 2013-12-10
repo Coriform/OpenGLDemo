@@ -6,7 +6,7 @@
 		"Model" : {
 			"Mesh" : "Light.dae",
 			"DiffuseTexture" : "_white.png",
-			"Color" : [ 1.0,0.0,0.5,0.75 ],
+			"Color" : [ 1.0,1.0,1.0,0.75 ],
 			"WireColor" : [ 1.0,1.0,0.0 ]
 		},
 		"Light" : {

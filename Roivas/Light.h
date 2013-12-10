@@ -19,6 +19,7 @@ namespace Roivas
 			vec3 Direction;
 			float Radius;
 			float Cone;		// For Spot lights
+			bool Orbital;
 
 			GLuint RT_Textures[4];
 			int CurrentRT;	

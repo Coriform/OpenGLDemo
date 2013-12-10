@@ -9,7 +9,8 @@ in vec2 Texcoord;
 uniform sampler2D tSampleA;
 uniform sampler2D tSampleB;
 
-uniform float ratio = 0.05;
+uniform int amount = 1;
+uniform bool mult = true;
 
 void main() 
 {
@@ -19,11 +20,16 @@ void main()
 	//if( colorA.a == 0 )
 	//	colorA = vec4(0,0,0,0);
 
-	//outColor = mix(colorA, colorB, 1.0);
+	//outColor = mix(colorA, colorB, ratio);
 
+	outColor = vec4(0,0,0,1);
 
-	outColor = colorA * colorB;
-
-
+	for( int i = 0; i < amount; ++i )
+	{
+		if( mult )
+			outColor += colorA * colorB;
+		else
+			outColor += colorA + colorB;
+	}
 	
 }

@@ -3,12 +3,13 @@
 // Ouput data
 layout(location = 0) out vec4 outLight;
 layout(location = 1) out vec4 outShadow;
+layout(location = 2) out vec4 outBloom;
 
 uniform sampler2D tDiffuse; 
 uniform sampler2D tPosition;
 uniform sampler2D tNormals;
-uniform sampler2D tShadow;
 uniform sampler2D tSpecular;
+uniform sampler2D tShadow;
 
 uniform mat4 V;
 
@@ -64,6 +65,7 @@ void main()
 	vec4 normal		= texture( tNormals, UV );
 
 	vec3 color = vec3(0,0,0);
+	vec3 bloomcolor = vec3(0,0,0);
 
 	vec3 LightDirection = ( V * vec4(lightdir,0) ).xyz;
 	vec3 EyeDirection = vec3(0,0,0) - (V * position).xyz;
@@ -94,9 +96,9 @@ void main()
 	//for( int i = 0; i < shadowsmooth; ++i )
 	//{
 		//float shadow_sam = texture2D( tShadow, ShadowH.xy + poissonDisk[i]/1000.0 ).z;
-		float shadow_sam = texture2D( tShadow, ShadowH.xy ).z;
+		float shadow_sam = texture( tShadow, ShadowH.xy ).z;
 		if( ShadowH.z > shadow_sam+bias )
-			visibility -= 0.8f/shadowsmooth;
+			visibility -= 0.7f;
 	//}
 
 	vec3 shadowed_color = vec3(0,0,0);
@@ -122,6 +124,7 @@ void main()
 			color += Diffuse * lambertTerm * spot * att + Specular * spot * att;
 			shadowed_color += (visibility * Diffuse * lambertTerm * spot * att);
 			shadowed_color += (visibility * Specular * spot * att);
+			bloomcolor += visibility * Specular * spot * att;
 		}
 	}
 	// Point Light
@@ -130,15 +133,24 @@ void main()
 		visibility = 1.0;
 		color += ((visibility * Diffuse + visibility * Specular) * att);
 		shadowed_color = color;
+		bloomcolor += visibility * Specular * att;
 	}
 	// Directional Light
 	else
 	{
 		color += Diffuse + Specular;
-		shadowed_color += (visibility * Diffuse + visibility * Specular);
+		shadowed_color += visibility * Diffuse;
+		bloomcolor += visibility * Specular;
+
+		if( visibility < 1.0 )
+		{
+			color -= Specular;
+			bloomcolor = vec3(0,0,0);
+		}
 	}
 
 	outLight = vec4(color,1);
+	outBloom = vec4(bloomcolor,1);
 
 	if( visibility < 1.0 )
 		outShadow = vec4(shadowed_color,1);

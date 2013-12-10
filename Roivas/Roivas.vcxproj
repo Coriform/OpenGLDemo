@@ -237,8 +237,10 @@
     <None Include="Assets\Shaders\Blend.vert" />
     <None Include="Assets\Shaders\Deferred.frag" />
     <None Include="Assets\Shaders\Deferred.vert" />
-    <None Include="Assets\Shaders\Fog.frag" />
-    <None Include="Assets\Shaders\Fog.vert" />
+    <None Include="Assets\Shaders\FogBlur.frag" />
+    <None Include="Assets\Shaders\FogBlur.vert" />
+    <None Include="Assets\Shaders\FogRadiance.frag" />
+    <None Include="Assets\Shaders\FogRadiance.vert" />
     <None Include="Assets\Shaders\GaussBlur.frag" />
     <None Include="Assets\Shaders\GaussBlur.vert" />
     <None Include="Assets\Shaders\Hud.frag" />
@@ -255,6 +257,8 @@
     <None Include="Assets\Shaders\Screen.vert" />
     <None Include="Assets\Shaders\ShadowTex.frag" />
     <None Include="Assets\Shaders\ShadowTex.vert" />
+    <None Include="Assets\Shaders\Skybox.frag" />
+    <None Include="Assets\Shaders\Skybox.vert" />
     <None Include="Assets\Shaders\Wireframe.frag" />
     <None Include="Assets\Shaders\Wireframe.vert" />
   </ItemGroup>

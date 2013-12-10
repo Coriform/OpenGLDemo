@@ -1,7 +1,9 @@
 #version 330 core
 
 // Ouput data
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out vec4 outLight;
+layout(location = 1) out vec4 outShadow;
+layout(location = 2) out vec4 outBloom;
 
 uniform sampler2D tDiffuse; 
 uniform sampler2D tPosition;
@@ -36,6 +38,7 @@ void main()
 	vec4 normal		= texture( tNormals, UV );
 
 	vec3 color = vec3(0,0,0);
+	vec3 bloomcolor = vec3(0,0,0);
 
 	vec3 LightDirection = ( V * vec4(lightdir,0) ).xyz;
 	vec3 EyeDirection = vec3(0,0,0) - (V * position).xyz;
@@ -55,6 +58,8 @@ void main()
 	vec3 Diffuse	= clamp( max( dot( N, L ), 0.0 ), 0.0, 1.0 ) * lightcolor * diffuse.xyz;              
 	vec3 Specular	= clamp( texture( tSpecular, UV ).xyz * pow( max( dot( R, E ), 0.0 ), shininess ), 0.0, 1.0 ) * lightcolor;
 
+
+	// Spot Light
 	if( lighttype == 1 )
 	{
 		float lambertTerm = max( dot(N,L), 0.0);
@@ -74,16 +79,22 @@ void main()
 			float spot = clamp((angle - outer) /  angle_diff, 0.0, 1.0);
             color += (Diffuse * lambertTerm * spot * att);
             color += (Specular * spot * att);
+			bloomcolor += Specular * spot * att;
         }
 	}
+	// Point Light
 	else if( lighttype == 2 )
 	{
 		color += ((Diffuse + Specular) * att);
+		bloomcolor += Specular * att;
 	}
+	// Directional Light
 	else
 	{
 		color += (Diffuse + Specular);
+		bloomcolor += Specular;
 	}
 
-	outColor = vec4(color,1);
+	outLight = vec4(color,1);
+	outBloom = vec4(bloomcolor,1);
 }
