@@ -55,17 +55,17 @@ namespace Roivas
 					if( GetSystem(Graphics)->current_lighting == SH_LightingSSM )
 					{
 						GetSystem(Graphics)->current_lighting = SH_LightingDSM;
-						std::cout << " >< Deferred Shadow Maps" << std::endl;
+						std::cout << " >L< Deferred Shadow Maps" << std::endl;
 					}
 					else if( GetSystem(Graphics)->current_lighting == SH_LightingDSM )
 					{
 						GetSystem(Graphics)->current_lighting = SH_Lighting;
-						std::cout << " >< No Shadow Maps" << std::endl;
+						std::cout << " >L< No Shadow Maps" << std::endl;
 					}
 					else if( GetSystem(Graphics)->current_lighting == SH_Lighting )
 					{
 						GetSystem(Graphics)->current_lighting = SH_LightingSSM;
-						std::cout << " >< Simple Shadow Maps" << std::endl;
+						std::cout << " >L< Simple Shadow Maps" << std::endl;
 					}
 				}
 			}
@@ -85,6 +85,15 @@ namespace Roivas
 				if( pressed )
 				{
 					GetSystem(Graphics)->wireframe_enabled = !GetSystem(Graphics)->wireframe_enabled ;
+				}
+			}
+			break;
+
+			case SDLK_b:
+			{
+				if( pressed )
+				{
+					GetSystem(Graphics)->bloom_enabled = !GetSystem(Graphics)->bloom_enabled ;
 				}
 			}
 			break;

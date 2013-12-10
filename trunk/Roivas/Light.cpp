@@ -8,6 +8,7 @@ namespace Roivas
 		Direction(vec3(0.0f,-1.0f,0.0f)), 
 		Radius(10.0f), 
 		Cone(0.1f),
+		Orbital(false),
 		RT_Textures(),
 		LightType("DirectionLight"),
 		Type(LT_DirectionLight), 
@@ -21,6 +22,7 @@ namespace Roivas
 		Direction(l.Direction), 
 		Radius(l.Radius), 
 		Cone(l.Cone),
+		Orbital(l.Orbital),
 		RT_Textures(),
 		LightType(l.LightType),
 		Type(l.Type), 
@@ -50,6 +52,7 @@ namespace Roivas
 		fio.Read(root["Direction"], Direction);
 		fio.Read(root["Radius"], Radius);	
 		fio.Read(root["Cone"], Cone);
+		fio.Read(root["Orbital"], Orbital);
 
 		Direction = glm::normalize(Direction);
 

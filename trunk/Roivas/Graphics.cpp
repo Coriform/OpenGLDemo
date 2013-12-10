@@ -21,6 +21,7 @@ namespace Roivas
 		current_lighting(SH_Lighting),
 		wireframe_enabled(false),
 		normal_mapping_enabled(true),
+		bloom_enabled(true),
 		shadow_size(1.0f),
 		shadow_smooth(1.0f),
 		SelectedEntity(nullptr)
@@ -79,13 +80,17 @@ namespace Roivas
 		CreateShaderProgram("Assets/Shaders/LightingWithDSM.vert",	"Assets/Shaders/LightingWithDSM.frag");	// SH_LightingDSM
 		CreateShaderProgram("Assets/Shaders/LogBlur.vert",			"Assets/Shaders/LogBlur.frag");			// SH_LogBlur
 		CreateShaderProgram("Assets/Shaders/GaussBlur.vert",		"Assets/Shaders/GaussBlur.frag");		// SH_GaussBlur
-		CreateShaderProgram("Assets/Shaders/Fog.vert",				"Assets/Shaders/Fog.frag");				// SH_Fog
+		CreateShaderProgram("Assets/Shaders/FogRadiance.vert",		"Assets/Shaders/FogRadiance.frag");		// SH_FogRadiance
+		CreateShaderProgram("Assets/Shaders/FogBlur.vert",			"Assets/Shaders/FogBlur.frag");			// SH_FogBlur
 		CreateShaderProgram("Assets/Shaders/Blend.vert",			"Assets/Shaders/Blend.frag");			// SH_Blend
+		CreateShaderProgram("Assets/Shaders/Skybox.vert",			"Assets/Shaders/Skybox.frag");			// SH_Skybox
 
 		//shadow_size = 1;
 
 		// Preload meshes and textures
 		PreloadAssets();
+
+		LoadSkybox("sky_ft.jpg","sky_bk.jpg","sky_lf.jpg","sky_rt.jpg","sky_tp.jpg","sky_bt.jpg");
 
 		// Reset default framebuffer
 		glBindFramebuffer( GL_FRAMEBUFFER, 0 );
@@ -131,23 +136,25 @@ namespace Roivas
 		// Primary drawing functions; draws the geometry and lighting calculations
 		Draw3D(dt);		
 
+		//DrawSkybox(dt);
+
 		// Post-processing effects
 		DrawPP(dt);
 
 		// Debug drawing
-		DrawEditor(dt);
-
-		if( wireframe_enabled == true )
-		{
-			DrawWireframe(dt);
-			DrawLightShape(dt);
-		}
+		//DrawEditor(dt);
 
 		// HUD and other 2D drawing
 		//Draw2D(dt);	
 
 		// Draw screen texture to screen
-		ScreenPass(dt);
+		ScreenPass(dt);		
+
+		if( wireframe_enabled == true )
+		{
+			DrawWireframe(dt);
+			DrawLightShape(dt);
+		}		
 
 		// Draw framerate
 		DrawDebugText(framerate);	
@@ -173,6 +180,66 @@ namespace Roivas
 			 1.0f,  1.0f, 0.0f,
 		};
 
+		static const GLfloat g_skybox_vertex_buffer_data[] = {
+		  -10.0f,  10.0f, -10.0f,
+		  -10.0f, -10.0f, -10.0f,
+		   10.0f, -10.0f, -10.0f,
+		   10.0f, -10.0f, -10.0f,
+		   10.0f,  10.0f, -10.0f,
+		  -10.0f,  10.0f, -10.0f,
+  
+		  -10.0f, -10.0f,  10.0f,
+		  -10.0f, -10.0f, -10.0f,
+		  -10.0f,  10.0f, -10.0f,
+		  -10.0f,  10.0f, -10.0f,
+		  -10.0f,  10.0f,  10.0f,
+		  -10.0f, -10.0f,  10.0f,
+  
+		   10.0f, -10.0f, -10.0f,
+		   10.0f, -10.0f,  10.0f,
+		   10.0f,  10.0f,  10.0f,
+		   10.0f,  10.0f,  10.0f,
+		   10.0f,  10.0f, -10.0f,
+		   10.0f, -10.0f, -10.0f,
+   
+		  -10.0f, -10.0f,  10.0f,
+		  -10.0f,  10.0f,  10.0f,
+		   10.0f,  10.0f,  10.0f,
+		   10.0f,  10.0f,  10.0f,
+		   10.0f, -10.0f,  10.0f,
+		  -10.0f, -10.0f,  10.0f,
+  
+		  -10.0f,  10.0f, -10.0f,
+		   10.0f,  10.0f, -10.0f,
+		   10.0f,  10.0f,  10.0f,
+		   10.0f,  10.0f,  10.0f,
+		  -10.0f,  10.0f,  10.0f,
+		  -10.0f,  10.0f, -10.0f,
+  
+		  -10.0f, -10.0f, -10.0f,
+		  -10.0f, -10.0f,  10.0f,
+		   10.0f, -10.0f, -10.0f,
+		   10.0f, -10.0f, -10.0f,
+		  -10.0f, -10.0f,  10.0f,
+		   10.0f, -10.0f,  10.0f
+		};
+
+		glGenVertexArrays(1, &meshSkybox);
+		glBindVertexArray(meshSkybox);
+
+		glGenBuffers(1, &buffSkybox);
+		glBindBuffer(GL_ARRAY_BUFFER, buffSkybox);
+		glBufferData(GL_ARRAY_BUFFER, 3*36*sizeof(float), &g_skybox_vertex_buffer_data, GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, buffSkybox);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL);
+
+
+
+
+
+
 		glGenVertexArrays(1, &meshQuad);
 		glBindVertexArray(meshQuad);
 
@@ -183,18 +250,8 @@ namespace Roivas
 		glGenFramebuffers( 1, &screen_fbo );
 		glBindFramebuffer( GL_FRAMEBUFFER, screen_fbo );
 
-		glGenTextures( 1, &screen_tex );
 		glBindTexture( GL_TEXTURE_2D, screen_tex );
-
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, screen_width_i, screen_height_i, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
-
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-
 		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screen_tex, 0 );
 
 		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -273,7 +330,18 @@ namespace Roivas
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		// Attach the texture to the FBO
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, rt_textures[RT_SceneDepth], 0);		
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, rt_textures[RT_SceneDepth], 0);	
+
+		// Generate and bind the OGL texture for depth
+		glGenTextures(1, &rt_textures[RT_SceneGlow]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneGlow]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, rt_textures[RT_SceneGlow], 0);	
 
 
 		// Check if all worked fine and unbind the FBO
@@ -312,6 +380,18 @@ namespace Roivas
 		// Attach the texture to the FBO
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, rt_textures[RT_SceneShadows], 0);
 
+		// Generate and bind the OGL texture for depth
+		glGenTextures(1, &rt_textures[RT_SceneBloom]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneBloom]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, rt_textures[RT_SceneBloom], 0);	
+
 		// Check if all worked fine and unbind the FBO
 		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -326,8 +406,45 @@ namespace Roivas
 		glBindFramebuffer( GL_FRAMEBUFFER, blur_fbo );
 
 
+
+
 		glGenFramebuffers( 1, &fog_fbo );
 		glBindFramebuffer( GL_FRAMEBUFFER, fog_fbo );
+
+		// Generate and bind the OGL texture for diffuse
+		glGenTextures(1, &rt_textures[RT_SceneAttRadiance]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneAttRadiance]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneAttRadiance], 0);
+
+		// Generate and bind the OGL texture for positions
+		glGenTextures(1, &rt_textures[RT_SceneSctRadiance]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneSctRadiance]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, rt_textures[RT_SceneSctRadiance], 0);
+
+		// Check if all worked fine and unbind the FBO
+		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		if( status != GL_FRAMEBUFFER_COMPLETE)
+		{
+			std::cout << "FB error for deferred, status: " << status << std::endl;
+		}
+
+
+
+		
+
 
 		glGenFramebuffers( 1, &blend_fbo );
 		glBindFramebuffer( GL_FRAMEBUFFER, blend_fbo );
@@ -362,6 +479,8 @@ namespace Roivas
 
 		GeometryPass(dt);
 
+		DrawSkybox(dt);
+
 		if( current_lighting > SH_Lighting )
 			ShadowPass(dt);		
 
@@ -369,12 +488,46 @@ namespace Roivas
 
 		if( current_lighting == SH_LightingDSM )
 		{
-			Blur(rt_textures[RT_SceneShadows],2,0);
-			Blur(rt_textures[RT_SceneShadows],0,2);
-			Blend(rt_textures[RT_SceneLighting], rt_textures[RT_SceneShadows], rt_textures[RT_SceneLighting], 0.5f);
+			Blur(rt_textures[RT_SceneShadows],2,0,5);
+			Blur(rt_textures[RT_SceneShadows],0,2,5);
+			Blend(rt_textures[RT_SceneLighting], rt_textures[RT_SceneShadows], rt_textures[RT_SceneLighting], 1, true);
 		}
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	}
+
+	void Graphics::DrawSkybox(float dt)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneDiffuse], 0);
+
+		glDepthMask(GL_FALSE);
+
+		glUseProgram(SHADERS[SH_Skybox].ShaderProgram);
+
+		SHADERS[SH_Skybox].SetUniform4fv( "V", &viewMat[0][0]);
+		SHADERS[SH_Skybox].SetUniform4fv( "P", &projMat[0][0]);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, sky_tex);
+	
+		glEnableVertexAttribArray(0);
+
+			glBindBuffer(GL_ARRAY_BUFFER, buffSkybox);
+			glVertexAttribPointer(
+				0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+				3,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			);
+
+			glDrawArrays(GL_TRIANGLES, 0, 36); // 2*3 indices starting at 0 -> 2 triangles
+
+		glDisableVertexAttribArray(0);
+
+		glDepthMask(GL_TRUE);
 	}
 
 	void Graphics::GeometryPass(float dt)
@@ -389,8 +542,9 @@ namespace Roivas
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
-		glDrawBuffers(5, buffers);
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, 
+			GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5 };
+		glDrawBuffers(6, buffers);
 		
 		glUseProgram( SHADERS.at(SH_Deferred).ShaderProgram );
 
@@ -422,6 +576,7 @@ namespace Roivas
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->DiffuseID);
+			//glBindTexture(GL_TEXTURE_2D, sky_tex);
 			SHADERS[SH_Deferred].SetUniform1i( "tex_sampler", 0 );
 
 			glActiveTexture(GL_TEXTURE1);
@@ -431,6 +586,11 @@ namespace Roivas
 			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->SpecID);
 			SHADERS[SH_Deferred].SetUniform1i( "spec_sampler", 2 );
+
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, MODEL_LIST.at(i)->GlowID);
+			SHADERS[SH_Deferred].SetUniform1i( "glow_sampler", 3 );
+
 
 			glEnableVertexAttribArray(0);
 			glEnableVertexAttribArray(1);
@@ -508,7 +668,13 @@ namespace Roivas
 			if( LIGHT_LIST.at(j)->Type == LT_DirectionLight )
 			{
 				depthProjMat[j] = glm::ortho<float>(-20,20,-20,20,-20,36);
-				depthViewMat[j] = glm::lookAt(LIGHT_LIST.at(j)->Direction, vec3(0,0,0), vec3(0,1,0));
+
+				vec3 direction = LIGHT_LIST.at(j)->Direction;
+
+				if( LIGHT_LIST.at(j)->Orbital )
+					direction = glm::normalize(LIGHT_LIST.at(j)->GetTransform()->Position - vec3(0,0,0));
+	
+				depthViewMat[j] = glm::lookAt(direction, vec3(0,0,0), vec3(0,1,0));
 			}
 			else if( LIGHT_LIST.at(j)->Type == LT_SpotLight )
 			{
@@ -527,6 +693,9 @@ namespace Roivas
 
 			for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
 			{
+				if( MODEL_LIST[i]->GetLight() )
+					continue;
+
 				Transform* t = MODEL_LIST[i]->GetTransform();
 
 				if( t == nullptr )
@@ -611,7 +780,6 @@ namespace Roivas
 
 		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
 
-
 		glDisable( GL_DEPTH_TEST );
 		glEnable( GL_CULL_FACE );
 		glCullFace(GL_BACK);
@@ -653,8 +821,8 @@ namespace Roivas
 
 
 
-		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-		glDrawBuffers(2, buffers);
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+		glDrawBuffers(3, buffers);
 		
 		glUseProgram( SHADERS.at(current_lighting).ShaderProgram );
 
@@ -674,12 +842,17 @@ namespace Roivas
 			if( t == nullptr )
 				continue;
 
-			modelMat = mat4();						
+			modelMat = mat4();	
+
+			vec3 direction = light->Direction;
+
+			if( light->Orbital )
+				direction = glm::normalize(light->GetTransform()->Position - vec3(0,0,0));
 
 			SHADERS[current_lighting].SetUniform1f( "shadowsmooth", shadow_smooth );
 			SHADERS[current_lighting].SetUniform3f( "lightpos",		light->GetTransform()->Position );
 			SHADERS[current_lighting].SetUniform3f( "lightcolor",	light->Color );
-			SHADERS[current_lighting].SetUniform3f( "lightdir",		light->Direction );
+			SHADERS[current_lighting].SetUniform3f( "lightdir",		direction );
 			SHADERS[current_lighting].SetUniform1f( "lightradius",	light->Radius);
 			SHADERS[current_lighting].SetUniform1f( "lightcone",	light->Cone );
 			SHADERS[current_lighting].SetUniform1i( "lighttype",	light->Type );
@@ -707,8 +880,14 @@ namespace Roivas
 			SHADERS[current_lighting].SetUniform1i( "tSpecular", 3 );
 
 			glActiveTexture(GL_TEXTURE4);
+			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneBloom]);
+			SHADERS[current_lighting].SetUniform1i( "tBloom", 4 );	
+
+			glActiveTexture(GL_TEXTURE5);
 			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->RT_Textures[RT_LightDepth]);
-			SHADERS[current_lighting].SetUniform1i( "tShadow", 4 );	
+			SHADERS[current_lighting].SetUniform1i( "tShadow", 5 );	
+
+			
 
 			
 			if( light->Type == LT_PointLight )
@@ -856,7 +1035,7 @@ namespace Roivas
 
 	}
 
-	void Graphics::Blend(GLint in1, GLint in2, GLint out, float ratio = 0.5f)
+	void Graphics::Blend(GLint in1, GLint in2, GLint out, int amount = 1, bool mult = true)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, blend_fbo);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, out, 0);
@@ -874,7 +1053,8 @@ namespace Roivas
 		glBindTexture(GL_TEXTURE_2D, in2);
 		SHADERS[SH_Blend].SetUniform1i( "tSampleB", 1 );
 
-		SHADERS[SH_Blend].SetUniform1f( "ratio", ratio);
+		SHADERS[SH_Blend].SetUniform1i( "amount", amount );
+		SHADERS[SH_Blend].SetUniform1i( "mult", mult );
 
 
 		glEnableVertexAttribArray(0);
@@ -895,7 +1075,7 @@ namespace Roivas
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	void Graphics::Blur(GLint tex, int w, int h)
+	void Graphics::Blur(GLint tex, float w, float h, float numpixels = 4.0f)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, blur_fbo);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
@@ -911,7 +1091,7 @@ namespace Roivas
 
 		SHADERS[SH_GaussBlur].SetUniform2f( "blurSize", vec2(w*1.0f/screen_width, h*1.0f/screen_height));
 		SHADERS[SH_GaussBlur].SetUniform1f( "blurAmount", 5.0f);
-		SHADERS[SH_GaussBlur].SetUniform1f( "blurPixels", 4.0f);
+		SHADERS[SH_GaussBlur].SetUniform1f( "blurPixels", numpixels);
 
 
 		glEnableVertexAttribArray(0);
@@ -932,44 +1112,28 @@ namespace Roivas
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	void Graphics::Fog(GLint tex, GLint depth)
+	void Graphics::Fog(GLint radiance, GLint depth)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, fog_fbo);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, radiance, 0);
 
 		glViewport(0,0,screen_width_i,screen_height_i); 
 
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, buffers);
+
 		// Use our shader
-		glUseProgram( SHADERS.at(SH_Fog).ShaderProgram );
+		glUseProgram( SHADERS.at(SH_FogRadiance).ShaderProgram );
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, tex);
-		SHADERS[SH_Fog].SetUniform1i( "tBlur", 0 );
+		glBindTexture(GL_TEXTURE_2D, radiance);
+		SHADERS[SH_FogRadiance].SetUniform1i( "tInRadiance", 0 );
 
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, depth);
-		SHADERS[SH_Fog].SetUniform1i( "tDepth", 1 );
-
-		SHADERS[SH_Fog].SetUniform2f( "blurSize", vec2(1.0f/screen_width, 0));
-		SHADERS[SH_Fog].SetUniform1f( "blurAmount", 4.0f);
-		SHADERS[SH_Fog].SetUniform1f( "blurPixels", 4.0f);
-
+		SHADERS[SH_FogRadiance].SetUniform1i( "tDepth", 1 );
 
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
-		glVertexAttribPointer(
-			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-		);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
-
-		SHADERS[SH_Fog].SetUniform2f( "blurSize", vec2(0, 1.0f/screen_height));
 
 		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
 		glVertexAttribPointer(
@@ -983,9 +1147,28 @@ namespace Roivas
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+
 		glDisableVertexAttribArray(0);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		
+	}
+
+	void Graphics::Glow()
+	{
+		Blur(rt_textures[RT_SceneGlow],1,0,4);
+		Blur(rt_textures[RT_SceneGlow],0,1,4);
+		Blend(rt_textures[RT_SceneGlow], rt_textures[RT_SceneGlow],rt_textures[RT_SceneGlow], 1, false);
+		Blend(rt_textures[RT_SceneLighting], rt_textures[RT_SceneGlow],rt_textures[RT_SceneLighting], 1, false);
+	}
+
+	void Graphics::Bloom()
+	{
+		//Blend(rt_textures[RT_SceneBloom], rt_textures[RT_SceneBloom],rt_textures[RT_SceneBloom], 0.5f, false);
+		Blur(rt_textures[RT_SceneBloom],1,0,6);
+		Blur(rt_textures[RT_SceneBloom],0,1,6);
+		Blend(rt_textures[RT_SceneBloom], rt_textures[RT_SceneBloom],rt_textures[RT_SceneBloom], 2, false);
+		Blend(rt_textures[RT_SceneLighting], rt_textures[RT_SceneBloom],rt_textures[RT_SceneLighting], 1, false);
 		
 	}
 
@@ -1040,7 +1223,15 @@ namespace Roivas
 		// Post processing
 
 		//Blur(rt_textures[RT_SceneLighting],1,1);
-		//Fog(rt_textures[RT_SceneLighting], rt_textures[RT_SceneDepth]);
+		
+
+		if( bloom_enabled )
+		{
+			Bloom();
+			Glow();
+		}
+
+		Fog(rt_textures[RT_SceneLighting], rt_textures[RT_SceneDepth]);
 	}
 
 	void Graphics::Draw2D(float dt)
@@ -1053,7 +1244,7 @@ namespace Roivas
 
 	void Graphics::DrawWireframe(float dt)
 	{		
-		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		glViewport(0,0,screen_width_i,screen_height_i);
 
@@ -1130,7 +1321,7 @@ namespace Roivas
 
 	void Graphics::DrawLightShape(float dt)
 	{		
-		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		glViewport(0,0,screen_width_i,screen_height_i);
 
@@ -1309,7 +1500,7 @@ namespace Roivas
 
 		if( path != "" && image == nullptr )
 		{
-			std::cout << "Texture didn't load properly" << std::endl;
+			std::cout << "Texture '" << path << "' didn't load properly" << std::endl;
 			return 0;
 		}
 
@@ -1329,6 +1520,35 @@ namespace Roivas
 		TEXTURE_LIST[path] = texture;
 
 		return texture;
+	}
+
+	GLuint Graphics::LoadCubemap(std::string front, std::string back, std::string left, std::string right,
+								std::string top, std::string bottom)
+	{
+		std::string path = "Assets/Textures/";
+		std::string R = path + right;
+		std::string L = path + left;
+		std::string U = path + top;
+		std::string D = path + bottom;
+		std::string B = path + back;
+		std::string F = path + front;
+
+		GLuint tex_cube = SOIL_load_OGL_cubemap( R.c_str(), L.c_str(), U.c_str(), D.c_str(), B.c_str(), F.c_str(),
+							SOIL_LOAD_RGB, SOIL_CREATE_NEW_ID, 0 );
+
+		glTexParameteri (GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri (GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri (GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		glTexParameteri (GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri (GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		if( tex_cube == 0 )
+		{
+			std::cout << "Cubemap texture '" << path << "' didn't load properly" << std::endl;
+			return 0;
+		}
+
+		return tex_cube;
 	}
 
 	void Graphics::LoadMesh(std::string path, GLuint& vbuff, GLuint& uvbuff, GLuint& nbuff, GLuint& ebuff, std::vector<unsigned short>& indices)
@@ -1632,6 +1852,12 @@ namespace Roivas
 		std::sort( MODEL_LIST.begin(), MODEL_LIST.end(), ZSorting(*this) );
 	}
 
+	void Graphics::LoadSkybox( std::string front, std::string back, std::string left, 
+								std::string right, std::string top, std::string bottom)
+	{
+		sky_tex = LoadCubemap(front,back,left,right,top,bottom);
+	}
+
 	void Graphics::InitializeCamera()
 	{
 		cam_pos		= vec3(0.0f, 2.0f, 28.0f);
@@ -1713,6 +1939,48 @@ namespace Roivas
 			current_rt = 0;
 
 		screen_tex = rt_textures[current_rt];
+
+		switch( current_rt )
+		{
+			case RT_LightDepth:
+				std::cout << " >RT< Shadow depth texture" << std::endl;
+				break;
+			case RT_SceneLighting:
+				std::cout << " >RT< Final composite lighting" << std::endl;
+				break;
+			case RT_SceneShadows:
+				std::cout << " >RT< Shadows" << std::endl;
+				break;
+			case RT_SceneBloom:
+				std::cout << " >RT< Bloom" << std::endl;
+				break;
+			case RT_SceneDiffuse:
+				std::cout << " >RT< Diffuse color" << std::endl;
+				break;
+			case RT_ScenePositions:
+				std::cout << " >RT< Positions" << std::endl;
+				break;
+			case RT_SceneNormals:
+				std::cout << " >RT< Normals" << std::endl;
+				break;
+			case RT_SceneSpecular:
+				std::cout << " >RT< Specular" << std::endl;
+				break;
+			case RT_SceneDepth:
+				std::cout << " >RT< Depth" << std::endl;
+				break;
+			case RT_SceneGlow:
+				std::cout << " >RT< Glow" << std::endl;
+				break;
+			case RT_SceneAttRadiance:
+				std::cout << " >RT< Attenuated radiance" << std::endl;
+				break;
+			case RT_SceneSctRadiance:
+				std::cout << " >RT< Scattered radiance" << std::endl;
+				break;
+			default:
+				break;
+		}
 	}
 
 	void Graphics::PrevRT()
@@ -1723,6 +1991,48 @@ namespace Roivas
 			current_rt = RT_TOTAL-1;
 
 		screen_tex = rt_textures[current_rt];
+
+		switch( current_rt )
+		{
+			case RT_LightDepth:
+				std::cout << " >RT< Shadow depth texture" << std::endl;
+				break;
+			case RT_SceneLighting:
+				std::cout << " >RT< Final composite lighting" << std::endl;
+				break;
+			case RT_SceneShadows:
+				std::cout << " >RT< Shadows" << std::endl;
+				break;
+			case RT_SceneBloom:
+				std::cout << " >RT< Bloom" << std::endl;
+				break;
+			case RT_SceneDiffuse:
+				std::cout << " >RT< Diffuse color" << std::endl;
+				break;
+			case RT_ScenePositions:
+				std::cout << " >RT< Positions" << std::endl;
+				break;
+			case RT_SceneNormals:
+				std::cout << " >RT< Normals" << std::endl;
+				break;
+			case RT_SceneSpecular:
+				std::cout << " >RT< Specular" << std::endl;
+				break;
+			case RT_SceneDepth:
+				std::cout << " >RT< Depth" << std::endl;
+				break;
+			case RT_SceneGlow:
+				std::cout << " >RT< Glow" << std::endl;
+				break;
+			case RT_SceneAttRadiance:
+				std::cout << " >RT< Attenuated radiance" << std::endl;
+				break;
+			case RT_SceneSctRadiance:
+				std::cout << " >RT< Scattered radiance" << std::endl;
+				break;
+			default:
+				break;
+		}
 	}
 
 	void Graphics::MouseSelectEntity(float x, float y, bool pressed)

@@ -49,6 +49,7 @@ namespace Roivas
 			void Initialize();
 			void PreloadAssets();
 			GLuint LoadTexture(std::string path);
+			GLuint LoadCubemap(std::string r, std::string l, std::string u, std::string d, std::string b, std::string f);
 			void LoadMesh(std::string path, GLuint& vb, GLuint& uvb, GLuint& nb, GLuint& eb, std::vector<unsigned short>& ind);
 
 			void Update(float dt);
@@ -75,6 +76,7 @@ namespace Roivas
 			GLuint current_lighting;
 			bool normal_mapping_enabled;
 			bool wireframe_enabled;
+			bool bloom_enabled;
 
 		private:
 			void Draw3D(float dt);
@@ -83,6 +85,7 @@ namespace Roivas
 			void DrawWireframe(float dt);	
 			void DrawLightShape(float dt);
 			void Draw2D(float dt);
+			void DrawSkybox(float dt);
 			void SortModels(float dt);
 			void UpdateCamera(float dt);
 			void DrawDebugText(std::string path);
@@ -92,9 +95,11 @@ namespace Roivas
 			void LightingPass(float dt);	
 			void ScreenPass(float dt);
 
-			void Blend(GLint in1, GLint in2, GLint out, float ratio);
-			void Blur(GLint tex, int w, int h);
+			void Blend(GLint in1, GLint in2, GLint out, int amount, bool mult);
+			void Blur(GLint tex, float w, float h, float numpixels);
 			void Fog(GLint tex, GLint depth);
+			void Glow();
+			void Bloom();
 
 			GLint CreateShaderProgram(std::string _vertSource, std::string _fragSource);			
 			void LoadFontmap(std::string path);
@@ -110,10 +115,14 @@ namespace Roivas
 
 			void SetupFonts();
 			void InitializeCamera();
+			void LoadSkybox(std::string front, std::string back, std::string left, 
+				std::string right, std::string top, std::string bottom);
 
 			GLuint rboDepthStencil;
-			GLuint meshCube, meshQuad;
-			GLuint buffCube, buffQuad;
+			GLuint meshCube, meshQuad, meshSkybox;
+			GLuint buffCube, buffQuad, buffSkybox;
+			GLuint indSkybox;
+			unsigned indSkyboxSize;
 			SDL_Window*		window;
 
 			mat4 modelMat, viewMat, projMat, MVP;
@@ -134,6 +143,7 @@ namespace Roivas
 			// Render target textures
 			GLuint screen_tex;
 			GLuint rt_textures[RT_TOTAL];
+			GLuint sky_tex;
 			int current_rt;			
 
 			std::map<std::string,GLuint> TEXTURE_LIST;

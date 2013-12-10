@@ -30,7 +30,7 @@ const vec2 blurMultiplyVec = vec2(1.0,1.0);
 void main() 
 {
 
-  float depth = texture2D(tDepth, Texcoord).z;
+  float depth = texture(tDepth, Texcoord).z;
 
   float sigma = blurAmount * depth;
 
@@ -44,18 +44,36 @@ void main()
   float coefficientSum = 0.0f;
 
   // Take the central sample first...
-  avgValue += texture2D(tBlur, Texcoord) * incrementalGaussian.x;
+  avgValue += texture(tBlur, Texcoord) * incrementalGaussian.x;
   coefficientSum += incrementalGaussian.x;
   incrementalGaussian.xy *= incrementalGaussian.yz; 
 
   // Go through the remaining 8 vertical samples (4 on each side of the center)
   for (float i = 1.0f; i <= blurPixels; i++) 
   { 
-    avgValue += texture2D(tBlur, Texcoord - i * blurSize) * incrementalGaussian.x;         
-    avgValue += texture2D(tBlur, Texcoord + i * blurSize) * incrementalGaussian.x;         
+    avgValue += texture(tBlur, Texcoord - i * blurSize) * incrementalGaussian.x;         
+    avgValue += texture(tBlur, Texcoord + i * blurSize) * incrementalGaussian.x;         
     coefficientSum += 2 * incrementalGaussian.x;
     incrementalGaussian.xy *= incrementalGaussian.yz;
   }
 
   outColor = avgValue / coefficientSum;
+
+
+  vec4 color = texture(tBlur, Texcoord);
+
+  float sigmaA = 0.2;
+  float sigmaS = 0.8;
+  float sigmaT = sigmaA + sigmaS;
+
+  float e = 2.71828;
+
+
+  //outColor = color * pow(10,-depth*sigmaT);
+
+
+  outColor = color * pow(10,-depth*sigmaA) * (1 - pow(10,-depth*sigmaS));
+
+  outColor += color * pow(10,-depth*sigmaT);
+
 }

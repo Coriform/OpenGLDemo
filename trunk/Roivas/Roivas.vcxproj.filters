@@ -213,12 +213,6 @@
     <None Include="Assets\Shaders\GaussBlur.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
-    <None Include="Assets\Shaders\Fog.frag">
-      <Filter>Graphics\Shaders</Filter>
-    </None>
-    <None Include="Assets\Shaders\Fog.vert">
-      <Filter>Graphics\Shaders</Filter>
-    </None>
     <None Include="Assets\Shaders\GaussBlur.frag">
       <Filter>Graphics\Shaders</Filter>
     </None>
@@ -238,6 +232,24 @@
       <Filter>Graphics\Shaders</Filter>
     </None>
     <None Include="Assets\Shaders\LightingWithSSM.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\FogBlur.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\FogRadiance.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\FogRadiance.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\FogBlur.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\Skybox.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\Skybox.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
   </ItemGroup>
