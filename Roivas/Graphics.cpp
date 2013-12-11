@@ -77,6 +77,7 @@ namespace Roivas
 		CreateShaderProgram("Assets/Shaders/ShadowTex.vert",		"Assets/Shaders/ShadowTex.frag");		// SH_ShadowTex
 		CreateShaderProgram("Assets/Shaders/Lighting.vert",			"Assets/Shaders/Lighting.frag");		// SH_Lighting
 		CreateShaderProgram("Assets/Shaders/LightingWithSSM.vert",	"Assets/Shaders/LightingWithSSM.frag");	// SH_LightingSSM
+		CreateShaderProgram("Assets/Shaders/LightingWithESM.vert",	"Assets/Shaders/LightingWithESM.frag");	// SH_LightingESM
 		CreateShaderProgram("Assets/Shaders/LightingWithDSM.vert",	"Assets/Shaders/LightingWithDSM.frag");	// SH_LightingDSM
 		CreateShaderProgram("Assets/Shaders/LogBlur.vert",			"Assets/Shaders/LogBlur.frag");			// SH_LogBlur
 		CreateShaderProgram("Assets/Shaders/GaussBlur.vert",		"Assets/Shaders/GaussBlur.frag");		// SH_GaussBlur
@@ -479,12 +480,14 @@ namespace Roivas
 
 		GeometryPass(dt);
 
-		DrawSkybox(dt);
+		////
+		//DrawSkybox(dt);
+		////
 
 		if( current_lighting > SH_Lighting )
 			ShadowPass(dt);		
 
-		LightingPass(dt);		
+		LightingPass(dt);	
 
 		if( current_lighting == SH_LightingDSM )
 		{
@@ -717,6 +720,8 @@ namespace Roivas
 				depthMVP = depthProjMat[j] * depthViewMat[j] * modelMat;
 
 				SHADERS[SH_ShadowTex].SetUniform4fv( "depthMVP", &depthMVP[0][0] );
+				SHADERS[SH_ShadowTex].SetUniform4fv( "M", &modelMat[0][0] );
+				SHADERS[SH_ShadowTex].SetUniform4fv( "V", &depthViewMat[j][0][0] );
 
 				glEnableVertexAttribArray(0);
 
@@ -740,36 +745,10 @@ namespace Roivas
 
 				glDisableVertexAttribArray(0);
 			}
+		}	
 
-
-
-			////
-
-
-			/*
-			// Use our shader
-			glUseProgram( SHADERS.at(SH_LogBlur).ShaderProgram );
-		
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->RT_Textures[RT_LightDepth]);
-
-			glEnableVertexAttribArray(0);
-			glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
-			glVertexAttribPointer(
-				0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-				3,                  // size
-				GL_FLOAT,           // type
-				GL_FALSE,           // normalized?
-				0,                  // stride
-				(void*)0            // array buffer offset
-			);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-			glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
-			glDisableVertexAttribArray(0);
-			*/
-
-		}		
+		if( current_lighting == SH_LightingESM )
+			BlurESM();
 
 		glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 	}
@@ -884,7 +863,10 @@ namespace Roivas
 			SHADERS[current_lighting].SetUniform1i( "tBloom", 4 );	
 
 			glActiveTexture(GL_TEXTURE5);
-			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->RT_Textures[RT_LightDepth]);
+			if( current_lighting == SH_LightingESM )
+				glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->RT_Textures[RT_ExpLightBlur]);
+			else
+				glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(j)->RT_Textures[RT_LightDepth]);
 			SHADERS[current_lighting].SetUniform1i( "tShadow", 5 );	
 
 			
@@ -972,6 +954,8 @@ namespace Roivas
 
 	void Graphics::ScreenPass(float dt)
 	{
+		glDisable( GL_DEPTH_TEST );	
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -1000,39 +984,31 @@ namespace Roivas
 
 
 
+		if( screen_tex == rt_textures[RT_SceneLighting] )
+		{
+			glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
+			glCullFace(GL_NONE);
 
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(0)->RT_Textures[RT_LightDepth]);
 
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+			glVertexAttribPointer(
+				0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+				3,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			);
 
-
-
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+			glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+			glDisableVertexAttribArray(0);
+		}
 		
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
-		glCullFace(GL_NONE);
-
-		// Use our shader
-		glUseProgram( SHADERS.at(SH_Screen).ShaderProgram );
-
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(0)->RT_Textures[RT_LightDepth]);
-
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
-		glVertexAttribPointer(
-			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-		);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
-		glDisableVertexAttribArray(0);
-		
-
+		glEnable( GL_DEPTH_TEST );	
 	}
 
 	void Graphics::Blend(GLint in1, GLint in2, GLint out, int amount = 1, bool mult = true)
@@ -1154,6 +1130,76 @@ namespace Roivas
 		
 	}
 
+	void Graphics::BlurESM()
+	{
+		glDisable(GL_BLEND);
+		glDisable( GL_DEPTH_TEST );
+		glEnable( GL_CULL_FACE );
+		glCullFace(GL_BACK);
+
+
+		// bind blur FBO
+		glBindFramebuffer(GL_FRAMEBUFFER, exp_fbo);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_ExpLightBlur], 0);
+		// save our old viewport so we can restore it
+		//glPushAttrib( GL_VIEWPORT_BIT );
+		glViewport(0, 0, (int)(screen_width*shadow_size), (int)(screen_width*shadow_size));
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ); 
+
+		glUseProgram( SHADERS.at(SH_LogBlur).ShaderProgram );
+
+		// bind texture containing linear depth buffer
+		glEnable( GL_TEXTURE_2D );
+		glActiveTexture( GL_TEXTURE0 );
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_ExpLightDepth]);
+
+		
+		SHADERS[SH_LogBlur].SetUniform1i( "tBlur", 0 );
+
+
+		glEnableVertexAttribArray(0);
+
+		SHADERS[SH_LogBlur].SetUniform2f( "blurSize", vec2(1.0f/screen_width, 0));
+		
+		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+
+		SHADERS[SH_LogBlur].SetUniform2f( "blurSize", vec2(0, 1.0f/screen_height));
+
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_ExpLightBlur]);
+
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+
+
+		glDisableVertexAttribArray(0);
+
+		glEnable(GL_BLEND);
+		glEnable( GL_DEPTH_TEST );
+
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
 	void Graphics::Glow()
 	{
 		Blur(rt_textures[RT_SceneGlow],1,0,4);
@@ -1182,30 +1228,53 @@ namespace Roivas
 
 	void Graphics::BuildShadows()
 	{
-		glGenFramebuffers(1, &shadow_fbo);    			
-
 		for( unsigned i = 0; i < LIGHT_LIST.size(); ++i )
 		{
 			if( LIGHT_LIST.at(i)->RT_Textures[RT_LightDepth] > 0 )
 				continue;
 
-			glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo);
 			glGenTextures(1, &LIGHT_LIST.at(i)->RT_Textures[RT_LightDepth]);
-			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(i)->RT_Textures[RT_LightDepth]);
-			
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, (int)(screen_width*shadow_size), (int)(screen_width*shadow_size), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(i)->RT_Textures[RT_LightDepth]);			
+
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);		
-	
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, LIGHT_LIST.at(i)->RT_Textures[RT_LightDepth], 0);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);	
+			// luminance is 1 channel (R/red in our case). We only need one since depth is 1 channel
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, (int)(screen_width*shadow_size), (int)(screen_width*shadow_size), 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glBindTexture(GL_TEXTURE_2D, 0);
+
+
+			glGenTextures(1, &LIGHT_LIST.at(i)->RT_Textures[RT_ExpLightDepth]);
+			glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(i)->RT_Textures[RT_ExpLightDepth]);	
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+
+			GLfloat border[] = {1.0f, 1.0f, 1.0f, 1.0f};
+			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, (int)(screen_width*shadow_size), (int)(screen_width*shadow_size), 0, GL_LUMINANCE, GL_FLOAT, NULL);
+			glBindTexture(GL_TEXTURE_2D, 0);
+
+			glGenFramebuffers(1, &shadow_fbo); 
+			glBindFramebuffer(GL_FRAMEBUFFER, shadow_fbo);
+
+			// Attach the texture to the FBO
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, LIGHT_LIST.at(i)->RT_Textures[RT_LightDepth], 0 );
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, LIGHT_LIST.at(i)->RT_Textures[RT_ExpLightDepth], 0);
 		}
 
-		glDrawBuffer(GL_NONE);
-		glReadBuffer(GL_NONE);
+		//glDrawBuffer(GL_NONE);
+		//glReadBuffer(GL_NONE);
 
 		int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -1215,7 +1284,37 @@ namespace Roivas
 			return;
 		} 
 
+
+		////
+		glGenFramebuffers(1, &exp_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, exp_fbo);
+
+		// CREATE COLOR TEXTURE
+		glGenTextures(1, &LIGHT_LIST.at(0)->RT_Textures[RT_ExpLightBlur]);
+		glBindTexture(GL_TEXTURE_2D, LIGHT_LIST.at(0)->RT_Textures[RT_ExpLightBlur]);
+    
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+		// any objects that end up with tex coords outside of light frustum (0..1) will be white (non-shadowed)
+		GLfloat border[] = {1.0f, 1.0f, 1.0f, 1.0f};
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
+    
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER );
+    
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, (int)(screen_width*shadow_size), (int)(screen_width*shadow_size), 0, GL_LUMINANCE, GL_FLOAT, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+    
+		// attach textures to FBO color attachment0 point
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, LIGHT_LIST.at(0)->RT_Textures[RT_ExpLightBlur], 0 );
+		////
+
+		glBindFramebuffer(GL_FRAMEBUFFER,0);
+
 		rt_textures[RT_LightDepth] = LIGHT_LIST.at(0)->RT_Textures[RT_LightDepth];
+		rt_textures[RT_ExpLightDepth] = LIGHT_LIST.at(0)->RT_Textures[RT_ExpLightDepth];
+		rt_textures[RT_ExpLightBlur] = LIGHT_LIST.at(0)->RT_Textures[RT_ExpLightBlur];
 	}
 
 	void Graphics::DrawPP(float dt)
@@ -1945,6 +2044,12 @@ namespace Roivas
 			case RT_LightDepth:
 				std::cout << " >RT< Shadow depth texture" << std::endl;
 				break;
+			case RT_ExpLightDepth:
+				std::cout << " >RT< Shadow exp depth" << std::endl;
+				break;
+			case RT_ExpLightBlur:
+				std::cout << " >RT< Shadow exp blur" << std::endl;
+				break;
 			case RT_SceneLighting:
 				std::cout << " >RT< Final composite lighting" << std::endl;
 				break;
@@ -1996,6 +2101,12 @@ namespace Roivas
 		{
 			case RT_LightDepth:
 				std::cout << " >RT< Shadow depth texture" << std::endl;
+				break;
+			case RT_ExpLightDepth:
+				std::cout << " >RT< Shadow exp depth" << std::endl;
+				break;
+			case RT_ExpLightBlur:
+				std::cout << " >RT< Shadow exp blur" << std::endl;
 				break;
 			case RT_SceneLighting:
 				std::cout << " >RT< Final composite lighting" << std::endl;

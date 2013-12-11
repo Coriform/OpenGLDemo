@@ -252,5 +252,11 @@
     <None Include="Assets\Shaders\Skybox.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
+    <None Include="Assets\Shaders\LightingWithESM.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\LightingWithESM.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

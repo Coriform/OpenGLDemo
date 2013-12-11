@@ -3,7 +3,9 @@
 
 layout(location = 0) out vec4 outColor;
 
-uniform sampler2D sTexture;
+uniform sampler2D tBlur;
+
+uniform vec2 blurSize;
 
 in vec2 Texcoord;
 
@@ -16,7 +18,7 @@ float log_conv ( float x0, float X, float y0, float Y )
 	return ( X + log( x0 + (y0 * exp(Y - X) ) ) );
 }
 
-vec4 LogGaussianFilter()
+void main()
 {
 
 	vGaussianBlur[0] = 0.0882357;
@@ -35,8 +37,8 @@ vec4 LogGaussianFilter()
 	for (int i = 0; i < 10; i++)
 	{
 		float fOffSet = i - 4.5;
-		vec2 vTexCoord = vec2( Texcoord.x + fOffSet, Texcoord.y + fOffSet );
-		vSample[i] = texture2D( sTexture, vTexCoord ).r;
+		vec2 vTexCoord = vec2( Texcoord.x + fOffSet * blurSize.x, Texcoord.y + fOffSet * blurSize.y );
+		vSample[i] = texture2D( tBlur, vTexCoord ).r;
 	}
 
 	float fAccum;
@@ -47,10 +49,5 @@ vec4 LogGaussianFilter()
 		fAccum = log_conv( 1.0, fAccum, vGaussianBlur[i], vSample[i] );
 	}
 
-	return vec4( fAccum, 0.0, 0.0, 0.0);
-}
-
-void main()
-{
-	outColor = vec4(1,1,1,1);//LogGaussianFilter();
+	outColor = vec4( fAccum, 0.0, 0.0, 0.0);
 }
