@@ -5,7 +5,7 @@
 		},
 		"Model" : {
 			"Mesh" : "watertower.obj",
-			"DiffuseTexture" : "_white.png"
+			"DiffuseTexture" : "_grey.png"
 		}
 	}
 }

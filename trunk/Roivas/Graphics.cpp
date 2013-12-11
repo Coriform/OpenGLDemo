@@ -1378,6 +1378,8 @@ namespace Roivas
 		//Blend(rt_textures[RT_SceneBloom], rt_textures[RT_SceneBloom],rt_textures[RT_SceneBloom], 0.5f, false);
 		Blur(rt_textures[RT_SceneBloom],1,0,6);
 		Blur(rt_textures[RT_SceneBloom],0,1,6);
+		Blend(rt_textures[RT_SceneBloom], rt_textures[RT_SceneBloom],rt_textures[RT_SceneBloom], 1, false);
+		Blend(rt_textures[RT_SceneBloom], rt_textures[RT_SceneBloom],rt_textures[RT_SceneBloom], 1, true);
 		Blend(rt_textures[RT_SceneBloom], rt_textures[RT_SceneBloom],rt_textures[RT_SceneBloom], 2, false);
 		Blend(rt_textures[RT_SceneLighting], rt_textures[RT_SceneBloom],rt_textures[RT_SceneLighting], 1, false);
 		
