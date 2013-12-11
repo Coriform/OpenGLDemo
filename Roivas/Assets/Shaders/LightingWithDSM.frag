@@ -93,7 +93,7 @@ void main()
 
 	float shadow_sam = texture( tShadow, ShadowH.xy ).z;
 	if( ShadowH.z > shadow_sam-bias )
-		visibility -= 0.75f;
+		visibility -= 0.9f;
 	
 	vec3 shadowed_color = vec3(0,0,0);
 
