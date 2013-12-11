@@ -54,8 +54,13 @@ namespace Roivas
 				{
 					if( GetSystem(Graphics)->current_lighting == SH_LightingSSM )
 					{
+						GetSystem(Graphics)->current_lighting = SH_LightingESM;
+						std::cout << " >L< ESM - Exponential Shadow Maps" << std::endl;
+					}
+					else if( GetSystem(Graphics)->current_lighting == SH_LightingESM )
+					{
 						GetSystem(Graphics)->current_lighting = SH_LightingDSM;
-						std::cout << " >L< Deferred Shadow Maps" << std::endl;
+						std::cout << " >L< DSM - Deferred Shadow Maps" << std::endl;
 					}
 					else if( GetSystem(Graphics)->current_lighting == SH_LightingDSM )
 					{
@@ -65,7 +70,7 @@ namespace Roivas
 					else if( GetSystem(Graphics)->current_lighting == SH_Lighting )
 					{
 						GetSystem(Graphics)->current_lighting = SH_LightingSSM;
-						std::cout << " >L< Simple Shadow Maps" << std::endl;
+						std::cout << " >L< SSM - Simple Shadow Maps" << std::endl;
 					}
 				}
 			}

@@ -1,10 +1,13 @@
 #version 330 core
 
-// Ouput data
-layout(location = 0) out vec4 outColor;
+const float Near = 0.1; // camera z near
+const float Far = 300.0; // camera z far
+const float LinearDepthConstant = 1.0 / (56.0);
 
+in vec4 Position;
 
 void main()
 {
-	outColor = vec4(gl_FragCoord.z);
+	float linearDepth = length(Position) * LinearDepthConstant;
+	gl_FragColor.r = linearDepth;
 }

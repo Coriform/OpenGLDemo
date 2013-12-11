@@ -98,6 +98,7 @@ namespace Roivas
 			void Blend(GLint in1, GLint in2, GLint out, int amount, bool mult);
 			void Blur(GLint tex, float w, float h, float numpixels);
 			void Fog(GLint tex, GLint depth);
+			void BlurESM();
 			void Glow();
 			void Bloom();
 
@@ -134,6 +135,7 @@ namespace Roivas
 			GLuint screen_fbo;
 			GLuint lighting_fbo;
 			GLuint shadow_fbo;
+			GLuint exp_fbo;
 			GLuint blur_fbo;
 			GLuint fog_fbo;
 			GLuint blend_fbo;

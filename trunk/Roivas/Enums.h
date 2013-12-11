@@ -41,6 +41,7 @@ enum ShaderName
 	SH_ShadowTex,
 	SH_Lighting,
 	SH_LightingSSM,
+	SH_LightingESM,
 	SH_LightingDSM,
 	SH_LogBlur,
 	SH_GaussBlur,
@@ -57,6 +58,8 @@ enum ShaderName
 enum RenderTarget
 {
 	RT_LightDepth = 0,
+	RT_ExpLightDepth,
+	RT_ExpLightBlur,
 
 	RT_SceneLighting,
 	RT_SceneShadows,
