@@ -81,6 +81,7 @@ namespace Roivas
 		CreateShaderProgram("Assets/Shaders/LightingWithSSM.vert",	"Assets/Shaders/LightingWithSSM.frag");	// SH_LightingSSM
 		CreateShaderProgram("Assets/Shaders/LightingWithESM.vert",	"Assets/Shaders/LightingWithESM.frag");	// SH_LightingESM
 		CreateShaderProgram("Assets/Shaders/LightingWithDSM.vert",	"Assets/Shaders/LightingWithDSM.frag");	// SH_LightingDSM
+		CreateShaderProgram("Assets/Shaders/BlurDSM.vert",			"Assets/Shaders/BlurDSM.frag");			// SH_BlurDSM
 		CreateShaderProgram("Assets/Shaders/LogBlur.vert",			"Assets/Shaders/LogBlur.frag");			// SH_LogBlur
 		CreateShaderProgram("Assets/Shaders/GaussBlur.vert",		"Assets/Shaders/GaussBlur.frag");		// SH_GaussBlur
 		CreateShaderProgram("Assets/Shaders/DepthFog.vert",			"Assets/Shaders/DepthFog.frag");		// SH_DepthFog
@@ -494,8 +495,7 @@ namespace Roivas
 
 		if( current_lighting == SH_LightingDSM )
 		{
-			Blur(rt_textures[RT_SceneShadows],2,0,5);
-			Blur(rt_textures[RT_SceneShadows],0,2,5);
+			BlurDSM();
 			Blend(rt_textures[RT_SceneLighting], rt_textures[RT_SceneShadows], rt_textures[RT_SceneLighting], 1, true);
 		}
 
@@ -1314,6 +1314,53 @@ namespace Roivas
 		glEnable(GL_BLEND);
 		glEnable( GL_DEPTH_TEST );
 
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	void Graphics::BlurDSM()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, blur_fbo);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneShadows], 0);
+
+		glViewport(0,0,screen_width_i,screen_height_i); 
+
+		// Use our shader
+		glUseProgram( SHADERS.at(SH_BlurDSM).ShaderProgram );
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneShadows]);
+		SHADERS[SH_BlurDSM].SetUniform1i( "tBlur", 0 );
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneNormals]);
+		SHADERS[SH_BlurDSM].SetUniform1i( "tNormals", 1 );
+
+
+
+		SHADERS[SH_BlurDSM].SetUniform2f( "blurSize", vec2(1.2f/screen_width, 0));
+		SHADERS[SH_BlurDSM].SetUniform1f( "blurAmount", 6.0f);
+		SHADERS[SH_BlurDSM].SetUniform1f( "blurPixels", 6.0f);
+
+
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+
+		SHADERS[SH_BlurDSM].SetUniform2f( "blurSize", vec2(0, 1.2f/screen_height));
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+
+		glDisableVertexAttribArray(0);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}

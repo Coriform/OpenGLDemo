@@ -43,6 +43,7 @@ enum ShaderName
 	SH_LightingSSM,
 	SH_LightingESM,
 	SH_LightingDSM,
+	SH_BlurDSM,
 	SH_LogBlur,
 	SH_GaussBlur,
 	SH_DepthFog,

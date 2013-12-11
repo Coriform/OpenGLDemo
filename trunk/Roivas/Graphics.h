@@ -102,6 +102,7 @@ namespace Roivas
 			void Fog(GLint tex, GLint depth);
 			void FogBlur();
 			void BlurESM();
+			void BlurDSM();
 			void Glow();
 			void Bloom();
 
