@@ -237,6 +237,8 @@
     <None Include="Assets\Shaders\Blend.vert" />
     <None Include="Assets\Shaders\Deferred.frag" />
     <None Include="Assets\Shaders\Deferred.vert" />
+    <None Include="Assets\Shaders\DepthFog.frag" />
+    <None Include="Assets\Shaders\DepthFog.vert" />
     <None Include="Assets\Shaders\FogBlur.frag" />
     <None Include="Assets\Shaders\FogBlur.vert" />
     <None Include="Assets\Shaders\FogRadiance.frag" />

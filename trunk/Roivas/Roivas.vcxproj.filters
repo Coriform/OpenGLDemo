@@ -258,5 +258,11 @@
     <None Include="Assets\Shaders\LightingWithESM.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
+    <None Include="Assets\Shaders\DepthFog.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\DepthFog.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

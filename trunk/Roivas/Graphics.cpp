@@ -19,9 +19,11 @@ namespace Roivas
 		varray_size(8),
 		current_rt(0),
 		current_lighting(SH_Lighting),
+		current_fog(0),
 		wireframe_enabled(false),
 		normal_mapping_enabled(true),
 		bloom_enabled(true),
+		fog_density(1.0f),
 		shadow_size(1.0f),
 		shadow_smooth(1.0f),
 		SelectedEntity(nullptr)
@@ -81,6 +83,7 @@ namespace Roivas
 		CreateShaderProgram("Assets/Shaders/LightingWithDSM.vert",	"Assets/Shaders/LightingWithDSM.frag");	// SH_LightingDSM
 		CreateShaderProgram("Assets/Shaders/LogBlur.vert",			"Assets/Shaders/LogBlur.frag");			// SH_LogBlur
 		CreateShaderProgram("Assets/Shaders/GaussBlur.vert",		"Assets/Shaders/GaussBlur.frag");		// SH_GaussBlur
+		CreateShaderProgram("Assets/Shaders/DepthFog.vert",			"Assets/Shaders/DepthFog.frag");		// SH_DepthFog
 		CreateShaderProgram("Assets/Shaders/FogRadiance.vert",		"Assets/Shaders/FogRadiance.frag");		// SH_FogRadiance
 		CreateShaderProgram("Assets/Shaders/FogBlur.vert",			"Assets/Shaders/FogBlur.frag");			// SH_FogBlur
 		CreateShaderProgram("Assets/Shaders/Blend.vert",			"Assets/Shaders/Blend.frag");			// SH_Blend
@@ -143,13 +146,13 @@ namespace Roivas
 		DrawPP(dt);
 
 		// Debug drawing
-		//DrawEditor(dt);
+		DrawEditor(dt);
 
 		// HUD and other 2D drawing
 		//Draw2D(dt);	
 
 		// Draw screen texture to screen
-		ScreenPass(dt);		
+		ScreenPass(dt);	
 
 		if( wireframe_enabled == true )
 		{
@@ -984,7 +987,7 @@ namespace Roivas
 
 
 
-		if( screen_tex == rt_textures[RT_SceneLighting] )
+		if( screen_tex == rt_textures[RT_SceneLighting] && NULL )
 		{
 			glViewport(screen_width_i/2+screen_width_i/4,screen_height_i/2+screen_height_i/4,screen_width_i/4,screen_height_i/4);
 			glCullFace(GL_NONE);
@@ -1051,7 +1054,7 @@ namespace Roivas
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	void Graphics::Blur(GLint tex, float w, float h, float numpixels = 4.0f)
+	void Graphics::Blur(GLint tex, float w, float h, float numpixels)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, blur_fbo);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
@@ -1091,9 +1094,46 @@ namespace Roivas
 	void Graphics::Fog(GLint radiance, GLint depth)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, fog_fbo);
-		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, radiance, 0);
-
 		glViewport(0,0,screen_width_i,screen_height_i); 
+
+		if( current_fog == 1 )
+		{
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, radiance, 0);
+
+			glUseProgram( SHADERS.at(SH_DepthFog).ShaderProgram );
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, radiance);
+			SHADERS[SH_DepthFog].SetUniform1i( "tInRadiance", 0 );
+
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, depth);
+			SHADERS[SH_DepthFog].SetUniform1i( "tDepth", 1 );
+
+			glEnableVertexAttribArray(0);
+
+			glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+			glVertexAttribPointer(
+				0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+				3,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+			glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+
+			glDisableVertexAttribArray(0);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			return;
+		}
+
+		
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneAttRadiance], 0);
 
 		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
 		glDrawBuffers(2, buffers);
@@ -1108,6 +1148,8 @@ namespace Roivas
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, depth);
 		SHADERS[SH_FogRadiance].SetUniform1i( "tDepth", 1 );
+
+		SHADERS[SH_FogRadiance].SetUniform1f( "fog_density", fog_density );
 
 		glEnableVertexAttribArray(0);
 
@@ -1126,8 +1168,86 @@ namespace Roivas
 
 		glDisableVertexAttribArray(0);
 
+		FogBlur();
+		Blend(rt_textures[RT_SceneSctRadiance], rt_textures[RT_SceneAttRadiance], rt_textures[RT_SceneSctRadiance], 2, false);
+		FogBlur();
+		//Blend(rt_textures[RT_SceneSctRadiance], rt_textures[RT_SceneLighting], rt_textures[RT_SceneLighting], 1, false);
+
+
+		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
+
+		// Use our shader
+		glUseProgram( SHADERS.at(SH_Screen).ShaderProgram );
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneLighting], 0);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneSctRadiance]);
+
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+		glDisableVertexAttribArray(0);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		
+	}
+
+	void Graphics::FogBlur()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, fog_fbo);
+		glViewport(0,0,screen_width_i,screen_height_i);
+
+		// Use our shader
+		glUseProgram( SHADERS.at(SH_FogBlur).ShaderProgram );
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneSctRadiance], 0);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneLighting], 0);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneSctRadiance]);
+		//glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneLighting]);
+		SHADERS[SH_FogBlur].SetUniform1i( "tBlur", 0 );
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneDepth]);
+		SHADERS[SH_FogBlur].SetUniform1i( "tDepth", 1 );
+
+		SHADERS[SH_FogBlur].SetUniform2f( "blurSize", vec2(1.0f/screen_width, 0));
+		SHADERS[SH_FogBlur].SetUniform1f( "blurAmount", 6.0f);
+		SHADERS[SH_FogBlur].SetUniform1f( "blurPixels", 4.0f);
+		SHADERS[SH_FogBlur].SetUniform1f( "fog_density", fog_density);
+
+		glEnableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+
+		SHADERS[SH_FogBlur].SetUniform2f( "blurSize", vec2(0, 1.0f/screen_height));
+
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+
+		glDisableVertexAttribArray(0);
+
 	}
 
 	void Graphics::BlurESM()
@@ -1148,8 +1268,6 @@ namespace Roivas
 
 		glUseProgram( SHADERS.at(SH_LogBlur).ShaderProgram );
 
-		// bind texture containing linear depth buffer
-		glEnable( GL_TEXTURE_2D );
 		glActiveTexture( GL_TEXTURE0 );
 		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_ExpLightDepth]);
 
@@ -1330,7 +1448,8 @@ namespace Roivas
 			Glow();
 		}
 
-		Fog(rt_textures[RT_SceneLighting], rt_textures[RT_SceneDepth]);
+		if( current_fog > 0 )
+			Fog(rt_textures[RT_SceneLighting], rt_textures[RT_SceneDepth]);
 	}
 
 	void Graphics::Draw2D(float dt)
@@ -1508,7 +1627,7 @@ namespace Roivas
 
 		for( unsigned i = 0; i < MODEL_LIST.size(); ++i )
 		{
-			if( MODEL_LIST[i]->MeshName != "Light.dae" )
+			if( MODEL_LIST[i]->MeshName != "Light.dae" && MODEL_LIST[i]->Owner != SelectedEntity )
 				continue;
 
 			//glBindVertexArray( MODEL_LIST[i]->MeshID );		// Use the cube mesh		
@@ -1530,6 +1649,11 @@ namespace Roivas
 			modelMat = glm::rotate( modelMat, t->Rotation.x, vec3( 1.0f, 0.0f, 0.0f ) );
 			modelMat = glm::rotate( modelMat, t->Rotation.y, vec3( 0.0f, 1.0f, 0.0f ) );
 			modelMat = glm::rotate( modelMat, t->Rotation.z, vec3( 0.0f, 0.0f, 1.0f ) );
+
+			if( MODEL_LIST[i]->Owner->GetBehavior() != nullptr )
+				modelMat = glm::rotate( modelMat, (accum/2000.0f) * 180.0f, vec3( 0.0f, 1.0f, 0.0f ) );
+
+
 			modelMat = glm::scale( modelMat, t->Scale );
 			
 
@@ -1562,6 +1686,7 @@ namespace Roivas
 			glDisableVertexAttribArray(0);
 		}
 
+		glEnable( GL_DEPTH_TEST );
 		glPolygonMode(GL_FRONT, GL_FILL);
 		glPolygonMode(GL_BACK, GL_FILL);	
 	}
@@ -2173,7 +2298,7 @@ namespace Roivas
 				continue;
 
 			float dist		= glm::distance(position, cam_pos);
-			float radius	= 100.0f;//1.0f / dist * 1000.0f;
+			float radius	= 40.0f;//1.0f / dist * 1000.0f;
 
 			vec2 mouse_xy = vec2(x,y);
 			vec2 obj_xy   = vec2(pos.x,pos.y);
@@ -2191,12 +2316,14 @@ namespace Roivas
 		if( SelectedEntity == nullptr )
 			return;
 
+		float dist = glm::distance( SelectedEntity->GetTransform()->Position, cam_pos ) * 0.005f;
+
 		vec3 move(0,0,0); 		
 
-		float move_speed = 0.05f*x;
+		float move_speed = dist*x;
 		move += vec3(move_speed,0,0);
 
-		move_speed = 0.05f*y;	
+		move_speed = dist*y;	
 
 		if( Input::GetInstance()->GetKey(SDLK_RSHIFT) == true || Input::GetInstance()->GetKey(SDLK_LSHIFT) == true )
 		{
