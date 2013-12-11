@@ -103,6 +103,29 @@ namespace Roivas
 			}
 			break;
 
+			case SDLK_g:
+			{
+				if( pressed )
+				{
+					if( GetSystem(Graphics)->current_fog == 0 )
+					{
+						GetSystem(Graphics)->current_fog = 1;
+						std::cout << " >F< Depth-based fog" << std::endl;
+					}
+					else if( GetSystem(Graphics)->current_fog == 1 )
+					{
+						GetSystem(Graphics)->current_fog = 2;
+						std::cout << " >F< Screen space light scattering" << std::endl;
+					}
+					else if( GetSystem(Graphics)->current_fog == 2 )
+					{
+						GetSystem(Graphics)->current_fog = 0;
+						std::cout << " >F< No fog" << std::endl;
+					}
+				}
+			}
+			break;
+
 			case SDLK_LEFT:
 				if( pressed )
 				{
@@ -118,11 +141,11 @@ namespace Roivas
 			break;
 
 			case SDLK_UP:
-				//GetSystem(Graphics)->CameraPitch(1.0f);
+				GetSystem(Graphics)->fog_density += 0.05f;
 			break;
 
 			case SDLK_DOWN:
-				//GetSystem(Graphics)->CameraPitch(-1.0f);
+				GetSystem(Graphics)->fog_density -= 0.05f;
 			break;
 
 			default:

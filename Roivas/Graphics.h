@@ -77,6 +77,8 @@ namespace Roivas
 			bool normal_mapping_enabled;
 			bool wireframe_enabled;
 			bool bloom_enabled;
+			GLuint current_fog;
+			float fog_density;
 
 		private:
 			void Draw3D(float dt);
@@ -96,8 +98,9 @@ namespace Roivas
 			void ScreenPass(float dt);
 
 			void Blend(GLint in1, GLint in2, GLint out, int amount, bool mult);
-			void Blur(GLint tex, float w, float h, float numpixels);
+			void Blur(GLint tex, float w, float h, float numpixels = 4.0f);
 			void Fog(GLint tex, GLint depth);
+			void FogBlur();
 			void BlurESM();
 			void Glow();
 			void Bloom();
@@ -146,6 +149,10 @@ namespace Roivas
 			GLuint screen_tex;
 			GLuint rt_textures[RT_TOTAL];
 			GLuint sky_tex;
+			GLuint scattered_levels[6];
+			GLuint scattered_mip;
+			GLuint spreadspace_levels[6];
+			GLuint spreadspace_mip;
 			int current_rt;			
 
 			std::map<std::string,GLuint> TEXTURE_LIST;

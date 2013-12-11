@@ -22,6 +22,7 @@ uniform vec2 blurSize;  // This should usually be equal to
                          // 1.0f / texture_pixel_width for a horizontal blur, and
                          // 1.0f / texture_pixel_height for a vertical blur.
 
+uniform float fog_density = 1.0;
 
 const float pi = 3.14159265f;
 
@@ -32,7 +33,7 @@ void main()
 
   float depth = texture(tDepth, Texcoord).z;
 
-  float sigma = blurAmount * depth;
+  float sigma = blurAmount * depth * depth * 6.0 * fog_density;
 
   // Incremental Gaussian Coefficent Calculation (See GPU Gems 3 pp. 877 - 889)
   vec3 incrementalGaussian;
@@ -51,29 +52,19 @@ void main()
   // Go through the remaining 8 vertical samples (4 on each side of the center)
   for (float i = 1.0f; i <= blurPixels; i++) 
   { 
-    avgValue += texture(tBlur, Texcoord - i * blurSize) * incrementalGaussian.x;         
-    avgValue += texture(tBlur, Texcoord + i * blurSize) * incrementalGaussian.x;         
+    avgValue += texture(tBlur, Texcoord - i * blurSize*fog_density) * incrementalGaussian.x;         
+    avgValue += texture(tBlur, Texcoord + i * blurSize*fog_density) * incrementalGaussian.x;         
     coefficientSum += 2 * incrementalGaussian.x;
     incrementalGaussian.xy *= incrementalGaussian.yz;
   }
 
   outColor = avgValue / coefficientSum;
 
+  
+ 
 
-  vec4 color = texture(tBlur, Texcoord);
+  outColor = avgValue / coefficientSum;
 
-  float sigmaA = 0.2;
-  float sigmaS = 0.8;
-  float sigmaT = sigmaA + sigmaS;
-
-  float e = 2.71828;
-
-
-  //outColor = color * pow(10,-depth*sigmaT);
-
-
-  outColor = color * pow(10,-depth*sigmaA) * (1 - pow(10,-depth*sigmaS));
-
-  outColor += color * pow(10,-depth*sigmaT);
+  
 
 }

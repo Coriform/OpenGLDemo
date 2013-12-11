@@ -13,6 +13,8 @@ uniform sampler2D tDepth;
 uniform float sigmaA = 0.2;
 uniform float sigmaS = 0.8;
 
+uniform float fog_density = 1.0;
+
 const float e = 2.71828;
 
 void main() 
@@ -24,4 +26,8 @@ void main()
 
 	outAttenuatedRadiance = color * pow(10,-depth*sigmaT);
 	outScatteredRadiance = color * pow(10,-depth*sigmaA) * (1 - pow(10,-depth*sigmaS));
+
+	vec4 fog_color = vec4(0.25,0.25,0.25,0);
+  float fogAmount = pow(depth, (2.2-fog_density)/1.5);
+  outAttenuatedRadiance = mix(outAttenuatedRadiance, fog_color, fogAmount);
 }
