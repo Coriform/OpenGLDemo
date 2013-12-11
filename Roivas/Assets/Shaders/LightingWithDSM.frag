@@ -29,7 +29,7 @@ uniform float shadowsmooth = 2.0f;
 
 const float shininess = 30.0;
 
-const float bias = 0.0005;
+const float bias = 0.00001;
 
 float attenuation(float r, float d)
 {
@@ -90,17 +90,11 @@ void main()
 	// Shadows
 	float visibility = 1.0;
 	vec3 ShadowH = ShadowCoord.xyz / ShadowCoord.w;
-	//float shadow_sam = texture2D( tShadow, ShadowH.xy ).z;	
 
+	float shadow_sam = texture( tShadow, ShadowH.xy ).z;
+	if( ShadowH.z > shadow_sam-bias )
+		visibility -= 0.75f;
 	
-	//for( int i = 0; i < shadowsmooth; ++i )
-	//{
-		//float shadow_sam = texture2D( tShadow, ShadowH.xy + poissonDisk[i]/1000.0 ).z;
-		float shadow_sam = texture( tShadow, ShadowH.xy ).z;
-		if( ShadowH.z > shadow_sam+bias )
-			visibility -= 0.7f;
-	//}
-
 	vec3 shadowed_color = vec3(0,0,0);
 
 	// Spot Light

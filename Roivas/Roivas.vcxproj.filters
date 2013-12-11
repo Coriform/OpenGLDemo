@@ -264,5 +264,11 @@
     <None Include="Assets\Shaders\DepthFog.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
+    <None Include="Assets\Shaders\BlurDSM.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\BlurDSM.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
