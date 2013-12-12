@@ -96,5 +96,5 @@ void main()
 	}
 
 	outLight = vec4(color,1);
-	outBloom = vec4(bloomcolor,1);
+	outBloom = vec4(Specular,1);
 }

@@ -270,5 +270,17 @@
     <None Include="Assets\Shaders\BlurDSM.vert">
       <Filter>Graphics\Shaders</Filter>
     </None>
+    <None Include="Assets\Shaders\VolumeLight.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\VolumeSampling.frag">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\VolumeSampling.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Assets\Shaders\VolumeLight.vert">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

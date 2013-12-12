@@ -77,6 +77,7 @@ namespace Roivas
 			bool normal_mapping_enabled;
 			bool wireframe_enabled;
 			bool bloom_enabled;
+			bool volumelight_enabled;
 			GLuint current_fog;
 			float fog_density;
 
@@ -105,6 +106,7 @@ namespace Roivas
 			void BlurDSM();
 			void Glow();
 			void Bloom();
+			void VolumeLight();
 
 			GLint CreateShaderProgram(std::string _vertSource, std::string _fragSource);			
 			void LoadFontmap(std::string path);
@@ -143,6 +145,7 @@ namespace Roivas
 			GLuint blur_fbo;
 			GLuint fog_fbo;
 			GLuint blend_fbo;
+			GLuint volume_fbo;
 
 			GLuint depth_buffer;		
 

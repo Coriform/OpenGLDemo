@@ -12,10 +12,15 @@ uniform sampler2D tDepth;
 const vec4 fog_color = vec4(0,0.5,1,1);
 const float fog_density = 0.8;
 
+float epsilon = 0.001;
+
 void main() 
 {
 	vec4 color = texture(tInRadiance, Texcoord);
 	float depth = texture(tDepth, Texcoord).z;
+
+	if( depth < epsilon )
+		depth = 1.0;
 
 	float fogAmount = pow(depth, fog_density);
 

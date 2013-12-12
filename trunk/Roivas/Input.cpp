@@ -98,7 +98,16 @@ namespace Roivas
 			{
 				if( pressed )
 				{
-					GetSystem(Graphics)->bloom_enabled = !GetSystem(Graphics)->bloom_enabled ;
+					GetSystem(Graphics)->bloom_enabled = !GetSystem(Graphics)->bloom_enabled;
+				}
+			}
+			break;
+
+			case SDLK_v:
+			{
+				if( pressed )
+				{
+					GetSystem(Graphics)->volumelight_enabled = !GetSystem(Graphics)->volumelight_enabled;
 				}
 			}
 			break;
