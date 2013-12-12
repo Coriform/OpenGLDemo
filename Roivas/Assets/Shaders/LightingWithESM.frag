@@ -100,9 +100,9 @@ void main()
 
     if ( ShadowH.z > 0.0 ) 
 	{
-        float c = 6.0; 
+        float c = 80.0; 
         float texel = texture2D( tShadow, ShadowH.xy ).r;
-		visibility = clamp( exp( c * (texel - lightDepth)), 0.0, 1.0 ); 
+		visibility = clamp( exp( c * (texel - ShadowH.z)), 0.0, 1.0 ); 
     }
 	
 
