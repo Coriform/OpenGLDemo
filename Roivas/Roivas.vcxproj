@@ -265,6 +265,10 @@
     <None Include="Assets\Shaders\ShadowTex.vert" />
     <None Include="Assets\Shaders\Skybox.frag" />
     <None Include="Assets\Shaders\Skybox.vert" />
+    <None Include="Assets\Shaders\VolumeLight.frag" />
+    <None Include="Assets\Shaders\VolumeLight.vert" />
+    <None Include="Assets\Shaders\VolumeSampling.frag" />
+    <None Include="Assets\Shaders\VolumeSampling.vert" />
     <None Include="Assets\Shaders\Wireframe.frag" />
     <None Include="Assets\Shaders\Wireframe.vert" />
   </ItemGroup>

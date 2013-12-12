@@ -51,6 +51,8 @@ enum ShaderName
 	SH_FogBlur,
 	SH_Blend,
 	SH_Skybox,
+	SH_VolumeLight,
+	SH_VolumeSampling,
 
 	SH_TOTAL
 };
@@ -76,6 +78,11 @@ enum RenderTarget
 
 	RT_SceneAttRadiance,
 	RT_SceneSctRadiance,
+
+	RT_VolumeLight,
+	RT_SceneVolumeLight,	
+	RT_CoordTex,
+	
 	
 
 	RT_TOTAL

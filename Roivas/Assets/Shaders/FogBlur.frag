@@ -28,10 +28,16 @@ const float pi = 3.14159265f;
 
 const vec2 blurMultiplyVec = vec2(1.0,1.0);
 
+float epsilon = 0.001;
+
+
 void main() 
 {
 
   float depth = texture(tDepth, Texcoord).z;
+
+  if( depth < epsilon )
+	depth = 1.0;
 
   float sigma = blurAmount * depth * depth * 6.0 * fog_density;
 
@@ -59,12 +65,7 @@ void main()
   }
 
   outColor = avgValue / coefficientSum;
-
-  
  
 
-  outColor = avgValue / coefficientSum;
-
-  
 
 }

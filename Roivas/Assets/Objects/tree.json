@@ -1,0 +1,11 @@
+{
+"Entity" : {
+		"Transform" : {
+			"Scale" : [ 1.01,1.01,1.01 ] 
+		},
+		"Model" : {
+			"Mesh" : "tree.obj",
+			"DiffuseTexture" : "drkwood.jpg"
+		}
+	}
+}

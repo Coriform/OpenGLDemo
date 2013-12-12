@@ -6,7 +6,7 @@
 		"Model" : {
 			"Mesh" : "tablelamp.obj",
 			"DiffuseTexture" : "tablelamp_diffuse.png",
-			"GlowTexture" : "tablelamp_glow.png",
+			"GlowTexture" : "_black.png",
 			"WireColor" : [ 1.0,1.0,0.0 ]
 		}
 	}

@@ -23,8 +23,9 @@ namespace Roivas
 		wireframe_enabled(false),
 		normal_mapping_enabled(true),
 		bloom_enabled(true),
+		volumelight_enabled(true),
 		fog_density(1.0f),
-		shadow_size(1.0f),
+		shadow_size(2.0f),
 		shadow_smooth(1.0f),
 		SelectedEntity(nullptr)
 	{
@@ -89,6 +90,8 @@ namespace Roivas
 		CreateShaderProgram("Assets/Shaders/FogBlur.vert",			"Assets/Shaders/FogBlur.frag");			// SH_FogBlur
 		CreateShaderProgram("Assets/Shaders/Blend.vert",			"Assets/Shaders/Blend.frag");			// SH_Blend
 		CreateShaderProgram("Assets/Shaders/Skybox.vert",			"Assets/Shaders/Skybox.frag");			// SH_Skybox
+		CreateShaderProgram("Assets/Shaders/VolumeLight.vert",		"Assets/Shaders/VolumeLight.frag");		// SH_VolumeLight
+		CreateShaderProgram("Assets/Shaders/VolumeSampling.vert",	"Assets/Shaders/VolumeSampling.frag");	// SH_VolumeSampling
 
 		//shadow_size = 1;
 
@@ -141,13 +144,11 @@ namespace Roivas
 		// Primary drawing functions; draws the geometry and lighting calculations
 		Draw3D(dt);		
 
-		//DrawSkybox(dt);
-
 		// Post-processing effects
 		DrawPP(dt);
 
 		// Debug drawing
-		DrawEditor(dt);
+		//DrawEditor(dt);
 
 		// HUD and other 2D drawing
 		//Draw2D(dt);	
@@ -162,7 +163,7 @@ namespace Roivas
 		}		
 
 		// Draw framerate
-		DrawDebugText(framerate);	
+		//DrawDebugText(framerate);	
 
 		// Clears debug text from previous frame; might change this
 		DEBUG_TEXT.clear();
@@ -449,6 +450,53 @@ namespace Roivas
 
 
 
+		glGenFramebuffers( 1, &volume_fbo );
+		glBindFramebuffer( GL_FRAMEBUFFER, volume_fbo );
+
+		// Generate and bind the OGL texture for positions
+		glGenTextures(1, &rt_textures[RT_VolumeLight]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_VolumeLight]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_VolumeLight], 0);
+
+		// Generate and bind the OGL texture for positions
+		glGenTextures(1, &rt_textures[RT_CoordTex]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_CoordTex]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, rt_textures[RT_CoordTex], 0);
+
+		// Generate and bind the OGL texture for positions
+		glGenTextures(1, &rt_textures[RT_SceneVolumeLight]);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneVolumeLight]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width_i, screen_height_i, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// Attach the texture to the FBO
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneVolumeLight], 0);
+
+		
+
+		// Check if all worked fine and unbind the FBO
+		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		if( status != GL_FRAMEBUFFER_COMPLETE)
+		{
+			std::cout << "FB error for deferred, status: " << status << std::endl;
+		}
+
+
 		
 
 
@@ -469,6 +517,7 @@ namespace Roivas
 
 		current_rt = RT_SceneLighting;
 		screen_tex = rt_textures[RT_SceneLighting];
+		
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
@@ -484,10 +533,6 @@ namespace Roivas
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
 		GeometryPass(dt);
-
-		////
-		//DrawSkybox(dt);
-		////
 
 		if( current_lighting > SH_Lighting )
 			ShadowPass(dt);		
@@ -505,6 +550,9 @@ namespace Roivas
 
 	void Graphics::DrawSkybox(float dt)
 	{
+		glDepthRangef(0.999f, 1.0f);	
+		glDisable(GL_CULL_FACE);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, screen_fbo);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneDiffuse], 0);
 
@@ -512,8 +560,18 @@ namespace Roivas
 
 		glUseProgram(SHADERS[SH_Skybox].ShaderProgram);
 
+
+
+		modelMat = mat4();
+		modelMat = glm::translate( modelMat, cam_pos );
+		modelMat = glm::scale( modelMat, vec3(10.0f,10.0f,10.0f) );
+		
+
+
 		SHADERS[SH_Skybox].SetUniform4fv( "V", &viewMat[0][0]);
 		SHADERS[SH_Skybox].SetUniform4fv( "P", &projMat[0][0]);
+		SHADERS[SH_Skybox].SetUniform4fv( "M", &modelMat[0][0]);
+
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, sky_tex);
@@ -534,6 +592,10 @@ namespace Roivas
 
 		glDisableVertexAttribArray(0);
 
+
+		glEnable(GL_CULL_FACE);
+		glDepthRangef(0.0f, 1.0f);
+
 		glDepthMask(GL_TRUE);
 	}
 
@@ -541,6 +603,7 @@ namespace Roivas
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, deferred_fbo);
 		glViewport(0,0,screen_width_i,screen_height_i); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+		glDepthRangef(0.0f, 0.999f);
 
 		glEnable( GL_DEPTH_TEST );
 		glEnable( GL_CULL_FACE );
@@ -548,6 +611,10 @@ namespace Roivas
 		glCullFace(GL_BACK);
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+		DrawSkybox(dt);	
+
+		glBindFramebuffer(GL_FRAMEBUFFER, deferred_fbo);
 
 		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, 
 			GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5 };
@@ -678,12 +745,13 @@ namespace Roivas
 
 			if( LIGHT_LIST.at(j)->Type == LT_DirectionLight )
 			{
-				depthProjMat[j] = glm::ortho<float>(-20,20,-20,20,-20,36);
+				float dim = 30.0f;
+				depthProjMat[j] = glm::ortho<float>(-dim,dim,-dim,dim,-20.0f,36.0f);
 
 				vec3 direction = LIGHT_LIST.at(j)->Direction;
 
 				if( LIGHT_LIST.at(j)->Orbital )
-					direction = glm::normalize(LIGHT_LIST.at(j)->GetTransform()->Position - vec3(0,0,0));
+					direction = glm::normalize(LIGHT_LIST.at(j)->GetTransform()->Position - cam_pos);
 	
 				depthViewMat[j] = glm::lookAt(direction, vec3(0,0,0), vec3(0,1,0));
 			}
@@ -774,13 +842,19 @@ namespace Roivas
 
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+		glDrawBuffers(3, buffers);
 
 		glUseProgram( SHADERS.at(SH_Ambient).ShaderProgram );
 
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneDiffuse]);
-		SHADERS[current_lighting].SetUniform1i( "tDiffuse", 0 );
+		SHADERS[SH_Ambient].SetUniform1i( "tDiffuse", 0 );
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneDepth]);
+		SHADERS[SH_Ambient].SetUniform1i( "tDepth", 1 );
 
 
 		glEnableVertexAttribArray(0);
@@ -807,9 +881,6 @@ namespace Roivas
 		glBlendFunc( GL_ONE, GL_ONE );
 
 
-
-		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-		glDrawBuffers(3, buffers);
 		
 		glUseProgram( SHADERS.at(current_lighting).ShaderProgram );
 
@@ -834,7 +905,7 @@ namespace Roivas
 			vec3 direction = light->Direction;
 
 			if( light->Orbital )
-				direction = glm::normalize(light->GetTransform()->Position - vec3(0,0,0));
+				direction = glm::normalize(light->GetTransform()->Position - cam_pos);
 
 			SHADERS[current_lighting].SetUniform1f( "shadowsmooth", shadow_smooth );
 			SHADERS[current_lighting].SetUniform3f( "lightpos",		light->GetTransform()->Position );
@@ -865,10 +936,6 @@ namespace Roivas
 			glActiveTexture(GL_TEXTURE3);
 			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneSpecular]);
 			SHADERS[current_lighting].SetUniform1i( "tSpecular", 3 );
-
-			glActiveTexture(GL_TEXTURE4);
-			glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneBloom]);
-			SHADERS[current_lighting].SetUniform1i( "tBloom", 4 );	
 
 			glActiveTexture(GL_TEXTURE5);
 			if( current_lighting == SH_LightingESM )
@@ -1381,13 +1448,72 @@ namespace Roivas
 	void Graphics::Bloom()
 	{
 		//Blend(rt_textures[RT_SceneBloom], rt_textures[RT_SceneBloom],rt_textures[RT_SceneBloom], 0.5f, false);
-		Blur(rt_textures[RT_SceneBloom],1,0,6);
-		Blur(rt_textures[RT_SceneBloom],0,1,6);
+		Blur(rt_textures[RT_SceneBloom],1,0,4);
+		Blur(rt_textures[RT_SceneBloom],0,1,4);
 		Blend(rt_textures[RT_SceneBloom], rt_textures[RT_SceneBloom],rt_textures[RT_SceneBloom], 1, false);
 		Blend(rt_textures[RT_SceneBloom], rt_textures[RT_SceneBloom],rt_textures[RT_SceneBloom], 1, true);
-		Blend(rt_textures[RT_SceneBloom], rt_textures[RT_SceneBloom],rt_textures[RT_SceneBloom], 2, false);
+		Blend(rt_textures[RT_SceneBloom], rt_textures[RT_SceneBloom],rt_textures[RT_SceneBloom], 1, false);
 		Blend(rt_textures[RT_SceneLighting], rt_textures[RT_SceneBloom],rt_textures[RT_SceneLighting], 1, false);
+	}
+
+	void Graphics::VolumeLight()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, volume_fbo);
+
+		glViewport(0,0,screen_width_i,screen_height_i); 
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+
+		GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, buffers);
+
+
+		glUseProgram( SHADERS.at(SH_VolumeSampling).ShaderProgram );
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt_textures[RT_SceneVolumeLight], 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, rt_textures[RT_SceneVolumeLight], 0);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_VolumeLight]);
+		SHADERS[SH_VolumeSampling].SetUniform1i( "tLighting", 0 );
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, rt_textures[RT_SceneGlow]);
+		SHADERS[SH_VolumeSampling].SetUniform1i( "tEpipolar", 1 );
+
+		Light* light = LIGHT_LIST[0];
+
+		SHADERS[SH_VolumeSampling].SetUniform3f( "light_pos", light->GetTransform()->Position);
+		SHADERS[SH_VolumeSampling].SetUniform3f( "light_color", light->Color);
+		SHADERS[SH_VolumeSampling].SetUniform2f( "screen_dims", vec2(screen_width,screen_height));
+
+		mat4 m = mat4();
+
+		modelMat = glm::translate( modelMat, LIGHT_LIST[0]->GetTransform()->Position );
+		m = viewMat * modelMat;
+
+		SHADERS[SH_VolumeSampling].SetUniform4fv( "V", &viewMat[0][0] );
+		SHADERS[SH_VolumeSampling].SetUniform4fv( "P", &projMat[0][0] );
+
+
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, buffQuad);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		glDrawArrays(GL_TRIANGLES, 0, 6); // 2*3 indices starting at 0 -> 2 triangles
+		glDisableVertexAttribArray(0);
+
 		
+		Blend( rt_textures[RT_SceneVolumeLight], rt_textures[RT_SceneLighting], rt_textures[RT_SceneLighting], 1, false );
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void Graphics::ProcessLights()
@@ -1500,7 +1626,10 @@ namespace Roivas
 		{
 			Bloom();
 			Glow();
-		}
+		}		
+
+		if( volumelight_enabled )
+			VolumeLight();
 
 		if( current_fog > 0 )
 			Fog(rt_textures[RT_SceneLighting], rt_textures[RT_SceneDepth]);
@@ -2169,6 +2298,8 @@ namespace Roivas
 
 		cam_pos += cam_rot * move;
 
+		LIGHT_LIST[0]->GetTransform()->Position += cam_rot * move;
+
 		cam_look = cam_rot * vec3(0,0,-1);
 
 		viewMat = glm::lookAt( cam_pos, cam_pos + cam_look, cam_up );
@@ -2262,6 +2393,15 @@ namespace Roivas
 			case RT_SceneSctRadiance:
 				std::cout << " >RT< Scattered radiance" << std::endl;
 				break;
+			case RT_VolumeLight:
+				std::cout << " >RT< Light volumes" << std::endl;
+				break;
+			case RT_SceneVolumeLight:
+				std::cout << " >RT< Sampled light volumes" << std::endl;
+				break;
+			case RT_CoordTex:
+				std::cout << " >RT< Coordinate texture" << std::endl;
+				break;
 			default:
 				break;
 		}
@@ -2320,6 +2460,15 @@ namespace Roivas
 			case RT_SceneSctRadiance:
 				std::cout << " >RT< Scattered radiance" << std::endl;
 				break;
+			case RT_VolumeLight:
+				std::cout << " >RT< Light volumes" << std::endl;
+				break;
+			case RT_SceneVolumeLight:
+				std::cout << " >RT< Sampled light volumes" << std::endl;
+				break;
+			case RT_CoordTex:
+				std::cout << " >RT< Coordinate texture" << std::endl;
+				break;
 			default:
 				break;
 		}
@@ -2371,33 +2520,73 @@ namespace Roivas
 			return;
 
 		float dist = glm::distance( SelectedEntity->GetTransform()->Position, cam_pos ) * 0.005f;
-
-		vec3 move(0,0,0); 		
-
-		float move_speed = dist*x;
-		move += vec3(move_speed,0,0);
-
-		move_speed = dist*y;	
-
-		if( Input::GetInstance()->GetKey(SDLK_RSHIFT) == true || Input::GetInstance()->GetKey(SDLK_LSHIFT) == true )
+		
+		if( SelectedEntity->GetLight() && SelectedEntity->GetLight()->Orbital )
 		{
-			move -= vec3(0,move_speed,0);
+			Transform* t = SelectedEntity->GetTransform();
+		
+			vec3 pos = t->Position;
 
-			SelectedEntity->GetTransform()->Position += move;
+			float move_speed = 0.0f;
+
+			vec4 axis = vec4(vec3(0,0,0) - pos,1);
+			axis.y = 0;
+
+			mat4 rot = mat4();
+			rot = glm::rotate(rot, 90.0f, vec3(0,1,0));
+			axis = rot * axis;
+
+			pos -= cam_pos;
+
+			rot = mat4();			
+
+			if( Input::GetInstance()->GetKey(SDLK_RSHIFT) == true || Input::GetInstance()->GetKey(SDLK_LSHIFT) == true )
+			{
+				move_speed = -2.0f*y;
+				rot = glm::rotate(rot, move_speed, vec3(axis.x,axis.y,axis.z));
+			}
+			else
+			{
+				move_speed = -2.0f*x;
+				rot = glm::rotate(rot, move_speed, vec3(0,1,0));
+			}
+
+
+			vec4 new_pos = rot * vec4(pos,1);
+
+			t->Position = vec3(new_pos.x, new_pos.y, new_pos.z) + cam_pos;
+
+			
 		}
 		else
 		{
-			move += vec3(0,0,move_speed);		
+			vec3 move(0,0,0); 		
 
-			quat turn = cam_rot;
-			turn.x = 0;
-			turn.z = 0;
-			float mag = 1.0f / sqrt(turn.w*turn.w + turn.y*turn.y);
-			turn.w *= mag;
-			turn.y *= mag;
+			float move_speed = dist*x;
+			move += vec3(move_speed,0,0);
 
-			SelectedEntity->GetTransform()->Position += turn * move;
-		}		
+			move_speed = dist*y;	
+
+			if( Input::GetInstance()->GetKey(SDLK_RSHIFT) == true || Input::GetInstance()->GetKey(SDLK_LSHIFT) == true )
+			{
+				move -= vec3(0,move_speed,0);
+
+				SelectedEntity->GetTransform()->Position += move;
+			}
+			else
+			{
+				move += vec3(0,0,move_speed);		
+
+				quat turn = cam_rot;
+				turn.x = 0;
+				turn.z = 0;
+				float mag = 1.0f / sqrt(turn.w*turn.w + turn.y*turn.y);
+				turn.w *= mag;
+				turn.y *= mag;
+
+				SelectedEntity->GetTransform()->Position += turn * move;
+			}	
+		}
 	}
 
 	Graphics::~Graphics()
