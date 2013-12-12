@@ -255,6 +255,7 @@ namespace Roivas
 		glGenFramebuffers( 1, &screen_fbo );
 		glBindFramebuffer( GL_FRAMEBUFFER, screen_fbo );
 
+		glGenTextures(1, &screen_tex);
 		glBindTexture( GL_TEXTURE_2D, screen_tex );
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, screen_width_i, screen_height_i, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL );
 		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, screen_tex, 0 );
@@ -660,7 +661,11 @@ namespace Roivas
 		
 		glEnable( GL_DEPTH_TEST );
 		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT); 	
+
+		if( current_lighting == SH_LightingESM )
+			glCullFace(GL_BACK);
+		else
+			glCullFace(GL_FRONT); 	
 
 		glUseProgram( SHADERS.at(SH_ShadowTex).ShaderProgram );		
 
