@@ -1,0 +1,13 @@
+{
+"Entity" : {
+		"Transform" : {
+			"Scale" : [ 0.01,0.01,0.01 ] 
+		},
+		"Model" : {
+			"Mesh" : "duck.dae",
+			"DiffuseTexture" : "duck.png"
+		},
+		"Behavior" : {
+		}
+	}
+}

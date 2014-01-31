@@ -1,0 +1,13 @@
+{
+"Entity" : {
+		"Transform" : {
+			"Scale" : [ 16,16,0.75 ] 
+		},
+		"Model" : {
+			"Mesh" : "Box.obj",
+			"DiffuseTexture" : "slate_diffuse.png",
+			"NormalTexture" : "slate_norm.png",
+			"SpecularTexture" : "slate_spec.png"
+		}
+	}
+}

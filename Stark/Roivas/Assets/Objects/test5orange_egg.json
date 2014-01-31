@@ -1,0 +1,12 @@
+{
+"Entity" : {
+		"Transform" : {
+			"Scale" : [ 1,2,1 ] 
+		},
+		"Model" : {
+			"Mesh" : "sphere.dae",
+			"DiffuseTexture" : "_orange.png",
+			"Color" : [ 1.0,0.0,0.5,0.75 ]
+		}
+	}
+}
