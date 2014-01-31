@@ -10,7 +10,8 @@ uniform mat4 V;
 uniform mat4 P;
 
 out vec2 UV;
-out vec4 Position;
+//out vec4 Position;
+out vec3 Position;
 out vec3 EyeDirection;
 out vec3 Normal;
 out float Depth;
@@ -18,12 +19,12 @@ out float Depth;
 
 void main( void )
 {
-	//Position = (M * vec4(position,1)).xyz;	
+	Position = (M * vec4(position,1)).xyz;	
 	Normal = ( V * M * vec4(normal,0)).xyz;
 	EyeDirection = vec3(0,0,0) - ( V * M * vec4(position,1)).xyz;
 	UV = uv;
 	Depth = -(V * M * vec4(position,1)).z;
 
 	gl_Position =  P * V * M * vec4(position,1);
-	Position = gl_Position;
+	//Position = gl_Position;
 }
